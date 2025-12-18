@@ -55,8 +55,8 @@ A modern, full-stack recipe blog application built with performance and develope
 ### 1. Clone & Install
 
 ```bash
-git clone https://github.com/yourusername/recipeswap.git
-cd recipeswap
+git clone https://github.com/dacrab/recipeswap-v2.git
+cd recipeswap-v2
 bun install
 ```
 
