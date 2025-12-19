@@ -11,10 +11,10 @@ export default function LoginForm() {
     await authClient.signIn.email({
       email,
       password,
-      callbackURL: "/admin",
+      callbackURL: "/dashboard",
     }, {
         onSuccess: () => {
-            window.location.href = "/admin";
+            window.location.href = "/dashboard";
         },
         onError: (ctx) => {
             alert(ctx.error.message);
@@ -26,7 +26,7 @@ export default function LoginForm() {
   const handleGithubSignIn = async () => {
     await authClient.signIn.social({
         provider: "github",
-        callbackURL: "/admin",
+        callbackURL: "/dashboard",
     });
   };
 

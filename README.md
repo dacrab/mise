@@ -36,7 +36,7 @@ A modern, full-stack recipe blog application built with performance and develope
 │   ├── lib/            # Auth Configuration
 │   ├── pages/          # File-based Routing
 │   │   ├── api/        # Auth API Routes
-│   │   ├── admin/      # Protected Dashboard
+│   │   ├── dashboard/  # User Kitchen/Dashboard
 │   │   └── recipe/     # Recipe Details
 │   └── middleware.ts   # Route Protection
 ├── drizzle.config.ts   # ORM Config

@@ -50,10 +50,10 @@ export default function SignupForm() {
       email,
       password,
       name,
-      callbackURL: "/admin",
+      callbackURL: "/dashboard",
     }, {
         onSuccess: () => {
-            window.location.href = "/admin";
+            window.location.href = "/dashboard";
         },
         onError: (ctx) => {
             alert(ctx.error.message);
@@ -143,7 +143,7 @@ export default function SignupForm() {
           onClick={async () => {
             await authClient.signIn.social({
               provider: "github",
-              callbackURL: "/admin",
+              callbackURL: "/dashboard",
             });
           }}
           className="btn-outline w-full py-4 flex items-center justify-center gap-3"

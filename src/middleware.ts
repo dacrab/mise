@@ -2,7 +2,7 @@ import { defineMiddleware } from "astro:middleware";
 import { auth } from "./lib/auth";
 
 export const onRequest = defineMiddleware(async (context, next) => {
-	const isProtectedRoute = context.url.pathname.startsWith("/admin");
+	const isProtectedRoute = context.url.pathname.startsWith("/dashboard");
 
     // Check for session on every request to populate locals
     const session = await auth.api.getSession({

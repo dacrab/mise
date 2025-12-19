@@ -34,7 +34,7 @@ if (activeTab === 'saved') {
         <div class="wrapper h-16 flex items-center justify-between">
             <a href="/" class="flex items-center gap-2 group">
                 <span class="font-serif text-2xl font-bold tracking-tight">RecipeSwap.</span>
-                <span class="text-[10px] font-bold bg-brand-accent text-brand-primary px-1.5 py-0.5 rounded uppercase tracking-tighter">Admin</span>
+                <span class="text-[10px] font-bold bg-brand-accent text-brand-primary px-1.5 py-0.5 rounded uppercase tracking-tighter">Chef</span>
             </a>
             
             <div class="flex items-center gap-4">
@@ -56,7 +56,7 @@ if (activeTab === 'saved') {
                     <h1 class="text-4xl font-bold font-serif">Kitchen Control</h1>
                     <p class="text-gray-500">Manage your published masterpieces and bookmarks.</p>
                 </div>
-                <a href="/admin/create" class="btn-primary flex items-center gap-2">
+                <a href="/dashboard/create" class="btn-primary flex items-center gap-2">
                     <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="M12 5v14"/></svg>
                     New Recipe
                 </a>
@@ -65,14 +65,14 @@ if (activeTab === 'saved') {
             <!-- Tabs -->
             <div class="flex gap-4 mb-8 border-b border-gray-200">
                 <a 
-                    href="/admin?tab=my-recipes" 
+                    href="/dashboard?tab=my-recipes" 
                     class={`pb-4 px-2 text-sm font-bold transition-all border-b-2 ${activeTab === 'my-recipes' ? 'border-brand-primary text-brand-primary' : 'border-transparent text-gray-400 hover:text-gray-600'}`}
                     transition:name="tab-my-recipes"
                 >
                     My Recipes
                 </a>
                 <a 
-                    href="/admin?tab=saved" 
+                    href="/dashboard?tab=saved" 
                     class={`pb-4 px-2 text-sm font-bold transition-all border-b-2 ${activeTab === 'saved' ? 'border-brand-primary text-brand-primary' : 'border-transparent text-gray-400 hover:text-gray-600'}`}
                     transition:name="tab-saved"
                 >
@@ -117,7 +117,7 @@ if (activeTab === 'saved') {
 
                             {activeTab === 'my-recipes' && (
                                 <div class="flex flex-col md:flex-row gap-2 ml-4">
-                                    <a href={`/admin/edit/${recipe.id}`} class="btn-outline text-xs px-4 py-2 flex items-center gap-2">
+                                    <a href={`/dashboard/edit/${recipe.id}`} class="btn-outline text-xs px-4 py-2 flex items-center gap-2">
                                         Edit
                                     </a>
                                     <button 

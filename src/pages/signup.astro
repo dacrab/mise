@@ -8,7 +8,7 @@ const session = await auth.api.getSession({
 });
 
 if (session) {
-    return Astro.redirect("/admin");
+    return Astro.redirect("/dashboard");
 }
 ---
 

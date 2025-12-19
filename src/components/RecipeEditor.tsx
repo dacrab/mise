@@ -89,7 +89,7 @@ export default function RecipeEditor({ initialData, isEditing = false }: RecipeE
             <h1 className="text-4xl font-bold font-serif">{isEditing ? 'Refine your creation' : 'Share a new flavor'}</h1>
           </div>
           <div className="flex gap-3">
-             <a href="/admin" className="btn-ghost">Cancel</a>
+             <a href="/dashboard" className="btn-ghost">Cancel</a>
              <button
                 onClick={handleSubmit}
                 disabled={loading}

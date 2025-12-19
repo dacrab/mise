@@ -32,14 +32,14 @@ if (search) {
             
             <nav class="flex items-center gap-6">
                 {Astro.locals.user ? (
-                    <a href="/admin" class="nav-link flex items-center gap-2">
+                    <a href="/dashboard" class="nav-link flex items-center gap-2">
                         <span class="w-2 h-2 rounded-full bg-green-500"></span>
                         {Astro.locals.user.name}
                     </a>
                 ) : (
                     <a href="/login" class="nav-link hidden md:block">Sign In</a>
                 )}
-                <a href="/admin/create" class="btn-primary">
+                <a href="/dashboard/create" class="btn-primary">
                     Submit Recipe
                 </a>
             </nav>
