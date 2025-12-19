@@ -129,8 +129,8 @@ export default function RecipeEditor({ initialData, isEditing = false }: RecipeE
                    />
                  </div>
 
-                 <div class="grid md:grid-cols-2 gap-4">
-                   <div class="space-y-2">
+                 <div className="grid md:grid-cols-2 gap-4">
+                   <div className="space-y-2">
                      <label htmlFor="recipe-category" className="text-xs font-bold uppercase tracking-wider text-gray-400">Category</label>
                      <select
                        id="recipe-category"
@@ -144,7 +144,7 @@ export default function RecipeEditor({ initialData, isEditing = false }: RecipeE
                      </select>
                    </div>
 
-                   <div class="space-y-2">
+                   <div className="space-y-2">
                      <label htmlFor="recipe-video" className="text-xs font-bold uppercase tracking-wider text-gray-400">Video Link (Optional)</label>
                      <input
                        id="recipe-video"

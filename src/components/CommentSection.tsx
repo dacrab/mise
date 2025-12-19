@@ -1,16 +1,6 @@
 import { useState } from 'react';
 import { actions } from 'astro:actions';
 
-interface Comment {
-    id: string;
-    content: string;
-    createdAt: Date;
-    user: {
-        name: string;
-        image?: string | null;
-    }
-}
-
 interface CommentSectionProps {
     recipeId: string;
     initialComments: any[];
@@ -18,7 +8,7 @@ interface CommentSectionProps {
 }
 
 export default function CommentSection({ recipeId, initialComments, isLoggedIn }: CommentSectionProps) {
-    const [comments, setComments] = useState<any[]>(initialComments);
+    const [comments] = useState<any[]>(initialComments);
     const [content, setContent] = useState('');
     const [loading, setLoading] = useState(false);
 
@@ -27,7 +17,7 @@ export default function CommentSection({ recipeId, initialComments, isLoggedIn }
         if (!content.trim()) return;
 
         setLoading(true);
-        const { data, error } = await actions.addComment({ recipeId, content });
+        const { error } = await actions.addComment({ recipeId, content });
         
         if (error) {
             alert("Error posting comment.");

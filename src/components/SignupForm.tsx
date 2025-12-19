@@ -57,7 +57,7 @@ export default function SignupForm() {
       name,
       username,
       callbackURL: "/dashboard",
-    }, {
+    } as any, {
         onSuccess: () => {
             window.location.href = "/dashboard";
         },

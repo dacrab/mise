@@ -16,7 +16,6 @@ const categories = [
 
 // Optimized data fetching
 let allRecipes;
-let dbQuery = db.select().from(recipes).orderBy(desc(recipes.createdAt));
 
 if (search || categoryFilter) {
     const conditions = [];
