@@ -2,20 +2,9 @@ import { defineAction } from 'astro:actions';
 import { z } from 'astro:schema';
 import { S3Client, PutObjectCommand } from '@aws-sdk/client-s3';
 import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
-import { db } from '../db';
 import { recipes, comments, likes, bookmarks } from '../db/schema';
 import { nanoid } from 'nanoid';
-import { eq, and } from 'drizzle-orm';
-
-// Initialize S3 Client for R2
-const S3 = new S3Client({
-  region: "auto",
-  endpoint: `https://${import.meta.env.CLOUDFLARE_ACCOUNT_ID}.r2.cloudflarestorage.com`,
-  credentials: {
-    accessKeyId: import.meta.env.CLOUDFLARE_ACCESS_KEY_ID,
-    secretAccessKey: import.meta.env.CLOUDFLARE_SECRET_ACCESS_KEY,
-  },
-});
+import { eq, and, desc } from 'drizzle-orm';
 
 export const server = {
   getPresignedUrl: defineAction({
@@ -26,19 +15,34 @@ export const server = {
     }),
     handler: async ({ fileType, fileSize }, context) => {
       if (!context.locals.user) throw new Error("Unauthorized");
+      
+      const env = context.locals.runtime.env;
+      
+      const S3 = new S3Client({
+        region: "auto",
+        endpoint: `https://${env.CLOUDFLARE_ACCOUNT_ID}.r2.cloudflarestorage.com`,
+        credentials: {
+          accessKeyId: env.CLOUDFLARE_ACCESS_KEY_ID,
+          secretAccessKey: env.CLOUDFLARE_SECRET_ACCESS_KEY,
+        },
+      });
+
       const fileId = nanoid();
       const key = `recipes/${context.locals.user.id}/${fileId}-${Date.now()}`;
+      
       const command = new PutObjectCommand({
-        Bucket: import.meta.env.R2_BUCKET_NAME,
+        Bucket: env.R2_BUCKET_NAME,
         Key: key,
         ContentType: fileType,
         ContentLength: fileSize,
       });
+
       const url = await getSignedUrl(S3, command, { expiresIn: 3600 });
+
       return {
         uploadUrl: url,
         fileKey: key,
-        publicUrl: `https://${import.meta.env.PUBLIC_R2_DOMAIN}/${key}`
+        publicUrl: `https://${env.PUBLIC_R2_DOMAIN}/${key}`
       };
     },
   }),
@@ -56,7 +60,10 @@ export const server = {
     }),
     handler: async (input, context) => {
       if (!context.locals.user) throw new Error("Unauthorized");
+      const db = context.locals.db;
+
       const slug = input.title.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)+/g, '') + '-' + nanoid(6);
+
       const [newRecipe] = await db.insert(recipes).values({
         id: nanoid(),
         slug,
@@ -69,6 +76,7 @@ export const server = {
         videoUrl: input.videoUrl,
         userId: context.locals.user.id,
       }).returning();
+
       return newRecipe;
     },
   }),
@@ -87,6 +95,8 @@ export const server = {
     }),
     handler: async (input, context) => {
       if (!context.locals.user) throw new Error("Unauthorized");
+      const db = context.locals.db;
+
       const [updatedRecipe] = await db.update(recipes)
         .set({
           title: input.title,
@@ -99,6 +109,7 @@ export const server = {
         })
         .where(and(eq(recipes.id, input.id), eq(recipes.userId, context.locals.user.id)))
         .returning();
+
       if (!updatedRecipe) throw new Error("Recipe not found or you are not the owner");
       return updatedRecipe;
     },
@@ -109,6 +120,7 @@ export const server = {
     input: z.object({ id: z.string() }),
     handler: async ({ id }, context) => {
         if (!context.locals.user) throw new Error("Unauthorized");
+        const db = context.locals.db;
         const [deleted] = await db.delete(recipes).where(and(eq(recipes.id, id), eq(recipes.userId, context.locals.user.id))).returning();
         if (!deleted) throw new Error("Recipe not found or you are not the owner");
         return { success: true };
@@ -121,6 +133,8 @@ export const server = {
     handler: async ({ recipeId }, context) => {
       if (!context.locals.user) throw new Error("Unauthorized");
       const userId = context.locals.user.id;
+      const db = context.locals.db;
+
       const existing = await db.select().from(likes).where(and(eq(likes.recipeId, recipeId), eq(likes.userId, userId)));
       if (existing.length > 0) {
         await db.delete(likes).where(and(eq(likes.recipeId, recipeId), eq(likes.userId, userId)));
@@ -138,6 +152,8 @@ export const server = {
     handler: async ({ recipeId }, context) => {
       if (!context.locals.user) throw new Error("Unauthorized");
       const userId = context.locals.user.id;
+      const db = context.locals.db;
+
       const existing = await db.select().from(bookmarks).where(and(eq(bookmarks.recipeId, recipeId), eq(bookmarks.userId, userId)));
       if (existing.length > 0) {
         await db.delete(bookmarks).where(and(eq(bookmarks.recipeId, recipeId), eq(bookmarks.userId, userId)));
@@ -154,6 +170,7 @@ export const server = {
     input: z.object({ recipeId: z.string(), content: z.string().min(1).max(500) }),
     handler: async ({ recipeId, content }, context) => {
       if (!context.locals.user) throw new Error("Unauthorized");
+      const db = context.locals.db;
       const [comment] = await db.insert(comments).values({
         id: nanoid(),
         recipeId,

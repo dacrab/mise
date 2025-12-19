@@ -1,10 +1,17 @@
 import { defineMiddleware } from "astro:middleware";
-import { auth } from "./lib/auth";
+import { getAuth } from "./lib/auth";
+import { getDb } from "./db";
 
 export const onRequest = defineMiddleware(async (context, next) => {
-	const isProtectedRoute = context.url.pathname.startsWith("/dashboard");
+    // 1. Initialize DB from Cloudflare Bindings
+    const db = getDb(context.locals.runtime.env.DATABASE_URL);
+    const auth = getAuth(db, context.locals.runtime.env);
 
-    // Check for session on every request to populate locals
+    // 2. Attach to locals for use in actions and pages
+    context.locals.db = db;
+    context.locals.auth = auth;
+
+    // 3. Handle Session
     const session = await auth.api.getSession({
         headers: context.request.headers,
     });
@@ -17,7 +24,8 @@ export const onRequest = defineMiddleware(async (context, next) => {
         context.locals.user = null;
     }
 
-	if (isProtectedRoute && !session) {
+    // 4. Protect Routes
+	if (context.url.pathname.startsWith("/dashboard") && !session) {
 		return context.redirect("/login");
 	}
 

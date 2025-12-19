@@ -1,9 +1,8 @@
 ---
 import Layout from '../layouts/Layout.astro';
 import Footer from '../components/Footer.astro';
-import { db } from '../db';
 import { recipes } from '../db/schema';
-import { desc, ilike, or, eq } from 'drizzle-orm';
+import { desc, ilike, or, eq, and } from 'drizzle-orm';
 import { Image } from 'astro:assets';
 
 const search = Astro.url.searchParams.get('q') || '';
@@ -14,9 +13,10 @@ const categories = [
     'Vegan', 'Vegetarian', 'Quick & Easy', 'Baking', 'Italian', 'Asian', 'Mexican'
 ];
 
-// Optimized data fetching
-let allRecipes;
+// Use db from locals
+const db = Astro.locals.db;
 
+let allRecipes;
 if (search || categoryFilter) {
     const conditions = [];
     if (search) {
@@ -30,14 +30,13 @@ if (search || categoryFilter) {
     }
     
     allRecipes = await db.select().from(recipes)
-        .where(and(...conditions))
+        .where(and(...conditions as any))
         .orderBy(desc(recipes.createdAt));
 } else {
     allRecipes = await db.select().from(recipes).orderBy(desc(recipes.createdAt)).limit(20);
 }
 
-// Helper for combined filters
-import { and } from 'drizzle-orm';
+export const prerender = false;
 ---
 
 <Layout title="RecipeSwap - Discover and share amazing recipes">
@@ -64,7 +63,6 @@ import { and } from 'drizzle-orm';
     </header>
 
     <main class="pt-24 pb-20 min-h-screen">
-        <!-- Hero Section -->
         <section class="wrapper py-16 md:py-24 text-center">
             <h1 class="display-heading mb-6 animate-fade-in-up">
                 Taste the world, <br />
@@ -114,7 +112,6 @@ import { and } from 'drizzle-orm';
             )}
         </section>
 
-        <!-- Content Grid -->
         <section class="wrapper">
             <div class="flex items-center justify-between mb-8 border-b border-gray-100 pb-4">
                 <h2 class="section-heading mb-0">{search || categoryFilter ? 'Search Results' : 'Fresh from the Kitchen'}</h2>
