@@ -8,7 +8,7 @@ A modern, full-stack recipe platform built with Astro 5, React, and Cloudflare. 
 - **UI/Components:** [React](https://react.dev/), [Tailwind CSS](https://tailwindcss.com/)
 - **Database:** [Neon](https://neon.tech/) (Serverless Postgres)
 - **ORM:** [Drizzle ORM](https://orm.drizzle.team/)
-- **Authentication:** [Better Auth](https://better-auth.com/) (Email/Password)
+- **Authentication:** [Better Auth](https://better-auth.com/) (Google & Email/Password)
 - **Storage:** [Cloudflare R2](https://www.cloudflare.com/developer-platform/r2/) (S3-compatible object storage)
 - **Deployment:** [Cloudflare Pages](https://pages.cloudflare.com/)
 
@@ -17,7 +17,7 @@ A modern, full-stack recipe platform built with Astro 5, React, and Cloudflare. 
 - **Hybrid Architecture:**
   - **Public Pages:** Statically generated/cached for maximum performance (Homepage, Recipe View).
   - **Chef Dashboard:** Client-rendered React islands for interactivity.
-- **Authentication:** Secure login via Email and Password.
+- **Authentication:** Secure login via Email and Password or Google OAuth.
 - **Recipe Management:**
   - Create, Update, and Delete recipes.
   - Category tagging and video tutorial support.
@@ -51,6 +51,7 @@ A modern, full-stack recipe platform built with Astro 5, React, and Cloudflare. 
 - **Bun** (Recommended)
 - **Cloudflare Account** (for R2 & Pages)
 - **Neon Database** (Postgres)
+- **Google Cloud Console Project** (for OAuth)
 
 ### 1. Clone & Install
 
@@ -72,6 +73,7 @@ cp .env.example .env
 - `DATABASE_URL`: Your Neon Postgres connection string.
 - `BETTER_AUTH_SECRET`: A random string for encryption.
 - `BETTER_AUTH_URL`: Your site's base URL (e.g., `http://localhost:4321` or your production domain).
+- `GOOGLE_CLIENT_ID` / `GOOGLE_CLIENT_SECRET`: From Google Cloud Console.
 - `CLOUDFLARE_ACCOUNT_ID`: From Cloudflare Dashboard.
 - `CLOUDFLARE_ACCESS_KEY_ID` / `SECRET_ACCESS_KEY`: R2 API Tokens.
 - `R2_BUCKET_NAME`: Your bucket name.
