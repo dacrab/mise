@@ -11,10 +11,10 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v4
       
       - name: Setup Bun
-        uses: oven-sh/setup-bun@v2
+        uses: oven-sh/setup-bun@v1
         with:
           bun-version: latest
 
@@ -22,16 +22,15 @@ jobs:
         run: bun install
 
       - name: Lint and Type Check
-        run: bun x astro check && bun x tsc --noEmit
+        run: bun run lint
 
       - name: Build
         run: bun run build
         env:
-          # Dummy values for build-time validation if needed
+          # Dummy values for build-time validation
           DATABASE_URL: "postgres://dummy:dummy@localhost:5432/dummy"
           BETTER_AUTH_SECRET: "dummy_secret"
-          GITHUB_CLIENT_ID: "dummy_id"
-          GITHUB_CLIENT_SECRET: "dummy_secret"
+          BETTER_AUTH_URL: "http://localhost:4321"
           CLOUDFLARE_ACCOUNT_ID: "dummy_id"
           CLOUDFLARE_ACCESS_KEY_ID: "dummy_key"
           CLOUDFLARE_SECRET_ACCESS_KEY: "dummy_secret"

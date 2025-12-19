@@ -3,31 +3,48 @@ import { getAuth } from "./lib/auth";
 import { getDb } from "./db";
 
 export const onRequest = defineMiddleware(async (context, next) => {
-    // 1. Initialize DB from Cloudflare Bindings
-    const db = getDb(context.locals.runtime.env.DATABASE_URL);
-    const auth = getAuth(db, context.locals.runtime.env);
+    // 1. Safety check for environment variables
+    const env = context.locals.runtime?.env;
+    
+    if (!env || !env.DATABASE_URL) {
+        return new Response(
+            "Configuration Error: DATABASE_URL is missing in the Cloudflare Dashboard. Please add it to your Pages settings.", 
+            { status: 500 }
+        );
+    }
 
-    // 2. Attach to locals for use in actions and pages
+    // 2. Initialize DB and Auth
+    const db = getDb(env.DATABASE_URL);
+    const auth = getAuth(db, env);
+
+    // 3. Attach to locals
     context.locals.db = db;
     context.locals.auth = auth;
 
-    // 3. Handle Session
-    const session = await auth.api.getSession({
-        headers: context.request.headers,
-    });
+    try {
+        // 4. Handle Session
+        const session = await auth.api.getSession({
+            headers: context.request.headers,
+        });
 
-    if (session) {
-        context.locals.session = session.session;
-        context.locals.user = session.user;
-    } else {
+        if (session) {
+            context.locals.session = session.session;
+            context.locals.user = session.user;
+        } else {
+            context.locals.session = null;
+            context.locals.user = null;
+        }
+
+        // 5. Protect Routes
+        if (context.url.pathname.startsWith("/dashboard") && !session) {
+            return context.redirect("/login");
+        }
+    } catch (e) {
+        console.error("Auth Error:", e);
+        // Fallback for session failure
         context.locals.session = null;
         context.locals.user = null;
     }
-
-    // 4. Protect Routes
-	if (context.url.pathname.startsWith("/dashboard") && !session) {
-		return context.redirect("/login");
-	}
 
 	return next();
 });

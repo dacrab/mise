@@ -13,27 +13,30 @@ const categories = [
     'Vegan', 'Vegetarian', 'Quick & Easy', 'Baking', 'Italian', 'Asian', 'Mexican'
 ];
 
-// Use db from locals
 const db = Astro.locals.db;
 
 let allRecipes;
-if (search || categoryFilter) {
-    const conditions = [];
-    if (search) {
-        conditions.push(or(
-            ilike(recipes.title, `%${search}%`),
-            ilike(recipes.description, `%${search}%`)
-        ));
-    }
-    if (categoryFilter) {
-        conditions.push(eq(recipes.category, categoryFilter));
-    }
-    
+const conditions = [];
+
+if (search) {
+    conditions.push(or(
+        ilike(recipes.title, `%${search}%`),
+        ilike(recipes.description, `%${search}%`)
+    ));
+}
+
+if (categoryFilter) {
+    conditions.push(eq(recipes.category, categoryFilter));
+}
+
+if (conditions.length > 0) {
     allRecipes = await db.select().from(recipes)
         .where(and(...conditions as any))
         .orderBy(desc(recipes.createdAt));
 } else {
-    allRecipes = await db.select().from(recipes).orderBy(desc(recipes.createdAt)).limit(20);
+    allRecipes = await db.select().from(recipes)
+        .orderBy(desc(recipes.createdAt))
+        .limit(20);
 }
 
 export const prerender = false;

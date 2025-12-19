@@ -1,6 +1,6 @@
 # RecipeSwap V2 🍳
 
-A modern, full-stack recipe blog application built with performance and developer experience in mind. This project migrates a static HTML site to a dynamic web application using **Astro**, **React**, and **Serverless** technologies.
+A modern, full-stack recipe platform built with Astro 5, React, and Cloudflare. Features social interactions, R2 media storage, and high-performance hybrid rendering.
 
 ## 🚀 Tech Stack
 
@@ -8,7 +8,7 @@ A modern, full-stack recipe blog application built with performance and develope
 - **UI/Components:** [React](https://react.dev/), [Tailwind CSS](https://tailwindcss.com/)
 - **Database:** [Neon](https://neon.tech/) (Serverless Postgres)
 - **ORM:** [Drizzle ORM](https://orm.drizzle.team/)
-- **Authentication:** [Better Auth](https://better-auth.com/) (GitHub & Email/Password)
+- **Authentication:** [Better Auth](https://better-auth.com/) (Email/Password)
 - **Storage:** [Cloudflare R2](https://www.cloudflare.com/developer-platform/r2/) (S3-compatible object storage)
 - **Deployment:** [Cloudflare Pages](https://pages.cloudflare.com/)
 
@@ -16,20 +16,21 @@ A modern, full-stack recipe blog application built with performance and develope
 
 - **Hybrid Architecture:**
   - **Public Pages:** Statically generated/cached for maximum performance (Homepage, Recipe View).
-  - **Admin Dashboard:** Client-rendered React islands for interactivity.
-- **Authentication:** Secure login via Email/Password or GitHub OAuth.
+  - **Chef Dashboard:** Client-rendered React islands for interactivity.
+- **Authentication:** Secure login via Email and Password.
 - **Recipe Management:**
   - Create, Update, and Delete recipes.
-  - Dynamic form handling for ingredients and steps.
-- **Image Uploads:** Direct-to-R2 uploads using Presigned URLs (no server bottleneck).
-- **Search:** Server-side filtering for recipes.
+  - Category tagging and video tutorial support.
+- **Social Interactions:** Like, bookmark, and comment on recipes.
+- **Image Optimization:** Automated WebP conversion and resizing via Astro's Image component.
+- **Search:** Server-side filtering by title, description, and category.
 
 ## 🛠️ Project Structure
 
 ```bash
 /
 ├── src/
-│   ├── actions/        # Server Actions (CRUD, Uploads)
+│   ├── actions/        # Server Actions (CRUD, Social, Uploads)
 │   ├── components/     # React & Astro Components
 │   ├── db/             # Database Schema & Client
 │   ├── layouts/        # Page Layouts
@@ -47,10 +48,9 @@ A modern, full-stack recipe blog application built with performance and develope
 
 ### Prerequisites
 
-- **Bun** (Recommended) or Node.js
+- **Bun** (Recommended)
 - **Cloudflare Account** (for R2 & Pages)
 - **Neon Database** (Postgres)
-- **GitHub OAuth App** (for social login)
 
 ### 1. Clone & Install
 
@@ -70,8 +70,8 @@ cp .env.example .env
 
 **Required Variables:**
 - `DATABASE_URL`: Your Neon Postgres connection string.
-- `BETTER_AUTH_SECRET`: Generate a random string.
-- `GITHUB_CLIENT_ID` / `SECRET`: From GitHub Developer Settings.
+- `BETTER_AUTH_SECRET`: A random string for encryption.
+- `BETTER_AUTH_URL`: Your site's base URL (e.g., `http://localhost:4321` or your production domain).
 - `CLOUDFLARE_ACCOUNT_ID`: From Cloudflare Dashboard.
 - `CLOUDFLARE_ACCESS_KEY_ID` / `SECRET_ACCESS_KEY`: R2 API Tokens.
 - `R2_BUCKET_NAME`: Your bucket name.
@@ -82,7 +82,7 @@ cp .env.example .env
 Push the Drizzle schema to your Neon database:
 
 ```bash
-bunx drizzle-kit push
+bun run db:push
 ```
 
 ### 4. Run Locally
@@ -103,6 +103,7 @@ This project is configured for **Cloudflare Pages**.
 2. Set the build command: `bun run build`.
 3. Set the output directory: `dist`.
 4. Add all environment variables from your `.env` to the Cloudflare Pages settings.
+5. Enable the `nodejs_compat` compatibility flag in Settings > Functions.
 
 ## 🛡️ License
 
