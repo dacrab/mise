@@ -1,0 +1,125 @@
+---
+import Layout from '../../layouts/Layout.astro';
+import Footer from '../../components/Footer.astro';
+import { db } from '../../db';
+import { recipes, user } from '../../db/schema';
+import { eq, desc } from 'drizzle-orm';
+
+const { username } = Astro.params;
+
+if (!username) return Astro.redirect('/404');
+
+// Fetch chef by username
+const [chef] = await db.select().from(user).where(eq(user.username, username));
+
+if (!chef) return Astro.redirect('/404');
+
+// Fetch chef's recipes
+const chefRecipes = await db.select()
+    .from(recipes)
+    .where(eq(recipes.userId, chef.id))
+    .orderBy(desc(recipes.createdAt));
+
+export const prerender = false;
+---
+
+<Layout title={`${chef.name}'s Kitchen - RecipeSwap`}>
+    <header class="fixed top-0 w-full z-50 glass">
+        <div class="wrapper h-16 flex items-center justify-between">
+            <a href="/" class="font-serif text-2xl font-bold tracking-tight">RecipeSwap.</a>
+            <a href="/" class="btn-ghost text-sm font-medium">Explore All</a>
+        </div>
+    </header>
+
+    <main class="pt-32 pb-20">
+        <div class="wrapper">
+            <!-- Profile Header -->
+            <div class="flex flex-col items-center text-center mb-16 animate-fade-in">
+                <div class="w-32 h-32 rounded-full bg-brand-accent p-1 ring-4 ring-white shadow-xl mb-6 overflow-hidden">
+                    {chef.image ? (
+                        <img src={chef.image} alt={chef.name} class="w-full h-full object-cover rounded-full" />
+                    ) : (
+                        <div class="w-full h-full flex items-center justify-center text-4xl font-bold text-brand-primary">
+                            {chef.name[0]}
+                        </div>
+                    )}
+                </div>
+                <h1 class="display-heading text-4xl md:text-5xl mb-2">{chef.name}</h1>
+                <p class="text-brand-primary font-bold text-sm uppercase tracking-widest mb-4">@{chef.username}</p>
+                {chef.bio && <p class="prose-text max-w-lg mx-auto italic">"{chef.bio}"</p>}
+                
+                <div class="mt-8 flex gap-8 py-4 px-8 bg-white rounded-2xl border border-brand-border shadow-sm">
+                    <div class="text-center">
+                        <span class="block text-xl font-bold text-brand-text">{chefRecipes.length}</span>
+                        <span class="text-xs text-gray-400 uppercase font-bold tracking-tighter">Recipes</span>
+                    </div>
+                    <div class="w-px h-8 bg-gray-100 mt-2"></div>
+                    <div class="text-center">
+                        <span class="block text-xl font-bold text-brand-text">Joined</span>
+                        <span class="text-xs text-gray-400 uppercase font-bold tracking-tighter">
+                            {new Date(chef.createdAt).getFullYear()}
+                        </span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Chef's Recipes Grid -->
+            <section>
+                <div class="flex items-center justify-between mb-8 border-b border-gray-100 pb-4">
+                    <h2 class="section-heading mb-0">Published Masterpieces</h2>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                    {chefRecipes.map((recipe) => (
+                        <article>
+                            <a href={`/recipe/${recipe.slug}`} class="recipe-card group h-full">
+                                <div class="recipe-card-image-wrapper">
+                                    {recipe.coverImage ? (
+                                        <img 
+                                            src={recipe.coverImage} 
+                                            alt={recipe.title}
+                                            class="recipe-card-image"
+                                            loading="lazy"
+                                        />
+                                    ) : (
+                                        <div class="flex items-center justify-center h-full bg-brand-accent/30 text-brand-primary/50">
+                                            <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><path d="M3 14h18"/><path d="M4 14v4a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-4"/><path d="M12 2v20"/><path d="m16 9 4.3 4.3"/><path d="m8 9-4.3 4.3"/></svg>
+                                        </div>
+                                    )}
+                                    <div class="absolute top-3 left-3">
+                                        <span class="badge bg-white/90 backdrop-blur px-2 py-1 rounded-md text-[10px] font-bold shadow-sm text-brand-text">
+                                            {recipe.category}
+                                        </span>
+                                    </div>
+                                </div>
+                                
+                                <div class="recipe-card-content">
+                                    <h3 class="font-serif text-xl font-bold mb-2 group-hover:text-brand-primary transition-colors line-clamp-1">
+                                        {recipe.title}
+                                    </h3>
+                                    <p class="text-gray-600 text-sm line-clamp-2 mb-4 flex-1">
+                                        {recipe.description}
+                                    </p>
+                                    
+                                    <div class="flex items-center justify-between pt-4 border-t border-gray-100 mt-auto">
+                                        <span class="text-xs font-bold text-brand-primary flex items-center gap-1">
+                                            View Recipe &rarr;
+                                        </span>
+                                    </div>
+                                </div>
+                            </a>
+                        </article>
+                    ))}
+                </div>
+
+                {chefRecipes.length === 0 && (
+                    <div class="text-center py-20 bg-white rounded-3xl border border-brand-border border-dashed">
+                        <p class="text-gray-400">This chef hasn't published any recipes yet.</p>
+                    </div>
+                )}
+            </section>
+        </div>
+    </main>
+
+    <Footer />
+</Layout>

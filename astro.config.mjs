@@ -12,6 +12,11 @@ export default defineConfig({
   },
 
   integrations: [react()],
-  adapter: cloudflare(),
-  output: 'server'
+  adapter: cloudflare({
+    imageService: 'compile'
+  }),
+  output: 'server',
+  image: {
+    remotePatterns: [{ protocol: 'https' }],
+  }
 });

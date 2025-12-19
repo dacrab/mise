@@ -3,6 +3,7 @@ import { authClient } from "../lib/auth-client";
 
 export default function SignupForm() {
   const [name, setName] = useState("");
+  const [username, setUsername] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
@@ -40,6 +41,10 @@ export default function SignupForm() {
   }, [passwordStrength]);
 
   const handleSignup = async () => {
+    if (!username.trim()) {
+        alert("Please choose a username");
+        return;
+    }
     if (passwordStrength < 2) {
         alert("Please use a stronger password");
         return;
@@ -50,6 +55,7 @@ export default function SignupForm() {
       email,
       password,
       name,
+      username,
       callbackURL: "/dashboard",
     }, {
         onSuccess: () => {
@@ -71,8 +77,9 @@ export default function SignupForm() {
       
       <div className="space-y-5">
         <div className="space-y-2">
-          <label className="text-xs font-bold uppercase tracking-wider text-gray-500 ml-1">Display Name</label>
+          <label htmlFor="display-name" className="text-xs font-bold uppercase tracking-wider text-gray-500 ml-1">Display Name</label>
           <input 
+            id="display-name"
             type="text" 
             value={name}
             onChange={(e) => setName(e.target.value)}
@@ -82,8 +89,21 @@ export default function SignupForm() {
         </div>
 
         <div className="space-y-2">
-          <label className="text-xs font-bold uppercase tracking-wider text-gray-500 ml-1">Email Address</label>
+          <label htmlFor="username" className="text-xs font-bold uppercase tracking-wider text-gray-500 ml-1">Username (@)</label>
           <input 
+            id="username"
+            type="text" 
+            value={username}
+            onChange={(e) => setUsername(e.target.value.toLowerCase().replace(/[^a-z0-9_]/g, ''))}
+            className="input-field"
+            placeholder="chef_gusteau"
+          />
+        </div>
+
+        <div className="space-y-2">
+          <label htmlFor="email" className="text-xs font-bold uppercase tracking-wider text-gray-500 ml-1">Email Address</label>
+          <input 
+            id="email"
             type="email" 
             value={email}
             onChange={(e) => setEmail(e.target.value)}
@@ -93,8 +113,9 @@ export default function SignupForm() {
         </div>
 
         <div className="space-y-2">
-          <label className="text-xs font-bold uppercase tracking-wider text-gray-500 ml-1">Password</label>
+          <label htmlFor="password" className="text-xs font-bold uppercase tracking-wider text-gray-500 ml-1">Password</label>
           <input 
+            id="password"
             type="password" 
             value={password}
             onChange={(e) => setPassword(e.target.value)}

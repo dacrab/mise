@@ -3,9 +3,10 @@ import Layout from '../../layouts/Layout.astro';
 import Footer from '../../components/Footer.astro';
 import { db } from '../../db';
 import { recipes, user, comments, likes, bookmarks } from '../../db/schema';
-import { eq, and, count, desc } from 'drizzle-orm';
+import { eq, and, desc } from 'drizzle-orm';
 import SocialActions from '../../components/SocialActions';
 import CommentSection from '../../components/CommentSection';
+import { Image } from 'astro:assets';
 
 const { slug } = Astro.params;
 const currentUser = Astro.locals.user;
@@ -17,11 +18,14 @@ const [recipeData] = await db.select({
     id: recipes.id,
     title: recipes.title,
     description: recipes.description,
+    category: recipes.category,
     ingredients: recipes.ingredients,
     steps: recipes.steps,
     coverImage: recipes.coverImage,
+    videoUrl: recipes.videoUrl,
     createdAt: recipes.createdAt,
     authorName: user.name,
+    authorUsername: user.username,
     authorImage: user.image
 })
 .from(recipes)
@@ -57,18 +61,13 @@ const steps = recipeData.steps as string[];
 export const prerender = false; 
 ---
 
-<Layout>
+<Layout title={`${recipeData.title} - RecipeSwap`}>
     <header class="fixed top-0 w-full z-50 glass">
         <div class="wrapper h-16 flex items-center justify-between">
             <a href="/" class="flex items-center gap-2 group">
                 <span class="font-serif text-2xl font-bold tracking-tight group-hover:text-brand-primary transition-colors">RecipeSwap.</span>
             </a>
             <div class="flex items-center gap-4">
-                {Astro.locals.user && (
-                    <span class="text-xs font-bold text-gray-400 mr-2 hidden md:block">
-                        Chef {Astro.locals.user.name}
-                    </span>
-                )}
                 <a href="/" class="btn-ghost flex items-center gap-2 text-sm font-medium">
                     <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m15 18-6-6 6-6"/></svg>
                     Back to Home
@@ -81,11 +80,14 @@ export const prerender = false;
         <article class="wrapper max-w-4xl">
             <!-- Header Info -->
             <header class="mb-12 text-center">
-                <h1 class="display-heading mb-6 text-4xl md:text-6xl">{recipeData.title}</h1>
+                <div class="inline-flex items-center px-3 py-1 rounded-full bg-brand-accent text-brand-primary text-xs font-bold uppercase tracking-widest mb-6">
+                    {recipeData.category || 'General'}
+                </div>
+                <h1 class="display-heading mb-6 text-4xl md:text-6xl leading-tight">{recipeData.title}</h1>
                 <p class="prose-text text-xl max-w-2xl mx-auto mb-8">{recipeData.description}</p>
                 
                 <div class="flex items-center justify-center gap-4 py-6 border-y border-gray-100">
-                    <div class="flex items-center gap-2">
+                    <a href={`/chef/${recipeData.authorUsername || recipeData.authorName}`} class="flex items-center gap-2 hover:opacity-80 transition-opacity">
                         {recipeData.authorImage ? (
                             <img src={recipeData.authorImage} alt={recipeData.authorName || 'Author'} class="w-10 h-10 rounded-full ring-2 ring-brand-accent shadow-sm" />
                         ) : (
@@ -95,9 +97,9 @@ export const prerender = false;
                         )}
                         <div class="text-left">
                             <span class="block text-sm font-bold text-brand-text">{recipeData.authorName || 'Community Chef'}</span>
-                            <span class="block text-xs text-gray-500">Author</span>
+                            <span class="block text-[10px] uppercase tracking-widest text-gray-400 font-bold">View Kitchen &rarr;</span>
                         </div>
-                    </div>
+                    </a>
                     
                     <div class="w-px h-8 bg-gray-100"></div>
                     
@@ -110,8 +112,26 @@ export const prerender = false;
 
             <!-- Hero Image -->
             {recipeData.coverImage && (
-                <div class="rounded-3xl overflow-hidden aspect-video bg-gray-100 mb-16 shadow-2xl shadow-black/5">
-                    <img src={recipeData.coverImage} alt={recipeData.title} class="w-full h-full object-cover" />
+                <div class="rounded-3xl overflow-hidden aspect-video bg-gray-100 mb-16 shadow-2xl shadow-black/5 relative group">
+                    <Image 
+                        src={recipeData.coverImage} 
+                        alt={recipeData.title} 
+                        width={1200} 
+                        height={675}
+                        class="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105" 
+                    />
+                    
+                    {recipeData.videoUrl && (
+                        <a 
+                            href={recipeData.videoUrl} 
+                            target="_blank" 
+                            rel="noopener noreferrer"
+                            class="absolute bottom-6 right-6 btn-primary flex items-center gap-2 shadow-2xl"
+                        >
+                            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="m22 8-6 4 6 4V8Z"/><rect width="14" height="12" x="2" y="6" rx="2" ry="2"/></svg>
+                            Watch Tutorial
+                        </a>
+                    )}
                 </div>
             )}
 
@@ -123,7 +143,7 @@ export const prerender = false;
                         <h3 class="section-heading text-2xl mb-6">Ingredients</h3>
                         <ul class="space-y-4">
                             {ingredients.map((ingredient) => (
-                                <li class="flex gap-3 text-brand-text text-sm">
+                                <li class="flex gap-3 text-brand-text text-sm font-medium">
                                     <div class="w-5 h-5 rounded-full bg-brand-surface border border-brand-accent-border flex items-center justify-center shrink-0 mt-0.5">
                                         <div class="w-1.5 h-1.5 rounded-full bg-brand-primary"></div>
                                     </div>

@@ -48,9 +48,11 @@ export const server = {
     input: z.object({
       title: z.string().min(3),
       description: z.string().optional(),
+      category: z.string().optional(),
       ingredients: z.array(z.string()),
       steps: z.array(z.string()),
       coverImage: z.string().url().optional(),
+      videoUrl: z.string().url().optional(),
     }),
     handler: async (input, context) => {
       if (!context.locals.user) throw new Error("Unauthorized");
@@ -60,9 +62,11 @@ export const server = {
         slug,
         title: input.title,
         description: input.description,
+        category: input.category || 'General',
         ingredients: input.ingredients,
         steps: input.steps,
         coverImage: input.coverImage,
+        videoUrl: input.videoUrl,
         userId: context.locals.user.id,
       }).returning();
       return newRecipe;
@@ -75,9 +79,11 @@ export const server = {
       id: z.string(),
       title: z.string().min(3),
       description: z.string().optional(),
+      category: z.string().optional(),
       ingredients: z.array(z.string()),
       steps: z.array(z.string()),
       coverImage: z.string().url().optional(),
+      videoUrl: z.string().url().optional(),
     }),
     handler: async (input, context) => {
       if (!context.locals.user) throw new Error("Unauthorized");
@@ -85,9 +91,11 @@ export const server = {
         .set({
           title: input.title,
           description: input.description,
+          category: input.category,
           ingredients: input.ingredients,
           steps: input.steps,
           coverImage: input.coverImage,
+          videoUrl: input.videoUrl,
         })
         .where(and(eq(recipes.id, input.id), eq(recipes.userId, context.locals.user.id)))
         .returning();

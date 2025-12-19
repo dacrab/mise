@@ -1,11 +1,13 @@
-import { pgTable, text, timestamp, boolean, json } from "drizzle-orm/pg-core";
+import { pgTable, text, timestamp, boolean, json, uniqueIndex, index } from "drizzle-orm/pg-core";
 
 export const user = pgTable("user", {
 	id: text("id").primaryKey(),
 	name: text("name").notNull(),
+	username: text("username").unique(),
 	email: text("email").notNull().unique(),
 	emailVerified: boolean("email_verified").notNull(),
 	image: text("image"),
+	bio: text("bio"),
 	createdAt: timestamp("created_at").notNull(),
 	updatedAt: timestamp("updated_at").notNull()
 });
@@ -51,12 +53,18 @@ export const recipes = pgTable("recipes", {
 	slug: text("slug").notNull().unique(),
 	title: text("title").notNull(),
 	description: text("description"),
+	category: text("category").default('General'),
 	ingredients: json("ingredients").$type<string[]>().notNull(),
 	steps: json("steps").$type<string[]>().notNull(),
 	coverImage: text("cover_image"),
+	videoUrl: text("video_url"),
 	userId: text("user_id").notNull().references(() => user.id),
 	createdAt: timestamp("created_at").defaultNow().notNull()
-});
+}, (table) => ({
+    // Index for search performance
+    titleIdx: index("title_idx").on(table.title),
+    categoryIdx: index("category_idx").on(table.category)
+}));
 
 export const comments = pgTable("comments", {
 	id: text("id").primaryKey(),
@@ -71,11 +79,17 @@ export const likes = pgTable("likes", {
 	recipeId: text("recipe_id").notNull().references(() => recipes.id, { onDelete: 'cascade' }),
 	userId: text("user_id").notNull().references(() => user.id, { onDelete: 'cascade' }),
 	createdAt: timestamp("created_at").defaultNow().notNull()
-});
+}, (table) => ({
+    // Prevent double likes at DB level
+    uniqueLike: uniqueIndex("unique_like_idx").on(table.recipeId, table.userId)
+}));
 
 export const bookmarks = pgTable("bookmarks", {
 	id: text("id").primaryKey(),
 	recipeId: text("recipe_id").notNull().references(() => recipes.id, { onDelete: 'cascade' }),
 	userId: text("user_id").notNull().references(() => user.id, { onDelete: 'cascade' }),
 	createdAt: timestamp("created_at").defaultNow().notNull()
-});
+}, (table) => ({
+    // Prevent double bookmarks
+    uniqueBookmark: uniqueIndex("unique_bookmark_idx").on(table.recipeId, table.userId)
+}));

@@ -23,7 +23,14 @@ export default function RecipeEditor({ initialData, isEditing = false }: RecipeE
     title: initialData?.title || '',
     description: initialData?.description || '',
     coverImage: initialData?.coverImage || '',
+    category: (initialData as any)?.category || 'General',
+    videoUrl: (initialData as any)?.videoUrl || '',
   });
+
+  const categories = [
+    'General', 'Breakfast', 'Lunch', 'Dinner', 'Dessert', 
+    'Vegan', 'Vegetarian', 'Quick & Easy', 'Baking', 'Italian', 'Asian', 'Mexican'
+  ];
   
   const [ingredients, setIngredients] = useState<string[]>(initialData?.ingredients || ['']);
   const [steps, setSteps] = useState<string[]>(initialData?.steps || ['']);
@@ -111,8 +118,9 @@ export default function RecipeEditor({ initialData, isEditing = false }: RecipeE
                
                <div className="space-y-4">
                  <div className="space-y-2">
-                   <label className="text-xs font-bold uppercase tracking-wider text-gray-400">Recipe Title</label>
+                   <label htmlFor="recipe-title" className="text-xs font-bold uppercase tracking-wider text-gray-400">Recipe Title</label>
                    <input
+                     id="recipe-title"
                      type="text"
                      className="input-field text-xl font-bold"
                      value={formData.title}
@@ -121,9 +129,38 @@ export default function RecipeEditor({ initialData, isEditing = false }: RecipeE
                    />
                  </div>
 
+                 <div class="grid md:grid-cols-2 gap-4">
+                   <div class="space-y-2">
+                     <label htmlFor="recipe-category" className="text-xs font-bold uppercase tracking-wider text-gray-400">Category</label>
+                     <select
+                       id="recipe-category"
+                       className="input-field"
+                       value={formData.category}
+                       onChange={e => setFormData({ ...formData, category: e.target.value })}
+                     >
+                       {categories.map(cat => (
+                         <option key={cat} value={cat}>{cat}</option>
+                       ))}
+                     </select>
+                   </div>
+
+                   <div class="space-y-2">
+                     <label htmlFor="recipe-video" className="text-xs font-bold uppercase tracking-wider text-gray-400">Video Link (Optional)</label>
+                     <input
+                       id="recipe-video"
+                       type="url"
+                       className="input-field"
+                       value={formData.videoUrl}
+                       onChange={e => setFormData({ ...formData, videoUrl: e.target.value })}
+                       placeholder="YouTube or TikTok URL"
+                     />
+                   </div>
+                 </div>
+
                  <div className="space-y-2">
-                   <label className="text-xs font-bold uppercase tracking-wider text-gray-400">Short Description</label>
+                   <label htmlFor="recipe-description" className="text-xs font-bold uppercase tracking-wider text-gray-400">Short Description</label>
                    <textarea
+                     id="recipe-description"
                      className="input-field h-32 rounded-2xl py-4"
                      value={formData.description}
                      onChange={e => setFormData({ ...formData, description: e.target.value })}
@@ -143,7 +180,9 @@ export default function RecipeEditor({ initialData, isEditing = false }: RecipeE
                   <div className="space-y-3">
                     {ingredients.map((ing, i) => (
                       <div key={i} className="flex gap-3 animate-fade-in">
+                        <label htmlFor={`ingredient-${i}`} className="sr-only">Ingredient {i + 1}</label>
                         <input
+                          id={`ingredient-${i}`}
                           type="text"
                           className="input-field"
                           value={ing}
@@ -157,6 +196,7 @@ export default function RecipeEditor({ initialData, isEditing = false }: RecipeE
                         <button 
                           onClick={() => setIngredients(ingredients.filter((_, idx) => idx !== i))}
                           className="w-12 flex items-center justify-center text-gray-300 hover:text-red-500 transition-colors"
+                          aria-label={`Remove ingredient ${i + 1}`}
                         >
                           <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/></svg>
                         </button>
@@ -182,7 +222,9 @@ export default function RecipeEditor({ initialData, isEditing = false }: RecipeE
                       <div key={i} className="flex gap-4 group">
                         <div className="pt-2 text-xs font-bold text-gray-300 group-hover:text-brand-primary transition-colors">#{i+1}</div>
                         <div className="flex-1 space-y-2">
+                           <label htmlFor={`step-${i}`} className="sr-only">Step {i + 1}</label>
                            <textarea
+                             id={`step-${i}`}
                              className="input-field h-24 rounded-2xl"
                              value={step}
                              onChange={e => {
@@ -195,6 +237,7 @@ export default function RecipeEditor({ initialData, isEditing = false }: RecipeE
                            <button 
                              onClick={() => setSteps(steps.filter((_, idx) => idx !== i))}
                              className="text-xs text-gray-400 hover:text-red-500 font-medium"
+                             aria-label={`Remove step ${i + 1}`}
                            >
                              Remove step
                            </button>
@@ -227,16 +270,16 @@ export default function RecipeEditor({ initialData, isEditing = false }: RecipeE
                       <>
                         <img src={formData.coverImage} className="w-full h-full object-cover" alt="Preview" />
                         <div className="absolute inset-0 bg-black/40 opacity-0 hover:opacity-100 transition-opacity flex items-center justify-center">
-                           <label className="btn-primary text-xs py-2 cursor-pointer">
+                           <label htmlFor="change-image" className="btn-primary text-xs py-2 cursor-pointer">
                               Change Image
-                              <input type="file" accept="image/*" onChange={handleImageUpload} className="hidden" />
+                              <input id="change-image" type="file" accept="image/*" onChange={handleImageUpload} className="hidden" />
                            </label>
                         </div>
                       </>
                     ) : (
-                      <label className="absolute inset-0 flex flex-col items-center justify-center cursor-pointer">
+                      <label htmlFor="upload-cover" className="absolute inset-0 flex flex-col items-center justify-center cursor-pointer">
                         <span className="text-xs font-bold text-gray-400">Upload Cover</span>
-                        <input type="file" accept="image/*" onChange={handleImageUpload} className="hidden" />
+                        <input id="upload-cover" type="file" accept="image/*" onChange={handleImageUpload} className="hidden" />
                       </label>
                     )}
                   </div>

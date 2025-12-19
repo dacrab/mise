@@ -39,8 +39,9 @@ export default function LoginForm() {
       
       <div className="space-y-5">
         <div className="space-y-2">
-          <label className="text-xs font-bold uppercase tracking-wider text-gray-500 ml-1">Email Address</label>
+          <label htmlFor="email" className="text-xs font-bold uppercase tracking-wider text-gray-500 ml-1">Email Address</label>
           <input 
+            id="email"
             type="email" 
             value={email}
             onChange={(e) => setEmail(e.target.value)}
@@ -50,8 +51,9 @@ export default function LoginForm() {
         </div>
 
         <div className="space-y-2">
-          <label className="text-xs font-bold uppercase tracking-wider text-gray-500 ml-1">Password</label>
+          <label htmlFor="password" className="text-xs font-bold uppercase tracking-wider text-gray-500 ml-1">Password</label>
           <input 
+            id="password"
             type="password" 
             value={password}
             onChange={(e) => setPassword(e.target.value)}
