@@ -4,7 +4,7 @@ import { S3Client, PutObjectCommand } from '@aws-sdk/client-s3';
 import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
 import { recipes, comments, likes, bookmarks } from '../db/schema';
 import { nanoid } from 'nanoid';
-import { eq, and, desc } from 'drizzle-orm';
+import { eq, and } from 'drizzle-orm';
 
 export const server = {
   getPresignedUrl: defineAction({

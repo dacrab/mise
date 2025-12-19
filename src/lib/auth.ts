@@ -1,7 +1,6 @@
 import { betterAuth } from "better-auth";
 import { drizzleAdapter } from "better-auth/adapters/drizzle";
 import * as schema from "../db/schema";
-import type { DrizzlePostgreSQLInterface } from "better-auth/adapters/drizzle";
 
 export const getAuth = (db: any, env: any) => {
   return betterAuth({
