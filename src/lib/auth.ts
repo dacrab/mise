@@ -21,6 +21,11 @@ export const getAuth = (db: any, env: any) => {
     emailAndPassword: {
       enabled: true,
     },
-    // Social providers removed for simplicity
+    socialProviders: {
+      google: {
+        clientId: env.GOOGLE_CLIENT_ID,
+        clientSecret: env.GOOGLE_CLIENT_SECRET,
+      },
+    },
   });
 };
