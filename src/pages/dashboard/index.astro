@@ -1,11 +1,12 @@
 ---
 import Layout from '../../layouts/Layout.astro';
-import { db } from '../../db';
 import { recipes, bookmarks } from '../../db/schema';
 import { eq, desc } from 'drizzle-orm';
 
 const user = Astro.locals.user;
 if (!user) return Astro.redirect('/login');
+
+const db = Astro.locals.db;
 
 const activeTab = Astro.url.searchParams.get('tab') || 'my-recipes';
 

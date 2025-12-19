@@ -2,9 +2,8 @@
 import Layout from '../layouts/Layout.astro';
 import LoginForm from '../components/LoginForm';
 
-// If user is already logged in, redirect to dashboard
-// Note: This check happens on the server before rendering
-import { auth } from "../lib/auth";
+// Use auth from locals
+const auth = Astro.locals.auth;
 
 const session = await auth.api.getSession({
     headers: Astro.request.headers
