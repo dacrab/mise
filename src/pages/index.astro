@@ -16,7 +16,7 @@ const categories = [
 const db = Astro.locals.db;
 
 let allRecipes;
-const conditions = [];
+const conditions = [eq(recipes.status, 'published')];
 
 if (search) {
     conditions.push(or(
@@ -35,6 +35,7 @@ if (conditions.length > 0) {
         .orderBy(desc(recipes.createdAt));
 } else {
     allRecipes = await db.select().from(recipes)
+        .where(eq(recipes.status, 'published'))
         .orderBy(desc(recipes.createdAt))
         .limit(20);
 }

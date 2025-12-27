@@ -58,8 +58,10 @@ export const recipes = pgTable("recipes", {
 	steps: json("steps").$type<string[]>().notNull(),
 	coverImage: text("cover_image"),
 	videoUrl: text("video_url"),
-	userId: text("user_id").notNull().references(() => user.id),
-	createdAt: timestamp("created_at").defaultNow().notNull()
+	status: text("status").default('published').notNull(), // 'draft' | 'published'
+	userId: text("user_id").notNull().references(() => user.id, { onDelete: 'cascade' }),
+	createdAt: timestamp("created_at").defaultNow().notNull(),
+	updatedAt: timestamp("updated_at").defaultNow().notNull()
 }, (table) => [
     index("title_idx").on(table.title),
     index("category_idx").on(table.category)

@@ -57,6 +57,7 @@ export const server = {
       steps: z.array(z.string()),
       coverImage: z.string().url().optional(),
       videoUrl: z.string().url().optional(),
+      status: z.enum(['draft', 'published']).optional(),
     }),
     handler: async (input, context) => {
       if (!context.locals.user) throw new Error("Unauthorized");
@@ -74,6 +75,7 @@ export const server = {
         steps: input.steps,
         coverImage: input.coverImage,
         videoUrl: input.videoUrl,
+        status: input.status || 'published',
         userId: context.locals.user.id,
       }).returning();
 
@@ -92,6 +94,7 @@ export const server = {
       steps: z.array(z.string()),
       coverImage: z.string().url().optional(),
       videoUrl: z.string().url().optional(),
+      status: z.enum(['draft', 'published']).optional(),
     }),
     handler: async (input, context) => {
       if (!context.locals.user) throw new Error("Unauthorized");
@@ -106,6 +109,8 @@ export const server = {
           steps: input.steps,
           coverImage: input.coverImage,
           videoUrl: input.videoUrl,
+          status: input.status,
+          updatedAt: new Date(),
         })
         .where(and(eq(recipes.id, input.id), eq(recipes.userId, context.locals.user.id)))
         .returning();

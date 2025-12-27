@@ -25,6 +25,7 @@ export default function RecipeEditor({ initialData, isEditing = false }: RecipeE
     coverImage: initialData?.coverImage || '',
     category: (initialData as any)?.category || 'General',
     videoUrl: (initialData as any)?.videoUrl || '',
+    status: (initialData as any)?.status || 'published',
   });
 
   const categories = [
@@ -98,11 +99,18 @@ export default function RecipeEditor({ initialData, isEditing = false }: RecipeE
           <div className="flex gap-3">
              <a href="/dashboard" className="btn-ghost">Cancel</a>
              <button
-                onClick={handleSubmit}
+                onClick={() => { setFormData(f => ({...f, status: 'draft'})); handleSubmit(); }}
+                disabled={loading}
+                className="btn-outline px-6"
+              >
+                Save Draft
+              </button>
+             <button
+                onClick={() => { setFormData(f => ({...f, status: 'published'})); handleSubmit(); }}
                 disabled={loading}
                 className="btn-primary px-10"
               >
-                {loading ? 'Processing...' : (isEditing ? 'Save Changes' : 'Publish Recipe')}
+                {loading ? 'Processing...' : (isEditing ? 'Save & Publish' : 'Publish Recipe')}
               </button>
           </div>
         </header>

@@ -2,7 +2,7 @@
 import Layout from '../../layouts/Layout.astro';
 import Footer from '../../components/Footer.astro';
 import { recipes, user } from '../../db/schema';
-import { eq, desc } from 'drizzle-orm';
+import { eq, desc, and } from 'drizzle-orm';
 
 const { username } = Astro.params;
 
@@ -15,10 +15,10 @@ const [chef] = await db.select().from(user).where(eq(user.username, username));
 
 if (!chef) return Astro.redirect('/404');
 
-// Fetch chef's recipes
+// Fetch chef's recipes (only published)
 const chefRecipes = await db.select()
     .from(recipes)
-    .where(eq(recipes.userId, chef.id))
+    .where(and(eq(recipes.userId, chef.id), eq(recipes.status, 'published')))
     .orderBy(desc(recipes.createdAt));
 
 export const prerender = false;
