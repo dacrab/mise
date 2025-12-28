@@ -19,10 +19,13 @@ let allRecipes;
 const conditions = [eq(recipes.status, 'published')];
 
 if (search) {
-    conditions.push(or(
+    const searchCondition = or(
         ilike(recipes.title, `%${search}%`),
         ilike(recipes.description, `%${search}%`)
-    ));
+    );
+    if (searchCondition) {
+        conditions.push(searchCondition);
+    }
 }
 
 if (categoryFilter) {
