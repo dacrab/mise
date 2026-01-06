@@ -50,3 +50,4 @@ coverage/
 Thumbs.db
 db.sqlite3
 db.sqlite3-journal
+package-lock.json
