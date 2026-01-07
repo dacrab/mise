@@ -1,0 +1,54 @@
+---
+interface Props {
+    user?: { name: string } | null;
+    variant?: 'default' | 'dashboard' | 'minimal';
+}
+
+const { user, variant = 'default' } = Astro.props;
+---
+
+<header class="fixed top-0 w-full z-50 glass">
+    <div class="wrapper h-16 flex items-center justify-between">
+        <a href="/" class="flex items-center gap-2 group">
+            <span class="font-serif text-2xl font-bold tracking-tight group-hover:text-brand-primary transition-colors">RecipeSwap.</span>
+            {variant === 'dashboard' && (
+                <span class="text-[10px] font-bold bg-brand-accent text-brand-primary px-1.5 py-0.5 rounded uppercase tracking-tighter">Chef</span>
+            )}
+        </a>
+        
+        <nav class="flex items-center gap-4">
+            {variant === 'default' && (
+                <>
+                    {user ? (
+                        <a href="/dashboard" class="nav-link flex items-center gap-2">
+                            <span class="w-2 h-2 rounded-full bg-green-500 animate-pulse"></span>
+                            {user.name}
+                        </a>
+                    ) : (
+                        <a href="/login" class="nav-link hidden md:block">Sign In</a>
+                    )}
+                    <a href="/dashboard/create" class="btn-primary">Submit Recipe</a>
+                </>
+            )}
+            
+            {variant === 'dashboard' && (
+                <>
+                    <div class="hidden md:flex flex-col items-end mr-2">
+                        <span class="text-xs font-bold text-brand-text leading-tight">{user?.name}</span>
+                        <span class="text-[10px] text-gray-400 font-medium">Verified Chef</span>
+                    </div>
+                    <button id="logout-btn" class="btn-ghost text-xs py-2 px-4 border border-brand-border rounded-full hover:bg-red-50 hover:text-red-600 hover:border-red-100 transition-all">
+                        Sign Out
+                    </button>
+                </>
+            )}
+            
+            {variant === 'minimal' && (
+                <a href="/" class="btn-ghost flex items-center gap-2 text-sm font-medium">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m15 18-6-6 6-6"/></svg>
+                    Back to Home
+                </a>
+            )}
+        </nav>
+    </div>
+</header>

@@ -1,202 +1,141 @@
 ---
 import Layout from '../../layouts/Layout.astro';
 import Footer from '../../components/Footer.astro';
-import { recipes, user, comments, likes, bookmarks } from '../../db/schema';
+import Header from '../../components/Header.astro';
+import { recipes, user, comments, likes, bookmarks } from '../../db';
 import { eq, and, desc } from 'drizzle-orm';
 import SocialActions from '../../components/SocialActions';
 import CommentSection from '../../components/CommentSection';
 import { Image } from 'astro:assets';
 
 const { slug } = Astro.params;
-const currentUser = Astro.locals.user;
-
 if (!slug) return Astro.redirect('/404');
 
 const db = Astro.locals.db;
+const currentUser = Astro.locals.user;
 
-// Fetch recipe with author
-const [recipeData] = await db.select({
-    id: recipes.id,
-    title: recipes.title,
-    description: recipes.description,
-    category: recipes.category,
-    ingredients: recipes.ingredients,
-    steps: recipes.steps,
-    coverImage: recipes.coverImage,
-    videoUrl: recipes.videoUrl,
-    createdAt: recipes.createdAt,
-    authorName: user.name,
-    authorUsername: user.username,
-    authorImage: user.image
-})
-.from(recipes)
-.leftJoin(user, eq(recipes.userId, user.id))
-.where(eq(recipes.slug, slug));
+// Fetch all data in parallel
+const [recipeResult, , bookmarkData] = await Promise.all([
+    db.select({
+        id: recipes.id, title: recipes.title, description: recipes.description,
+        category: recipes.category, ingredients: recipes.ingredients, steps: recipes.steps,
+        coverImage: recipes.coverImage, videoUrl: recipes.videoUrl, createdAt: recipes.createdAt,
+        authorName: user.name, authorUsername: user.username, authorImage: user.image
+    }).from(recipes).leftJoin(user, eq(recipes.userId, user.id)).where(eq(recipes.slug, slug)),
+    db.select().from(likes).where(eq(likes.recipeId, slug)),
+    currentUser ? db.select().from(bookmarks).where(and(eq(bookmarks.recipeId, slug), eq(bookmarks.userId, currentUser.id))) : Promise.resolve([])
+]);
 
-if (!recipeData) return Astro.redirect('/404');
+const recipe = recipeResult[0];
+if (!recipe) return Astro.redirect('/404');
 
-// Fetch Likes, Bookmarks, and Comments
-const likesData = await db.select().from(likes).where(eq(likes.recipeId, recipeData.id));
-const isLiked = currentUser ? likesData.some(l => l.userId === currentUser.id) : false;
+// Fetch likes count and comments after we have recipe ID
+const [allLikes, recipeComments] = await Promise.all([
+    db.select().from(likes).where(eq(likes.recipeId, recipe.id)),
+    db.select({
+        id: comments.id, content: comments.content, createdAt: comments.createdAt,
+        user: { name: user.name, image: user.image }
+    }).from(comments).leftJoin(user, eq(comments.userId, user.id))
+      .where(eq(comments.recipeId, recipe.id)).orderBy(desc(comments.createdAt))
+]);
 
-const bookmarkData = await db.select().from(bookmarks).where(and(eq(bookmarks.recipeId, recipeData.id), eq(bookmarks.userId, currentUser?.id || "")));
+const isLiked = currentUser ? allLikes.some(l => l.userId === currentUser.id) : false;
 const isBookmarked = bookmarkData.length > 0;
 
-const recipeComments = await db.select({
-    id: comments.id,
-    content: comments.content,
-    createdAt: comments.createdAt,
-    user: {
-        name: user.name,
-        image: user.image
-    }
-})
-.from(comments)
-.leftJoin(user, eq(comments.userId, user.id))
-.where(eq(comments.recipeId, recipeData.id))
-.orderBy(desc(comments.createdAt));
-
-const ingredients = recipeData.ingredients as string[];
-const steps = recipeData.steps as string[];
-
-export const prerender = false; 
+export const prerender = false;
 ---
 
-<Layout title={`${recipeData.title} - RecipeSwap`}>
-    <header class="fixed top-0 w-full z-50 glass">
-        <div class="wrapper h-16 flex items-center justify-between">
-            <a href="/" class="flex items-center gap-2 group">
-                <span class="font-serif text-2xl font-bold tracking-tight group-hover:text-brand-primary transition-colors">RecipeSwap.</span>
-            </a>
-            <div class="flex items-center gap-4">
-                {Astro.locals.user && (
-                    <span class="text-xs font-bold text-gray-400 mr-2 hidden md:block">
-                        Chef {Astro.locals.user.name}
-                    </span>
-                )}
-                <a href="/" class="btn-ghost flex items-center gap-2 text-sm font-medium">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m15 18-6-6 6-6"/></svg>
-                    Back to Home
-                </a>
-            </div>
-        </div>
-    </header>
+<Layout title={`${recipe.title} - RecipeSwap`}>
+    <Header user={currentUser} variant="minimal" />
 
     <main class="pt-24 pb-20">
         <article class="wrapper max-w-4xl">
-            <!-- Header Info -->
+            <!-- Header -->
             <header class="mb-12 text-center">
-                <div class="inline-flex items-center px-3 py-1 rounded-full bg-brand-accent text-brand-primary text-xs font-bold uppercase tracking-widest mb-6">
-                    {recipeData.category || 'General'}
-                </div>
-                <h1 class="display-heading mb-6 text-4xl md:text-6xl leading-tight">{recipeData.title}</h1>
-                <p class="prose-text text-xl max-w-2xl mx-auto mb-8">{recipeData.description}</p>
-                
+                <span class="inline-flex items-center px-3 py-1 rounded-full bg-brand-accent text-brand-primary text-xs font-bold uppercase tracking-widest mb-6">
+                    {recipe.category || 'General'}
+                </span>
+                <h1 class="display-heading mb-6 text-4xl md:text-6xl leading-tight">{recipe.title}</h1>
+                <p class="prose-text text-xl max-w-2xl mx-auto mb-8">{recipe.description}</p>
+
                 <div class="flex items-center justify-center gap-4 py-6 border-y border-gray-100">
-                    <a href={`/chef/${recipeData.authorUsername || recipeData.authorName}`} class="flex items-center gap-2 hover:opacity-80 transition-opacity">
-                        {recipeData.authorImage ? (
-                            <img src={recipeData.authorImage} alt={recipeData.authorName || 'Author'} class="w-10 h-10 rounded-full ring-2 ring-brand-accent shadow-sm" />
+                    <a href={`/chef/${recipe.authorUsername || recipe.authorName}`} class="flex items-center gap-2 hover:opacity-80">
+                        {recipe.authorImage ? (
+                            <img src={recipe.authorImage} alt={recipe.authorName || 'Author'} class="w-10 h-10 rounded-full ring-2 ring-brand-accent shadow-sm" />
                         ) : (
                             <div class="w-10 h-10 rounded-full bg-brand-accent flex items-center justify-center text-brand-primary font-bold">
-                                {(recipeData.authorName || 'U')[0]}
+                                {(recipe.authorName || 'U')[0]}
                             </div>
                         )}
                         <div class="text-left">
-                            <span class="block text-sm font-bold text-brand-text">{recipeData.authorName || 'Community Chef'}</span>
-                            <span class="block text-[10px] uppercase tracking-widest text-gray-400 font-bold">View Kitchen &rarr;</span>
+                            <span class="block text-sm font-bold text-brand-text">{recipe.authorName || 'Community Chef'}</span>
+                            <span class="block text-[10px] uppercase tracking-widest text-gray-400 font-bold">View Kitchen →</span>
                         </div>
                     </a>
-                    
                     <div class="w-px h-8 bg-gray-100"></div>
-                    
                     <div class="text-left">
                         <span class="block text-sm font-bold text-brand-text">Published</span>
-                        <time class="block text-xs text-gray-500">{new Date(recipeData.createdAt).toLocaleDateString(undefined, { year: 'numeric', month: 'long', day: 'numeric' })}</time>
+                        <time class="block text-xs text-gray-500">{new Date(recipe.createdAt).toLocaleDateString(undefined, { year: 'numeric', month: 'long', day: 'numeric' })}</time>
                     </div>
                 </div>
             </header>
 
-            <!-- Hero Image -->
-            {recipeData.coverImage && (
+            <!-- Cover Image -->
+            {recipe.coverImage && (
                 <div class="rounded-3xl overflow-hidden aspect-video bg-gray-100 mb-16 shadow-2xl shadow-black/5 relative group">
-                    <Image 
-                        src={recipeData.coverImage} 
-                        alt={recipeData.title} 
-                        width={1200} 
-                        height={675}
-                        class="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105" 
-                    />
-                    
-                    {recipeData.videoUrl && (
-                        <a 
-                            href={recipeData.videoUrl} 
-                            target="_blank" 
-                            rel="noopener noreferrer"
-                            class="absolute bottom-6 right-6 btn-primary flex items-center gap-2 shadow-2xl"
-                        >
-                            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="m22 8-6 4 6 4V8Z"/><rect width="14" height="12" x="2" y="6" rx="2" ry="2"/></svg>
+                    <Image src={recipe.coverImage} alt={recipe.title} width={1200} height={675}
+                        class="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105" />
+                    {recipe.videoUrl && (
+                        <a href={recipe.videoUrl} target="_blank" rel="noopener noreferrer"
+                            class="absolute bottom-6 right-6 btn-primary flex items-center gap-2 shadow-2xl">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+                                <path d="m22 8-6 4 6 4V8Z"/><rect width="14" height="12" x="2" y="6" rx="2" ry="2"/>
+                            </svg>
                             Watch Tutorial
                         </a>
                     )}
                 </div>
             )}
 
-            <!-- Recipe Content -->
+            <!-- Content Grid -->
             <div class="grid-recipe-layout">
-                <!-- Sidebar: Ingredients -->
-                <aside class="space-y-8">
+                <aside>
                     <div class="p-8 rounded-2xl bg-brand-accent/50 border border-brand-accent-border sticky top-24">
                         <h3 class="section-heading text-2xl mb-6">Ingredients</h3>
                         <ul class="space-y-4">
-                            {ingredients.map((ingredient) => (
+                            {(recipe.ingredients as string[]).map((ing) => (
                                 <li class="flex gap-3 text-brand-text text-sm font-medium">
                                     <div class="w-5 h-5 rounded-full bg-brand-surface border border-brand-accent-border flex items-center justify-center shrink-0 mt-0.5">
                                         <div class="w-1.5 h-1.5 rounded-full bg-brand-primary"></div>
                                     </div>
-                                    <span class="leading-tight">{ingredient}</span>
+                                    <span class="leading-tight">{ing}</span>
                                 </li>
                             ))}
                         </ul>
                     </div>
                 </aside>
 
-                <!-- Main: Instructions -->
                 <section>
                     <h3 class="section-heading text-2xl mb-8">Preparation Steps</h3>
                     <div class="space-y-12">
-                        {steps.map((step, i) => (
+                        {(recipe.steps as string[]).map((step, i, arr) => (
                             <div class="group relative flex gap-6">
                                 <div class="flex flex-col items-center">
                                     <div class="flex items-center justify-center w-10 h-10 rounded-full bg-brand-text text-white font-serif text-lg font-bold shadow-lg shrink-0 z-10">
                                         {i + 1}
                                     </div>
-                                    {i !== steps.length - 1 && <div class="w-0.5 h-full bg-gray-100 absolute top-10"></div>}
+                                    {i !== arr.length - 1 && <div class="w-0.5 h-full bg-gray-100 absolute top-10"></div>}
                                 </div>
-                                <div class="pb-8">
-                                    <p class="text-lg text-gray-700 leading-relaxed pt-1 group-hover:text-black transition-colors">
-                                        {step}
-                                    </p>
-                                </div>
+                                <p class="text-lg text-gray-700 leading-relaxed pt-1 pb-8 group-hover:text-black">{step}</p>
                             </div>
                         ))}
                     </div>
 
-                    <!-- Social Interaction -->
-                    <SocialActions 
-                        client:load 
-                        recipeId={recipeData.id} 
-                        initialLiked={isLiked} 
-                        initialBookmarked={isBookmarked}
-                        likesCount={likesData.length}
-                    />
+                    <SocialActions client:load recipeId={recipe.id} initialLiked={isLiked}
+                        initialBookmarked={isBookmarked} likesCount={allLikes.length} />
 
-                    <!-- Comments Section -->
-                    <CommentSection 
-                        client:load 
-                        recipeId={recipeData.id} 
-                        initialComments={recipeComments}
-                        isLoggedIn={!!currentUser}
-                    />
+                    <CommentSection client:load recipeId={recipe.id}
+                        initialComments={recipeComments} isLoggedIn={!!currentUser} />
                 </section>
             </div>
         </article>
