@@ -1,6 +1,7 @@
 import { defineMiddleware } from "astro:middleware";
 import { getAuth } from "./auth";
 import { getDb } from "./db";
+import { config } from "./config";
 
 export const onRequest = defineMiddleware(async (context, next) => {
     // 1. Safety check for environment variables
@@ -36,7 +37,8 @@ export const onRequest = defineMiddleware(async (context, next) => {
         }
 
         // 5. Protect Routes
-        if (context.url.pathname.startsWith("/dashboard") && !session) {
+        const isProtected = config.protectedRoutes.some(route => context.url.pathname.startsWith(route));
+        if (isProtected && !session) {
             return context.redirect("/login");
         }
     } catch (e) {
