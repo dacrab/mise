@@ -2,6 +2,7 @@
 import { neon } from '@neondatabase/serverless';
 import { drizzle } from 'drizzle-orm/neon-http';
 import { pgTable, text, timestamp, boolean, json, uniqueIndex, index } from "drizzle-orm/pg-core";
+import { config } from './config';
 
 // Schema
 export const user = pgTable("user", {
@@ -57,12 +58,12 @@ export const recipes = pgTable("recipes", {
   slug: text("slug").notNull().unique(),
   title: text("title").notNull(),
   description: text("description"),
-  category: text("category").default('General'),
+  category: text("category").default(config.recipe.defaultCategory),
   ingredients: json("ingredients").$type<string[]>().notNull(),
   steps: json("steps").$type<string[]>().notNull(),
   coverImage: text("cover_image"),
   videoUrl: text("video_url"),
-  status: text("status").default('published').notNull(),
+  status: text("status").default(config.recipe.defaultStatus).notNull(),
   userId: text("user_id").notNull().references(() => user.id, { onDelete: 'cascade' }),
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at").defaultNow().notNull()

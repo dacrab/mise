@@ -5,6 +5,7 @@ import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
 import { recipes, comments, likes, bookmarks } from '../db';
 import { nanoid } from 'nanoid';
 import { eq, and } from 'drizzle-orm';
+import { config } from '../config';
 
 // Helper to ensure user is authenticated
 const requireAuth = (context: any) => {
@@ -14,14 +15,14 @@ const requireAuth = (context: any) => {
 
 // Recipe input schema (shared between create/update)
 const recipeInput = z.object({
-  title: z.string().min(3),
+  title: z.string().min(config.recipe.titleMinLength),
   description: z.string().optional(),
   category: z.string().optional(),
   ingredients: z.array(z.string()),
   steps: z.array(z.string()),
   coverImage: z.string().url().optional(),
   videoUrl: z.string().url().optional(),
-  status: z.enum(['draft', 'published']).optional(),
+  status: z.enum(config.recipe.statuses).optional(),
 });
 
 export const server = {
@@ -29,7 +30,7 @@ export const server = {
     accept: 'json',
     input: z.object({
       fileType: z.string(),
-      fileSize: z.number().max(10 * 1024 * 1024),
+      fileSize: z.number().max(config.upload.maxFileSize),
     }),
     handler: async ({ fileType, fileSize }, context) => {
       const { user } = requireAuth(context);
@@ -41,13 +42,13 @@ export const server = {
         credentials: { accessKeyId: env.CLOUDFLARE_ACCESS_KEY_ID, secretAccessKey: env.CLOUDFLARE_SECRET_ACCESS_KEY },
       });
 
-      const key = `recipes/${user.id}/${nanoid()}-${Date.now()}`;
+      const key = `${config.upload.keyPrefix}/${user.id}/${nanoid()}-${Date.now()}`;
       const url = await getSignedUrl(s3, new PutObjectCommand({
         Bucket: env.R2_BUCKET_NAME,
         Key: key,
         ContentType: fileType,
         ContentLength: fileSize,
-      }), { expiresIn: 3600 });
+      }), { expiresIn: config.upload.presignedUrlExpiry });
 
       return { uploadUrl: url, fileKey: key, publicUrl: `https://${env.PUBLIC_R2_DOMAIN}/${key}` };
     },
@@ -64,8 +65,8 @@ export const server = {
         id: nanoid(),
         slug,
         ...input,
-        category: input.category || 'General',
-        status: input.status || 'published',
+        category: input.category || config.recipe.defaultCategory,
+        status: input.status || config.recipe.defaultStatus,
         userId: user.id,
       }).returning();
 
@@ -139,7 +140,7 @@ export const server = {
 
   addComment: defineAction({
     accept: 'json',
-    input: z.object({ recipeId: z.string(), content: z.string().min(1).max(500) }),
+    input: z.object({ recipeId: z.string(), content: z.string().min(config.comment.minLength).max(config.comment.maxLength) }),
     handler: async ({ recipeId, content }, context) => {
       const { user, db } = requireAuth(context);
       const [comment] = await db.insert(comments).values({

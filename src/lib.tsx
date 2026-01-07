@@ -1,4 +1,9 @@
 import { useState, useCallback } from 'react';
+import { config, type Category, type RecipeStatus, type AvatarSize } from './config';
+
+// Re-export config values for convenience
+export const CATEGORIES = config.categories;
+export type { Category, RecipeStatus, AvatarSize };
 
 // Shared types
 export interface Comment {
@@ -15,15 +20,10 @@ export interface RecipeInput {
   coverImage?: string | null;
   ingredients: string[];
   steps: string[];
-  category?: string | null;
+  category?: string | null; // Allow any string for DB compatibility
   videoUrl?: string | null;
-  status?: 'draft' | 'published';
+  status?: RecipeStatus;
 }
-
-export const CATEGORIES = [
-  'General', 'Breakfast', 'Lunch', 'Dinner', 'Dessert',
-  'Vegan', 'Vegetarian', 'Quick & Easy', 'Baking', 'Italian', 'Asian', 'Mexican'
-] as const;
 
 // Hooks
 export function useOptimisticToggle(initial: boolean, onToggle: () => Promise<{ error?: unknown }>) {
@@ -122,8 +122,8 @@ export const Divider = ({ text }: { text: string }) => (
   </div>
 );
 
-export const Avatar = ({ src, name, size = 'md' }: { src?: string | null; name?: string | null; size?: 'sm' | 'md' | 'lg' }) => {
-  const sizes = { sm: 'w-8 h-8 text-sm', md: 'w-10 h-10 text-base', lg: 'w-32 h-32 text-4xl' };
+export const Avatar = ({ src, name, size = 'md' }: { src?: string | null; name?: string | null; size?: AvatarSize }) => {
+  const sizes = config.avatar;
   if (src) return <img src={src} alt={name || 'User'} className={`${sizes[size]} rounded-full object-cover`} />;
   return <div className={`${sizes[size]} rounded-full bg-brand-accent flex items-center justify-center font-bold text-brand-primary`}>{(name || 'U')[0]}</div>;
 };
