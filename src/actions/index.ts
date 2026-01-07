@@ -2,10 +2,10 @@ import { defineAction } from 'astro:actions';
 import { z } from 'astro:schema';
 import { S3Client, PutObjectCommand } from '@aws-sdk/client-s3';
 import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
-import { recipes, comments, likes, bookmarks } from '../db';
+import { recipes, comments, likes, bookmarks } from '@/db';
 import { nanoid } from 'nanoid';
 import { eq, and } from 'drizzle-orm';
-import { config } from '../config';
+import { config } from '@/config';
 
 // Helper to ensure user is authenticated
 const requireAuth = (context: any) => {

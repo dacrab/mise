@@ -1,5 +1,5 @@
 import { actions } from 'astro:actions';
-import { useOptimisticCounter, useOptimisticToggle, HeartIcon, BookmarkIcon } from '../lib';
+import { useOptimisticCounter, useOptimisticToggle, HeartIcon, BookmarkIcon } from '@/lib';
 
 interface Props {
   recipeId: string;

@@ -1,8 +1,8 @@
 ---
-import Layout from '../../layouts/Layout.astro';
-import Footer from '../../components/Footer.astro';
-import Header from '../../components/Header.astro';
-import { recipes, user } from '../../db';
+import Layout from '@/layouts/Layout.astro';
+import Footer from '@/components/Footer.astro';
+import Header from '@/components/Header.astro';
+import { recipes, user } from '@/db';
 import { eq, desc, and } from 'drizzle-orm';
 
 const { username } = Astro.params;

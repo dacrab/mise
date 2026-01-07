@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { actions } from 'astro:actions';
-import type { RecipeInput } from '../lib';
-import { CATEGORIES, TrashIcon, PlusIcon, ImageIcon, Label, SectionHeader } from '../lib';
+import type { RecipeInput } from '@/lib';
+import { CATEGORIES, TrashIcon, PlusIcon, ImageIcon, Label, SectionHeader } from '@/lib';
 
 export default function RecipeEditor({ initialData, isEditing = false }: { initialData?: RecipeInput; isEditing?: boolean }) {
   const [loading, setLoading] = useState(false);

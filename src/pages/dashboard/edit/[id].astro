@@ -1,7 +1,7 @@
 ---
-import Layout from '../../../layouts/Layout.astro';
-import RecipeEditor from '../../../components/RecipeEditor';
-import { recipes } from '../../../db';
+import Layout from '@/layouts/Layout.astro';
+import RecipeEditor from '@/components/RecipeEditor';
+import { recipes } from '@/db';
 import { eq, and } from 'drizzle-orm';
 
 const { id } = Astro.params;
