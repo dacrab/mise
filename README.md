@@ -26,8 +26,12 @@ A modern recipe sharing platform built with Astro 5, React, and Cloudflare. Shar
 ## Quick Start
 
 ```bash
-# Install
+# Install dependencies
 bun install
+
+# Setup environment
+cp .env.example .env
+# Then edit .env with your credentials
 
 # Setup database
 bun run db:push
@@ -38,17 +42,24 @@ bun dev
 
 ## Environment Variables
 
-```env
-DATABASE_URL=
-BETTER_AUTH_SECRET=
-BETTER_AUTH_URL=
-GOOGLE_CLIENT_ID=
-GOOGLE_CLIENT_SECRET=
-CLOUDFLARE_ACCOUNT_ID=
-CLOUDFLARE_ACCESS_KEY_ID=
-CLOUDFLARE_SECRET_ACCESS_KEY=
-R2_BUCKET_NAME=
-PUBLIC_R2_DOMAIN=
+```bash
+# Database (Neon Postgres)
+DATABASE_URL="postgresql://..."
+
+# Auth (Better Auth)
+BETTER_AUTH_SECRET="openssl rand -base64 32"
+BETTER_AUTH_URL="http://localhost:4321"
+
+# OAuth (Google) - optional, for social login
+GOOGLE_CLIENT_ID=""
+GOOGLE_CLIENT_SECRET=""
+
+# Storage (Cloudflare R2) - for image uploads
+CLOUDFLARE_ACCOUNT_ID=""
+CLOUDFLARE_ACCESS_KEY_ID=""
+CLOUDFLARE_SECRET_ACCESS_KEY=""
+R2_BUCKET_NAME=""
+PUBLIC_R2_DOMAIN=""
 ```
 
 ## License
