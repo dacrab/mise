@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { actions } from 'astro:actions';
-import type { Comment } from '../lib';
-import { Avatar } from '../lib';
+import type { Comment } from '@/lib';
+import { Avatar } from '@/lib';
 
 interface Props {
   recipeId: string;

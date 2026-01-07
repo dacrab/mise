@@ -1,7 +1,7 @@
 ---
-import Layout from '../../layouts/Layout.astro';
-import Header from '../../components/Header.astro';
-import { recipes, bookmarks } from '../../db';
+import Layout from '@/layouts/Layout.astro';
+import Header from '@/components/Header.astro';
+import { recipes, bookmarks } from '@/db';
 import { eq, desc } from 'drizzle-orm';
 
 const user = Astro.locals.user;
