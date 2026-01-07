@@ -59,7 +59,7 @@ export default function SignupForm() {
         </div>
         <div className="space-y-2">
           <Label htmlFor="email">Email Address</Label>
-          <input id="email" type="email" value={form.email} onChange={e => update('email', e.target.value)} className="input-field" placeholder="chef@recipeswap.com" />
+          <input id="email" type="email" value={form.email} onChange={e => update('email', e.target.value)} className="input-field" placeholder="chef@mise.cooking" />
         </div>
         <div className="space-y-2">
           <Label htmlFor="password">Password</Label>
