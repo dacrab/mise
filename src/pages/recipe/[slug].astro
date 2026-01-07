@@ -134,7 +134,7 @@ export const prerender = false;
                     <SocialActions client:load recipeId={recipe.id} initialLiked={isLiked}
                         initialBookmarked={isBookmarked} likesCount={allLikes.length} />
 
-                    <CommentSection client:load recipeId={recipe.id}
+                    <CommentSection client:visible recipeId={recipe.id}
                         initialComments={recipeComments} isLoggedIn={!!currentUser} />
                 </section>
             </div>
