@@ -25,7 +25,7 @@ export default function LoginForm() {
       <div className="space-y-5">
         <div className="space-y-2">
           <label htmlFor="email" className="text-xs font-bold uppercase tracking-wider text-gray-500 ml-1">Email Address</label>
-          <input id="email" type="email" value={email} onChange={e => setEmail(e.target.value)} className="input-field" placeholder="chef@recipeswap.com" />
+          <input id="email" type="email" value={email} onChange={e => setEmail(e.target.value)} className="input-field" placeholder="chef@mise.cooking" />
         </div>
         <div className="space-y-2">
           <label htmlFor="password" className="text-xs font-bold uppercase tracking-wider text-gray-500 ml-1">Password</label>

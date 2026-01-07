@@ -1,112 +1,56 @@
-# RecipeSwap V2 🍳
+# Mise 🍳
 
-A modern, full-stack recipe platform built with Astro 5, React, and Cloudflare. Features social interactions, R2 media storage, and high-performance hybrid rendering.
+> *From "mise en place" — the chef's practice of preparing everything before cooking.*
 
-## 🚀 Tech Stack
+A modern recipe sharing platform built with Astro 5, React, and Cloudflare. Share your culinary creations with the world.
 
-- **Framework:** [Astro 5](https://astro.build/) (Static + Hybrid Rendering)
-- **UI/Components:** [React](https://react.dev/), [Tailwind CSS](https://tailwindcss.com/)
-- **Database:** [Neon](https://neon.tech/) (Serverless Postgres)
-- **ORM:** [Drizzle ORM](https://orm.drizzle.team/)
-- **Authentication:** [Better Auth](https://better-auth.com/) (Google & Email/Password)
-- **Storage:** [Cloudflare R2](https://www.cloudflare.com/developer-platform/r2/) (S3-compatible object storage)
+**This is a complete rewrite of [RecipeSwap](https://github.com/dacrab/RecipeSwap)**, my original HTML/CSS/JS school project, now rebuilt as a full-stack application.
+
+## Tech Stack
+
+- **Framework:** [Astro 5](https://astro.build/) with React islands
+- **Database:** [Neon](https://neon.tech/) (Serverless Postgres) + [Drizzle ORM](https://orm.drizzle.team/)
+- **Auth:** [Better Auth](https://better-auth.com/) (Google OAuth + Email/Password)
+- **Storage:** [Cloudflare R2](https://www.cloudflare.com/developer-platform/r2/)
 - **Deployment:** [Cloudflare Pages](https://pages.cloudflare.com/)
+- **Styling:** [Tailwind CSS](https://tailwindcss.com/)
 
-## ✨ Features
+## Features
 
-- **Hybrid Architecture:**
-  - **Public Pages:** Statically generated/cached for maximum performance (Homepage, Recipe View).
-  - **Chef Dashboard:** Client-rendered React islands for interactivity.
-- **Authentication:** Secure login via Email and Password or Google OAuth.
-- **Recipe Management:**
-  - Create, Update, and Delete recipes.
-  - Category tagging and video tutorial support.
-- **Social Interactions:** Like, bookmark, and comment on recipes.
-- **Image Optimization:** Automated WebP conversion and resizing via Astro's Image component.
-- **Search:** Server-side filtering by title, description, and category.
+- Recipe CRUD with image uploads
+- Social interactions (likes, bookmarks, comments)
+- Chef profiles and dashboards
+- Category filtering and search
+- Optimistic UI updates
 
-## 🛠️ Project Structure
+## Quick Start
 
 ```bash
-/
-├── src/
-│   ├── actions/        # Server Actions (CRUD, Social, Uploads)
-│   ├── components/     # React & Astro Components
-│   ├── db/             # Database Schema & Client
-│   ├── layouts/        # Page Layouts
-│   ├── lib/            # Auth Configuration
-│   ├── pages/          # File-based Routing
-│   │   ├── api/        # Auth API Routes
-│   │   ├── dashboard/  # User Kitchen/Dashboard
-│   │   └── recipe/     # Recipe Details
-│   └── middleware.ts   # Route Protection
-├── drizzle.config.ts   # ORM Config
-└── astro.config.mjs    # Framework Config
-```
-
-## ⚡ Getting Started
-
-### Prerequisites
-
-- **Bun** (Recommended)
-- **Cloudflare Account** (for R2 & Pages)
-- **Neon Database** (Postgres)
-- **Google Cloud Console Project** (for OAuth)
-
-### 1. Clone & Install
-
-```bash
-git clone https://github.com/dacrab/recipeswap-v2.git
-cd recipeswap-v2
+# Install
 bun install
-```
 
-### 2. Environment Variables
-
-Copy the example file and fill in your credentials:
-
-```bash
-cp .env.example .env
-```
-
-**Required Variables:**
-- `DATABASE_URL`: Your Neon Postgres connection string.
-- `BETTER_AUTH_SECRET`: A random string for encryption.
-- `BETTER_AUTH_URL`: Your site's base URL (e.g., `http://localhost:4321` or your production domain).
-- `GOOGLE_CLIENT_ID` / `GOOGLE_CLIENT_SECRET`: From Google Cloud Console.
-- `CLOUDFLARE_ACCOUNT_ID`: From Cloudflare Dashboard.
-- `CLOUDFLARE_ACCESS_KEY_ID` / `SECRET_ACCESS_KEY`: R2 API Tokens.
-- `R2_BUCKET_NAME`: Your bucket name.
-- `PUBLIC_R2_DOMAIN`: The public domain for your R2 bucket.
-
-### 3. Database Setup
-
-Push the Drizzle schema to your Neon database:
-
-```bash
+# Setup database
 bun run db:push
-```
 
-### 4. Run Locally
-
-Start the development server:
-
-```bash
+# Run dev server
 bun dev
 ```
 
-Visit `http://localhost:4321` to see the app.
+## Environment Variables
 
-## 📦 Deployment
+```env
+DATABASE_URL=
+BETTER_AUTH_SECRET=
+BETTER_AUTH_URL=
+GOOGLE_CLIENT_ID=
+GOOGLE_CLIENT_SECRET=
+CLOUDFLARE_ACCOUNT_ID=
+CLOUDFLARE_ACCESS_KEY_ID=
+CLOUDFLARE_SECRET_ACCESS_KEY=
+R2_BUCKET_NAME=
+PUBLIC_R2_DOMAIN=
+```
 
-This project is configured for **Cloudflare Pages**.
-
-1. Connect your repository to Cloudflare Pages (e.g., `dacrab/recipeswap-v2`).
-2. Set the build command: `bun run build`.
-3. Set the output directory: `dist`.
-4. Add all environment variables from your `.env` to the Cloudflare Pages settings.
-5. Enable the `nodejs_compat` compatibility flag in Settings > Functions.
-
-## 🛡️ License
+## License
 
 MIT
