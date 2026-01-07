@@ -1,5 +1,5 @@
 import { defineMiddleware } from "astro:middleware";
-import { getAuth } from "./lib/auth";
+import { getAuth } from "./auth";
 import { getDb } from "./db";
 
 export const onRequest = defineMiddleware(async (context, next) => {
