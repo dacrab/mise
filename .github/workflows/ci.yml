@@ -2,30 +2,33 @@ name: CI
 
 on:
   push:
-    branches: [ main ]
+    branches: [main]
   pull_request:
-    branches: [ main ]
+    branches: [main]
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
 
 jobs:
   build:
     runs-on: ubuntu-latest
-
+    timeout-minutes: 10
     steps:
       - uses: actions/checkout@v6
-      
-      - name: Setup Bun
-        uses: oven-sh/setup-bun@v2
-        
-      - name: Install dependencies
-        run: bun install
-
-      - name: Lint and Type Check
-        run: bun run lint
-
-      - name: Build
-        run: bun run build
+      - uses: oven-sh/setup-bun@v2
+      - uses: actions/cache@v5
+        with:
+          path: ~/.bun/install/cache
+          key: ${{ runner.os }}-bun-${{ hashFiles('bun.lock') }}
+          restore-keys: ${{ runner.os }}-bun-
+      - run: bun install --frozen-lockfile
+      - run: bun run lint
+      - run: bun run build
         env:
-          # Dummy values for build-time validation
           DATABASE_URL: "postgres://dummy:dummy@localhost:5432/dummy"
           BETTER_AUTH_SECRET: "dummy_secret"
           BETTER_AUTH_URL: "http://localhost:4321"
