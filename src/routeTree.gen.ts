@@ -11,11 +11,12 @@
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as SignupRouteImport } from './routes/signup'
 import { Route as LoginRouteImport } from './routes/login'
+import { Route as AuthedRouteImport } from './routes/_authed'
 import { Route as IndexRouteImport } from './routes/index'
-import { Route as DashboardIndexRouteImport } from './routes/dashboard/index'
 import { Route as RecipeSlugRouteImport } from './routes/recipe/$slug'
-import { Route as DashboardCreateRouteImport } from './routes/dashboard/create'
 import { Route as ChefUsernameRouteImport } from './routes/chef/$username'
+import { Route as AuthedDashboardIndexRouteImport } from './routes/_authed/dashboard/index'
+import { Route as AuthedDashboardCreateRouteImport } from './routes/_authed/dashboard/create'
 
 const SignupRoute = SignupRouteImport.update({
   id: '/signup',
@@ -27,14 +28,13 @@ const LoginRoute = LoginRouteImport.update({
   path: '/login',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AuthedRoute = AuthedRouteImport.update({
+  id: '/_authed',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const DashboardIndexRoute = DashboardIndexRouteImport.update({
-  id: '/dashboard/',
-  path: '/dashboard/',
   getParentRoute: () => rootRouteImport,
 } as any)
 const RecipeSlugRoute = RecipeSlugRouteImport.update({
@@ -42,15 +42,20 @@ const RecipeSlugRoute = RecipeSlugRouteImport.update({
   path: '/recipe/$slug',
   getParentRoute: () => rootRouteImport,
 } as any)
-const DashboardCreateRoute = DashboardCreateRouteImport.update({
-  id: '/dashboard/create',
-  path: '/dashboard/create',
-  getParentRoute: () => rootRouteImport,
-} as any)
 const ChefUsernameRoute = ChefUsernameRouteImport.update({
   id: '/chef/$username',
   path: '/chef/$username',
   getParentRoute: () => rootRouteImport,
+} as any)
+const AuthedDashboardIndexRoute = AuthedDashboardIndexRouteImport.update({
+  id: '/dashboard/',
+  path: '/dashboard/',
+  getParentRoute: () => AuthedRoute,
+} as any)
+const AuthedDashboardCreateRoute = AuthedDashboardCreateRouteImport.update({
+  id: '/dashboard/create',
+  path: '/dashboard/create',
+  getParentRoute: () => AuthedRoute,
 } as any)
 
 export interface FileRoutesByFullPath {
@@ -58,28 +63,29 @@ export interface FileRoutesByFullPath {
   '/login': typeof LoginRoute
   '/signup': typeof SignupRoute
   '/chef/$username': typeof ChefUsernameRoute
-  '/dashboard/create': typeof DashboardCreateRoute
   '/recipe/$slug': typeof RecipeSlugRoute
-  '/dashboard': typeof DashboardIndexRoute
+  '/dashboard/create': typeof AuthedDashboardCreateRoute
+  '/dashboard': typeof AuthedDashboardIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/login': typeof LoginRoute
   '/signup': typeof SignupRoute
   '/chef/$username': typeof ChefUsernameRoute
-  '/dashboard/create': typeof DashboardCreateRoute
   '/recipe/$slug': typeof RecipeSlugRoute
-  '/dashboard': typeof DashboardIndexRoute
+  '/dashboard/create': typeof AuthedDashboardCreateRoute
+  '/dashboard': typeof AuthedDashboardIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/_authed': typeof AuthedRouteWithChildren
   '/login': typeof LoginRoute
   '/signup': typeof SignupRoute
   '/chef/$username': typeof ChefUsernameRoute
-  '/dashboard/create': typeof DashboardCreateRoute
   '/recipe/$slug': typeof RecipeSlugRoute
-  '/dashboard/': typeof DashboardIndexRoute
+  '/_authed/dashboard/create': typeof AuthedDashboardCreateRoute
+  '/_authed/dashboard/': typeof AuthedDashboardIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -88,8 +94,8 @@ export interface FileRouteTypes {
     | '/login'
     | '/signup'
     | '/chef/$username'
-    | '/dashboard/create'
     | '/recipe/$slug'
+    | '/dashboard/create'
     | '/dashboard'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -97,28 +103,28 @@ export interface FileRouteTypes {
     | '/login'
     | '/signup'
     | '/chef/$username'
-    | '/dashboard/create'
     | '/recipe/$slug'
+    | '/dashboard/create'
     | '/dashboard'
   id:
     | '__root__'
     | '/'
+    | '/_authed'
     | '/login'
     | '/signup'
     | '/chef/$username'
-    | '/dashboard/create'
     | '/recipe/$slug'
-    | '/dashboard/'
+    | '/_authed/dashboard/create'
+    | '/_authed/dashboard/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  AuthedRoute: typeof AuthedRouteWithChildren
   LoginRoute: typeof LoginRoute
   SignupRoute: typeof SignupRoute
   ChefUsernameRoute: typeof ChefUsernameRoute
-  DashboardCreateRoute: typeof DashboardCreateRoute
   RecipeSlugRoute: typeof RecipeSlugRoute
-  DashboardIndexRoute: typeof DashboardIndexRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -137,18 +143,18 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof LoginRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/_authed': {
+      id: '/_authed'
+      path: ''
+      fullPath: ''
+      preLoaderRoute: typeof AuthedRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/': {
       id: '/'
       path: '/'
       fullPath: '/'
       preLoaderRoute: typeof IndexRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/dashboard/': {
-      id: '/dashboard/'
-      path: '/dashboard'
-      fullPath: '/dashboard'
-      preLoaderRoute: typeof DashboardIndexRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/recipe/$slug': {
@@ -158,13 +164,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof RecipeSlugRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/dashboard/create': {
-      id: '/dashboard/create'
-      path: '/dashboard/create'
-      fullPath: '/dashboard/create'
-      preLoaderRoute: typeof DashboardCreateRouteImport
-      parentRoute: typeof rootRouteImport
-    }
     '/chef/$username': {
       id: '/chef/$username'
       path: '/chef/$username'
@@ -172,17 +171,43 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ChefUsernameRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/_authed/dashboard/': {
+      id: '/_authed/dashboard/'
+      path: '/dashboard'
+      fullPath: '/dashboard'
+      preLoaderRoute: typeof AuthedDashboardIndexRouteImport
+      parentRoute: typeof AuthedRoute
+    }
+    '/_authed/dashboard/create': {
+      id: '/_authed/dashboard/create'
+      path: '/dashboard/create'
+      fullPath: '/dashboard/create'
+      preLoaderRoute: typeof AuthedDashboardCreateRouteImport
+      parentRoute: typeof AuthedRoute
+    }
   }
 }
 
+interface AuthedRouteChildren {
+  AuthedDashboardCreateRoute: typeof AuthedDashboardCreateRoute
+  AuthedDashboardIndexRoute: typeof AuthedDashboardIndexRoute
+}
+
+const AuthedRouteChildren: AuthedRouteChildren = {
+  AuthedDashboardCreateRoute: AuthedDashboardCreateRoute,
+  AuthedDashboardIndexRoute: AuthedDashboardIndexRoute,
+}
+
+const AuthedRouteWithChildren =
+  AuthedRoute._addFileChildren(AuthedRouteChildren)
+
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  AuthedRoute: AuthedRouteWithChildren,
   LoginRoute: LoginRoute,
   SignupRoute: SignupRoute,
   ChefUsernameRoute: ChefUsernameRoute,
-  DashboardCreateRoute: DashboardCreateRoute,
   RecipeSlugRoute: RecipeSlugRoute,
-  DashboardIndexRoute: DashboardIndexRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

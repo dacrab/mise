@@ -2,12 +2,18 @@ import { query, mutation } from "./_generated/server";
 import { v } from "convex/values";
 import { getAuthUserId } from "@convex-dev/auth/server";
 
-// Toggle like
+// Toggle like - validates recipe exists and is published
 export const toggleLike = mutation({
   args: { recipeId: v.id("recipes") },
   handler: async (ctx, { recipeId }) => {
     const userId = await getAuthUserId(ctx);
     if (!userId) throw new Error("Unauthorized");
+
+    // Validate recipe exists and is published
+    const recipe = await ctx.db.get(recipeId);
+    if (!recipe || recipe.status !== "published") {
+      throw new Error("Recipe not found");
+    }
 
     const existing = await ctx.db
       .query("likes")
@@ -22,8 +28,7 @@ export const toggleLike = mutation({
     await ctx.db.insert("likes", { recipeId, userId });
 
     // Notify recipe owner
-    const recipe = await ctx.db.get(recipeId);
-    if (recipe && recipe.userId !== userId) {
+    if (recipe.userId !== userId) {
       await ctx.db.insert("notifications", {
         userId: recipe.userId,
         type: "like",
@@ -37,12 +42,26 @@ export const toggleLike = mutation({
   },
 });
 
-// Toggle bookmark
+// Toggle bookmark - validates recipe exists and is published
 export const toggleBookmark = mutation({
   args: { recipeId: v.id("recipes"), collectionId: v.optional(v.id("collections")) },
   handler: async (ctx, { recipeId, collectionId }) => {
     const userId = await getAuthUserId(ctx);
     if (!userId) throw new Error("Unauthorized");
+
+    // Validate recipe exists and is published
+    const recipe = await ctx.db.get(recipeId);
+    if (!recipe || recipe.status !== "published") {
+      throw new Error("Recipe not found");
+    }
+
+    // Validate collection ownership if provided
+    if (collectionId) {
+      const collection = await ctx.db.get(collectionId);
+      if (!collection || collection.userId !== userId) {
+        throw new Error("Collection not found");
+      }
+    }
 
     const existing = await ctx.db
       .query("bookmarks")
@@ -81,7 +100,7 @@ export const getComments = query({
   },
 });
 
-// Add comment
+// Add comment - validates recipe exists and is published
 export const addComment = mutation({
   args: {
     recipeId: v.id("recipes"),
@@ -96,8 +115,11 @@ export const addComment = mutation({
       throw new Error("Comment must be 1-500 characters");
     }
 
+    // Validate recipe exists and is published
     const recipe = await ctx.db.get(recipeId);
-    if (!recipe) throw new Error("Recipe not found");
+    if (!recipe || recipe.status !== "published") {
+      throw new Error("Recipe not found");
+    }
 
     const id = await ctx.db.insert("comments", { recipeId, userId, content: trimmed });
 

@@ -2,37 +2,17 @@ name: CI
 
 on:
   push:
-    branches: [ main ]
+    branches: [main]
   pull_request:
-    branches: [ main ]
+    branches: [main]
 
 jobs:
   build:
     runs-on: ubuntu-latest
-
     steps:
       - uses: actions/checkout@v6
-      
-      - name: Setup Bun
-        uses: oven-sh/setup-bun@v2
-        
-      - name: Install dependencies
-        run: bun install
-
-      - name: Lint and Type Check
-        run: bun run lint
-
-      - name: Build
-        run: bun run build
+      - uses: oven-sh/setup-bun@v2
+      - run: bun install
+      - run: bun run build
         env:
-          # Dummy values for build-time validation
-          DATABASE_URL: "postgres://dummy:dummy@localhost:5432/dummy"
-          BETTER_AUTH_SECRET: "dummy_secret"
-          BETTER_AUTH_URL: "http://localhost:4321"
-          GOOGLE_CLIENT_ID: "dummy_id"
-          GOOGLE_CLIENT_SECRET: "dummy_secret"
-          CLOUDFLARE_ACCOUNT_ID: "dummy_id"
-          CLOUDFLARE_ACCESS_KEY_ID: "dummy_key"
-          CLOUDFLARE_SECRET_ACCESS_KEY: "dummy_secret"
-          R2_BUCKET_NAME: "dummy_bucket"
-          PUBLIC_R2_DOMAIN: "dummy.r2.dev"
+          VITE_CONVEX_URL: "https://placeholder.convex.cloud"

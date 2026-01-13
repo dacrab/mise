@@ -97,18 +97,25 @@ export const getBySlug = query({
   },
 });
 
-// Get recipes by user
+// Get recipes by user - only returns published recipes to non-owners
 export const getByUser = query({
   args: { userId: v.id("users") },
   handler: async (ctx, { userId }) => {
+    const currentUserId = await getAuthUserId(ctx);
+    
     const recipes = await ctx.db
       .query("recipes")
       .withIndex("by_user", (q) => q.eq("userId", userId))
       .order("desc")
       .collect();
 
+    // Only show drafts to the owner
+    const filtered = recipes.filter(
+      (r) => r.status === "published" || r.userId === currentUserId
+    );
+
     return Promise.all(
-      recipes.map(async (recipe) => ({
+      filtered.map(async (recipe) => ({
         ...recipe,
         coverImageUrl: recipe.coverImage
           ? await ctx.storage.getUrl(recipe.coverImage)

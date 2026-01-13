@@ -14,8 +14,6 @@
     "baseUrl": ".",
     "paths": {
       "@/*": ["./src/*"],
-      "@/components/*": ["./src/components/*"],
-      "@/routes/*": ["./src/routes/*"],
       "convex/*": ["./convex/*"]
     }
   },

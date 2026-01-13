@@ -1,8 +1,11 @@
+"use client";
+
 import { useState } from "react";
 import { useMutation, useQuery } from "convex/react";
 import { Link } from "@tanstack/react-router";
 import { api } from "convex/_generated/api";
 import type { Id } from "convex/_generated/dataModel";
+import { useToast } from "./ui/toast";
 
 interface Props {
   recipeId: Id<"recipes">;
@@ -10,6 +13,7 @@ interface Props {
 }
 
 export function CommentSection({ recipeId, isLoggedIn }: Props) {
+  const { toast } = useToast();
   const comments = useQuery(api.social.getComments, { recipeId }) ?? [];
   const addComment = useMutation(api.social.addComment);
   const [content, setContent] = useState("");
@@ -23,8 +27,9 @@ export function CommentSection({ recipeId, isLoggedIn }: Props) {
     try {
       await addComment({ recipeId, content });
       setContent("");
+      toast("Comment posted!", "success");
     } catch {
-      alert("Error posting comment.");
+      toast("Could not post comment", "error");
     }
     setLoading(false);
   };
@@ -55,9 +60,7 @@ export function CommentSection({ recipeId, isLoggedIn }: Props) {
       )}
 
       <div className="space-y-6">
-        {comments.length === 0 && (
-          <p className="text-stone text-sm">No comments yet.</p>
-        )}
+        {comments.length === 0 && <p className="text-stone text-sm">No comments yet.</p>}
         {comments.map((comment) => (
           <div key={comment._id} className="flex gap-3">
             <div className="w-9 h-9 rounded-full bg-sage/15 overflow-hidden shrink-0">
@@ -71,12 +74,8 @@ export function CommentSection({ recipeId, isLoggedIn }: Props) {
             </div>
             <div className="flex-1 min-w-0">
               <div className="flex items-baseline gap-2 mb-1">
-                <span className="text-sm font-medium text-charcoal">
-                  {comment.user?.name || "Anonymous"}
-                </span>
-                <span className="text-xs text-stone-light">
-                  {new Date(comment._creationTime).toLocaleDateString()}
-                </span>
+                <span className="text-sm font-medium text-charcoal">{comment.user?.name || "Anonymous"}</span>
+                <span className="text-xs text-stone-light">{new Date(comment._creationTime).toLocaleDateString()}</span>
               </div>
               <p className="text-sm text-charcoal-light leading-relaxed">{comment.content}</p>
             </div>

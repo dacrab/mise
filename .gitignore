@@ -3,8 +3,8 @@ node_modules/
 
 # Build Outputs
 dist/
-.astro/
-.temp/
+.vinxi/
+.output/
 .cache/
 
 # Environment Variables

@@ -1,16 +1,13 @@
 {
-	"main": "dist/_worker.js/index.js",
-	"name": "recipeswap-v2",
+  "name": "mise",
+  "main": "dist/server/server.js",
   "compatibility_date": "2025-12-17",
-  "compatibility_flags": [
-    "nodejs_compat",
-    "global_fetch_strictly_public"
-  ],
-	"assets": {
-		"binding": "ASSETS",
-		"directory": "./dist"
-	},
-	"observability": {
+  "compatibility_flags": ["nodejs_compat"],
+  "assets": {
+    "binding": "ASSETS",
+    "directory": "./dist/client"
+  },
+  "observability": {
     "enabled": true
   }
 }

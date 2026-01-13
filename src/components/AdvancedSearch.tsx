@@ -1,17 +1,18 @@
+"use client";
+
 import { useQuery } from "convex/react";
 import { api } from "convex/_generated/api";
 import { useState } from "react";
-import { config } from "../config";
+
+const CATEGORIES = ["Breakfast", "Lunch", "Dinner", "Dessert", "Vegan", "Quick & Easy", "Baking", "Italian", "Asian", "Mexican"];
 
 export function AdvancedSearch() {
   const [query, setQuery] = useState("");
   const [category, setCategory] = useState("");
-  const [ingredient, setIngredient] = useState("");
 
   const results = useQuery(api.discovery.search, {
     query: query || undefined,
     category: category || undefined,
-    ingredient: ingredient || undefined,
     limit: 20,
   });
 
@@ -27,7 +28,7 @@ export function AdvancedSearch() {
         />
         <select value={category} onChange={(e) => setCategory(e.target.value)} className="input-field">
           <option value="">All categories</option>
-          {config.categories.map((c) => <option key={c} value={c}>{c}</option>)}
+          {CATEGORIES.map((c) => <option key={c} value={c}>{c}</option>)}
         </select>
       </div>
 

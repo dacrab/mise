@@ -3,18 +3,12 @@ import { Header } from "@/components/Header";
 import { Footer } from "@/components/Footer";
 import { RecipeEditor } from "@/components/RecipeEditor";
 
-export const Route = createFileRoute("/dashboard/create")({
-  component: CreateRecipePage,
-});
-
-function CreateRecipePage() {
-  return (
+export const Route = createFileRoute("/_authed/dashboard/create")({
+  component: () => (
     <>
       <Header variant="dashboard" backLink={{ href: "/dashboard", label: "Dashboard" }} />
-      <main className="pt-20 min-h-screen fade-in" style={{ "--delay": "0s" } as React.CSSProperties}>
-        <RecipeEditor />
-      </main>
+      <main className="pt-20 min-h-screen"><RecipeEditor /></main>
       <Footer />
     </>
-  );
-}
+  ),
+});

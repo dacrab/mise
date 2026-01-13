@@ -3,18 +3,12 @@ import { Header } from "@/components/Header";
 import { Footer } from "@/components/Footer";
 import { Dashboard } from "@/components/Dashboard";
 
-export const Route = createFileRoute("/dashboard/")({
-  component: DashboardPage,
-});
-
-function DashboardPage() {
-  return (
+export const Route = createFileRoute("/_authed/dashboard/")({
+  component: () => (
     <>
       <Header variant="dashboard" />
-      <main className="pt-20 min-h-screen fade-in" style={{ "--delay": "0s" } as React.CSSProperties}>
-        <Dashboard />
-      </main>
+      <main className="pt-20 min-h-screen"><Dashboard /></main>
       <Footer />
     </>
-  );
-}
+  ),
+});
