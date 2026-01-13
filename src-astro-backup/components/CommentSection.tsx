@@ -1,15 +1,15 @@
 import { useState } from "react";
 import { useMutation, useQuery } from "convex/react";
-import { Link } from "@tanstack/react-router";
-import { api } from "~/convex/_generated/api";
-import type { Id } from "~/convex/_generated/dataModel";
+import { api } from "../../convex/_generated/api";
+import { withConvex } from "../convex";
+import type { Id } from "../../convex/_generated/dataModel";
 
 interface Props {
   recipeId: Id<"recipes">;
   isLoggedIn: boolean;
 }
 
-export function CommentSection({ recipeId, isLoggedIn }: Props) {
+function CommentSectionInner({ recipeId, isLoggedIn }: Props) {
   const comments = useQuery(api.social.getComments, { recipeId }) ?? [];
   const addComment = useMutation(api.social.addComment);
   const [content, setContent] = useState("");
@@ -50,7 +50,7 @@ export function CommentSection({ recipeId, isLoggedIn }: Props) {
       ) : (
         <div className="card p-6 mb-8 text-center">
           <p className="text-stone text-sm mb-3">Sign in to join the conversation.</p>
-          <Link to="/login" className="btn-secondary text-sm">Sign in</Link>
+          <a href="/login" className="btn-secondary text-sm">Sign in</a>
         </div>
       )}
 
@@ -86,3 +86,5 @@ export function CommentSection({ recipeId, isLoggedIn }: Props) {
     </section>
   );
 }
+
+export default withConvex(CommentSectionInner);

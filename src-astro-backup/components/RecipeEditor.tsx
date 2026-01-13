@@ -1,11 +1,10 @@
 import { useState, useEffect } from "react";
 import { useMutation } from "convex/react";
 import { useAuthToken } from "@convex-dev/auth/react";
-import { Link, useNavigate } from "@tanstack/react-router";
-import { api } from "~/convex/_generated/api";
-import type { Id } from "~/convex/_generated/dataModel";
-
-const CATEGORIES = ["General", "Breakfast", "Lunch", "Dinner", "Dessert", "Vegan", "Quick & Easy", "Baking", "Italian", "Asian", "Mexican"];
+import { api } from "../../convex/_generated/api";
+import { config } from "../config";
+import { withConvex } from "../convex";
+import type { Id } from "../../convex/_generated/dataModel";
 
 interface RecipeInput {
   id?: Id<"recipes">;
@@ -21,7 +20,7 @@ interface RecipeInput {
   slug?: string;
 }
 
-export function RecipeEditor({
+function RecipeEditorInner({
   initialData,
   isEditing = false,
 }: {
@@ -29,7 +28,6 @@ export function RecipeEditor({
   isEditing?: boolean;
 }) {
   const token = useAuthToken();
-  const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
   const [uploading, setUploading] = useState(false);
   const [form, setForm] = useState({
@@ -48,11 +46,12 @@ export function RecipeEditor({
   const createRecipe = useMutation(api.recipes.create);
   const updateRecipe = useMutation(api.recipes.update);
 
+  // Redirect immediately if no token
   useEffect(() => {
     if (token === null) {
-      navigate({ to: "/login" });
+      window.location.href = "/login";
     }
-  }, [token, navigate]);
+  }, [token]);
 
   if (token === null) {
     return null;
@@ -116,7 +115,7 @@ export function RecipeEditor({
         const result = await createRecipe(payload);
         slug = result.slug;
       }
-      navigate({ to: `/recipe/${slug}` });
+      window.location.href = `/recipe/${slug}`;
     } catch (err: unknown) {
       alert(err instanceof Error ? err.message : "Error saving recipe");
     } finally {
@@ -135,11 +134,19 @@ export function RecipeEditor({
           {isEditing ? "Refine your recipe" : "Share something delicious"}
         </h1>
         <div className="flex flex-wrap gap-3">
-          <Link to="/dashboard" className="btn-ghost text-sm">Cancel</Link>
-          <button onClick={() => handleSubmit("draft")} disabled={loading} className="btn-secondary text-sm">
+          <a href="/dashboard" className="btn-ghost text-sm">Cancel</a>
+          <button
+            onClick={() => handleSubmit("draft")}
+            disabled={loading}
+            className="btn-secondary text-sm"
+          >
             Save as draft
           </button>
-          <button onClick={() => handleSubmit("published")} disabled={loading} className="btn-primary text-sm">
+          <button
+            onClick={() => handleSubmit("published")}
+            disabled={loading}
+            className="btn-primary text-sm"
+          >
             {loading ? "Saving..." : isEditing ? "Update recipe" : "Publish"}
           </button>
         </div>
@@ -153,7 +160,9 @@ export function RecipeEditor({
             <h2 className="font-serif text-lg font-medium">Basic info</h2>
             
             <div>
-              <label htmlFor="title" className="block text-sm font-medium text-charcoal-light mb-2">Title</label>
+              <label htmlFor="title" className="block text-sm font-medium text-charcoal-light mb-2">
+                Title
+              </label>
               <input
                 id="title"
                 type="text"
@@ -166,9 +175,16 @@ export function RecipeEditor({
 
             <div className="grid sm:grid-cols-2 gap-4">
               <div>
-                <label htmlFor="category" className="block text-sm font-medium text-charcoal-light mb-2">Category</label>
-                <select id="category" className="input-field" value={form.category} onChange={(e) => update("category", e.target.value)}>
-                  {CATEGORIES.map((cat) => (
+                <label htmlFor="category" className="block text-sm font-medium text-charcoal-light mb-2">
+                  Category
+                </label>
+                <select
+                  id="category"
+                  className="input-field"
+                  value={form.category}
+                  onChange={(e) => update("category", e.target.value)}
+                >
+                  {config.categories.map((cat) => (
                     <option key={cat} value={cat}>{cat}</option>
                   ))}
                 </select>
@@ -189,7 +205,9 @@ export function RecipeEditor({
             </div>
 
             <div>
-              <label htmlFor="description" className="block text-sm font-medium text-charcoal-light mb-2">Description</label>
+              <label htmlFor="description" className="block text-sm font-medium text-charcoal-light mb-2">
+                Description
+              </label>
               <textarea
                 id="description"
                 className="textarea-field h-24"
@@ -216,6 +234,7 @@ export function RecipeEditor({
                   <button
                     onClick={() => setIngredients(ingredients.filter((_, idx) => idx !== i))}
                     className="btn-ghost px-3 text-stone hover:text-terracotta"
+                    aria-label="Remove ingredient"
                   >
                     <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                       <path d="M18 6 6 18M6 6l12 12"/>
@@ -224,7 +243,10 @@ export function RecipeEditor({
                 </div>
               ))}
             </div>
-            <button onClick={() => setIngredients([...ingredients, ""])} className="text-sm font-medium text-sage hover:text-sage-light">
+            <button
+              onClick={() => setIngredients([...ingredients, ""])}
+              className="text-sm font-medium text-sage hover:text-sage-light transition-colors"
+            >
               + Add ingredient
             </button>
           </section>
@@ -245,14 +267,20 @@ export function RecipeEditor({
                       placeholder="Describe this step..."
                       onChange={(e) => updateList(steps, setSteps, i, e.target.value)}
                     />
-                    <button onClick={() => setSteps(steps.filter((_, idx) => idx !== i))} className="text-xs text-stone hover:text-terracotta mt-1">
+                    <button
+                      onClick={() => setSteps(steps.filter((_, idx) => idx !== i))}
+                      className="text-xs text-stone hover:text-terracotta mt-1"
+                    >
                       Remove
                     </button>
                   </div>
                 </div>
               ))}
             </div>
-            <button onClick={() => setSteps([...steps, ""])} className="text-sm font-medium text-sage hover:text-sage-light">
+            <button
+              onClick={() => setSteps([...steps, ""])}
+              className="text-sm font-medium text-sage hover:text-sage-light transition-colors"
+            >
               + Add step
             </button>
           </section>
@@ -262,16 +290,29 @@ export function RecipeEditor({
         <aside>
           <div className="card p-5 sticky top-24 space-y-4">
             <h3 className="text-sm font-medium text-charcoal-light">Cover image</h3>
-            <div className={`relative aspect-video rounded-lg overflow-hidden border-2 border-dashed transition-colors ${
-              form.coverImageUrl ? "border-transparent" : "border-stone-light hover:border-sage bg-cream-dark"
-            }`}>
+            <div
+              className={`relative aspect-video rounded-lg overflow-hidden border-2 border-dashed transition-colors ${
+                form.coverImageUrl
+                  ? "border-transparent"
+                  : "border-stone-light hover:border-sage bg-cream-dark"
+              }`}
+            >
               {form.coverImageUrl ? (
                 <>
-                  <img src={form.coverImageUrl} className="w-full h-full object-cover" alt="Preview" />
+                  <img
+                    src={form.coverImageUrl}
+                    className="w-full h-full object-cover"
+                    alt="Preview"
+                  />
                   <div className="absolute inset-0 bg-charcoal/50 opacity-0 hover:opacity-100 transition-opacity flex items-center justify-center">
                     <label className="btn-primary text-xs cursor-pointer">
                       Change
-                      <input type="file" accept="image/*" onChange={handleUpload} className="hidden" />
+                      <input
+                        type="file"
+                        accept="image/*"
+                        onChange={handleUpload}
+                        className="hidden"
+                      />
                     </label>
                   </div>
                 </>
@@ -283,15 +324,26 @@ export function RecipeEditor({
                     <path d="m21 15-3.086-3.086a2 2 0 0 0-2.828 0L6 21"/>
                   </svg>
                   <span className="text-xs font-medium">Upload image</span>
-                  <input type="file" accept="image/*" onChange={handleUpload} className="hidden" />
+                  <input
+                    type="file"
+                    accept="image/*"
+                    onChange={handleUpload}
+                    className="hidden"
+                  />
                 </label>
               )}
             </div>
-            {uploading && <p className="text-xs text-sage text-center animate-pulse">Uploading...</p>}
-            <p className="text-xs text-stone">JPG or PNG, max 10MB</p>
+            {uploading && (
+              <p className="text-xs text-sage text-center animate-pulse">Uploading...</p>
+            )}
+            <p className="text-xs text-stone">
+              JPG or PNG, max 10MB
+            </p>
           </div>
         </aside>
       </div>
     </div>
   );
 }
+
+export default withConvex(RecipeEditorInner);

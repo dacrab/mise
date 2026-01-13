@@ -1,5 +1,5 @@
 import { useQuery } from "convex/react";
-import { api } from "~/convex/_generated/api";
+import { api } from "../../convex/_generated/api";
 
 export function TrendingRecipes() {
   const recipes = useQuery(api.discovery.trending, { limit: 6 }) ?? [];

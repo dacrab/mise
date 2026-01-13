@@ -1,7 +1,8 @@
-import { useState } from "react";
 import { useMutation } from "convex/react";
-import { api } from "~/convex/_generated/api";
-import type { Id } from "~/convex/_generated/dataModel";
+import { api } from "../../convex/_generated/api";
+import { useOptimisticCounter, useOptimisticToggle } from "../lib";
+import { withConvex } from "../convex";
+import type { Id } from "../../convex/_generated/dataModel";
 
 interface Props {
   recipeId: Id<"recipes">;
@@ -10,34 +11,43 @@ interface Props {
   likesCount: number;
 }
 
-export function SocialActions({ recipeId, initialLiked, initialBookmarked, likesCount }: Props) {
+function SocialActionsInner({ recipeId, initialLiked, initialBookmarked, likesCount }: Props) {
   const toggleLikeMutation = useMutation(api.social.toggleLike);
   const toggleBookmarkMutation = useMutation(api.social.toggleBookmark);
 
-  const [liked, setLiked] = useState(initialLiked);
-  const [bookmarked, setBookmarked] = useState(initialBookmarked);
-  const [count, setCount] = useState(likesCount);
+  const { count, active: liked, toggle: toggleLike } = useOptimisticCounter(
+    likesCount,
+    initialLiked,
+    async () => {
+      try {
+        await toggleLikeMutation({ recipeId });
+        return {};
+      } catch (e) {
+        return { error: e };
+      }
+    }
+  );
+
+  const [bookmarked, toggleBookmark] = useOptimisticToggle(
+    initialBookmarked,
+    async () => {
+      try {
+        await toggleBookmarkMutation({ recipeId });
+        return {};
+      } catch (e) {
+        return { error: e };
+      }
+    }
+  );
 
   const handleLike = async () => {
-    setLiked(!liked);
-    setCount(liked ? count - 1 : count + 1);
-    try {
-      await toggleLikeMutation({ recipeId });
-    } catch {
-      setLiked(liked);
-      setCount(count);
-      alert("Please sign in to like recipes.");
-    }
+    const { error } = await toggleLike();
+    if (error) alert("Please sign in to like recipes.");
   };
 
   const handleBookmark = async () => {
-    setBookmarked(!bookmarked);
-    try {
-      await toggleBookmarkMutation({ recipeId });
-    } catch {
-      setBookmarked(bookmarked);
-      alert("Please sign in to save recipes.");
-    }
+    const { error } = await toggleBookmark();
+    if (error) alert("Please sign in to save recipes.");
   };
 
   return (
@@ -71,3 +81,5 @@ export function SocialActions({ recipeId, initialLiked, initialBookmarked, likes
     </div>
   );
 }
+
+export default withConvex(SocialActionsInner);
