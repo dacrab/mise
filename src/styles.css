@@ -1,13 +1,11 @@
 @import "tailwindcss";
 
 @theme {
-  /* Typography - Warm editorial feel */
   --font-sans: "Inter", system-ui, sans-serif;
   --font-serif: "Playfair Display", "Georgia", serif;
   --font-hand: "Caveat", cursive;
   --font-body: "Inter", system-ui, sans-serif;
 
-  /* Warm & Cozy Palette */
   --color-cream: #FAF7F2;
   --color-cream-dark: #F3EDE4;
   --color-warm-white: #FFFDFB;
@@ -21,22 +19,9 @@
   --color-stone: #9C9488;
   --color-stone-light: #C4BEB4;
 
-  /* Shadows - Soft and warm */
   --shadow-soft: 0 2px 8px rgba(45, 42, 38, 0.06);
   --shadow-card: 0 4px 20px rgba(45, 42, 38, 0.08);
   --shadow-hover: 0 8px 30px rgba(45, 42, 38, 0.12);
-
-  /* Animations */
-  @keyframes fade-up {
-    from { opacity: 0; transform: translateY(16px); }
-    to { opacity: 1; transform: translateY(0); }
-  }
-  @keyframes fade-in {
-    from { opacity: 0; }
-    to { opacity: 1; }
-  }
-  --animation-fade-up: fade-up 0.5s ease-out forwards;
-  --animation-fade-in: fade-in 0.3s ease-out forwards;
 }
 
 @layer base {
@@ -51,16 +36,10 @@
   }
 }
 
-/* Utilities */
 @utility wrapper {
   @apply max-w-6xl mx-auto px-5 sm:px-8;
 }
 
-@utility text-balance {
-  text-wrap: balance;
-}
-
-/* Buttons */
 @utility btn {
   @apply inline-flex items-center justify-center gap-2 font-medium transition-all duration-200 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed;
 }
@@ -81,7 +60,6 @@
   @apply btn px-5 py-2.5 bg-sage text-warm-white rounded-lg hover:bg-sage-light active:scale-[0.98];
 }
 
-/* Form inputs */
 @utility input-field {
   @apply w-full px-4 py-3 bg-warm-white border border-stone-light/60 rounded-lg text-charcoal placeholder:text-stone transition-all focus:outline-none focus:border-sage focus:ring-2 focus:ring-sage/20;
 }
@@ -90,7 +68,6 @@
   @apply input-field resize-none;
 }
 
-/* Cards */
 @utility card {
   @apply bg-warm-white rounded-xl border border-cream-dark shadow-soft;
 }
@@ -99,7 +76,6 @@
   @apply card transition-all duration-300 hover:shadow-card hover:border-stone-light/60;
 }
 
-/* Tags/Badges */
 @utility tag {
   @apply inline-flex items-center px-2.5 py-1 text-xs font-medium rounded-md bg-cream-dark text-charcoal-light;
 }
@@ -108,108 +84,10 @@
   @apply tag bg-sage/15 text-sage;
 }
 
-/* Typography helpers */
-@utility heading-1 {
-  @apply font-serif text-4xl sm:text-5xl md:text-6xl font-medium tracking-tight leading-[1.1];
-}
-
-@utility heading-2 {
-  @apply font-serif text-2xl sm:text-3xl font-medium tracking-tight;
-}
-
-@utility heading-3 {
-  @apply font-serif text-xl sm:text-2xl font-medium;
-}
-
-@utility body-large {
-  @apply text-lg text-charcoal-light leading-relaxed;
-}
-
-@utility handwritten {
-  @apply font-hand text-2xl text-sage;
-}
-
-/* Dividers */
-@utility divider {
-  @apply border-t border-cream-dark;
-}
-
-/* Links */
-@utility link {
-  @apply text-charcoal underline decoration-stone-light underline-offset-2 hover:decoration-sage transition-colors;
-}
-
-/* Recipe card specific */
-@utility recipe-card {
-  @apply block bg-warm-white rounded-2xl overflow-hidden border border-cream-dark transition-all duration-300 hover:shadow-card hover:-translate-y-1;
-}
-
-@utility recipe-card-image {
-  @apply aspect-[4/3] w-full object-cover transition-transform duration-500;
-}
-
-/* Group hover for recipe cards */
-.group:hover .recipe-card-image {
-  transform: scale(1.05);
-}
-
-/* Glass effect for header */
 @utility glass {
   @apply bg-cream/80 backdrop-blur-md border-b border-cream-dark;
 }
 
-/* Animations */
-@utility animate-fade-up {
-  animation: var(--animation-fade-up);
-}
-
-@utility animate-fade-in {
-  animation: var(--animation-fade-in);
-}
-
-/* Stagger children animations */
-@utility stagger-1 { animation-delay: 0.1s; }
-@utility stagger-2 { animation-delay: 0.2s; }
-@utility stagger-3 { animation-delay: 0.3s; }
-@utility stagger-4 { animation-delay: 0.4s; }
-
-/* Page animations */
-.fade-in {
-  animation: fadeIn 0.6s ease-out both;
-  animation-delay: var(--delay, 0s);
-}
-
-.scale-in {
-  animation: scaleIn 0.6s ease-out both;
-  animation-delay: var(--delay, 0s);
-}
-
-.slide-up {
-  animation: slideUp 0.5s ease-out both;
-  animation-delay: var(--delay, 0s);
-}
-
-.stagger-item {
-  animation: fadeSlide 0.4s ease-out both;
-  animation-delay: var(--delay, 0s);
-}
-
-@keyframes fadeIn {
-  from { opacity: 0; transform: translateY(10px); }
-  to { opacity: 1; transform: translateY(0); }
-}
-
-@keyframes scaleIn {
-  from { opacity: 0; transform: scale(0.96); }
-  to { opacity: 1; transform: scale(1); }
-}
-
-@keyframes slideUp {
-  from { opacity: 0; transform: translateY(20px); }
-  to { opacity: 1; transform: translateY(0); }
-}
-
-@keyframes fadeSlide {
-  from { opacity: 0; transform: translateX(-10px); }
-  to { opacity: 1; transform: translateX(0); }
+.group:hover .recipe-card-image {
+  transform: scale(1.05);
 }
