@@ -1,11 +1,33 @@
-import { query, mutation } from "./_generated/server";
+import { query, mutation, QueryCtx } from "./_generated/server";
 import { v } from "convex/values";
 import { getAuthUserId } from "@convex-dev/auth/server";
+import { paginationOptsValidator } from "convex/server";
 
 // Generate slug from title
 const generateSlug = (title: string) =>
   title.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)+/g, "") +
   "-" + Math.random().toString(36).slice(2, 8);
+
+// Helper to add cover image URLs
+async function withCoverUrls<T extends { coverImage?: any }>(ctx: QueryCtx, recipes: T[]) {
+  return Promise.all(recipes.map(async (r) => ({
+    ...r,
+    coverImageUrl: r.coverImage ? await ctx.storage.getUrl(r.coverImage) : null,
+  })));
+}
+
+// Paginated list for infinite scroll
+export const listPaginated = query({
+  args: { paginationOpts: paginationOptsValidator, category: v.optional(v.string()) },
+  handler: async (ctx, { paginationOpts, category }) => {
+    const results = category
+      ? await ctx.db.query("recipes").withIndex("by_category", (q) => q.eq("category", category))
+          .filter((q) => q.eq(q.field("status"), "published")).order("desc").paginate(paginationOpts)
+      : await ctx.db.query("recipes").withIndex("by_status", (q) => q.eq("status", "published"))
+          .order("desc").paginate(paginationOpts);
+    return { ...results, page: await withCoverUrls(ctx, results.page) };
+  },
+});
 
 // List published recipes with optional filters
 export const list = query({

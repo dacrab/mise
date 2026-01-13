@@ -15,15 +15,23 @@ interface Props {
 export function CommentSection({ recipeId, isLoggedIn }: Props) {
   const { toast } = useToast();
   const comments = useQuery(api.social.getComments, { recipeId }) ?? [];
-  const addComment = useMutation(api.social.addComment);
   const [content, setContent] = useState("");
-  const [loading, setLoading] = useState(false);
+
+  const addComment = useMutation(api.social.addComment).withOptimisticUpdate(
+    (localStore, { recipeId, content }) => {
+      const current = localStore.getQuery(api.social.getComments, { recipeId });
+      if (current) {
+        localStore.setQuery(api.social.getComments, { recipeId }, [
+          { _id: crypto.randomUUID() as Id<"comments">, _creationTime: Date.now(), content, user: { name: "You", image: null } },
+          ...current,
+        ]);
+      }
+    }
+  );
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!content.trim()) return;
-
-    setLoading(true);
     try {
       await addComment({ recipeId, content });
       setContent("");
@@ -31,7 +39,6 @@ export function CommentSection({ recipeId, isLoggedIn }: Props) {
     } catch {
       toast("Could not post comment", "error");
     }
-    setLoading(false);
   };
 
   return (
@@ -42,15 +49,8 @@ export function CommentSection({ recipeId, isLoggedIn }: Props) {
 
       {isLoggedIn ? (
         <form onSubmit={handleSubmit} className="mb-8">
-          <textarea
-            className="textarea-field h-24 mb-3"
-            placeholder="Share your thoughts..."
-            value={content}
-            onChange={(e) => setContent(e.target.value)}
-          />
-          <button type="submit" disabled={loading} className="btn-primary text-sm">
-            {loading ? "Posting..." : "Post comment"}
-          </button>
+          <textarea className="textarea-field h-24 mb-3" placeholder="Share your thoughts..." value={content} onChange={(e) => setContent(e.target.value)} />
+          <button type="submit" className="btn-primary text-sm">Post comment</button>
         </form>
       ) : (
         <div className="card p-6 mb-8 text-center">
@@ -67,9 +67,7 @@ export function CommentSection({ recipeId, isLoggedIn }: Props) {
               {comment.user?.image ? (
                 <img src={comment.user.image} alt="" className="w-full h-full object-cover" />
               ) : (
-                <div className="w-full h-full flex items-center justify-center text-sm font-medium text-sage">
-                  {(comment.user?.name || "?")[0]}
-                </div>
+                <div className="w-full h-full flex items-center justify-center text-sm font-medium text-sage">{(comment.user?.name || "?")[0]}</div>
               )}
             </div>
             <div className="flex-1 min-w-0">

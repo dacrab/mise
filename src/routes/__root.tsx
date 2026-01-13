@@ -1,7 +1,22 @@
 /// <reference types="vite/client" />
 import type { QueryClient } from "@tanstack/react-query";
-import { createRootRouteWithContext, Outlet, HeadContent, Scripts, Link } from "@tanstack/react-router";
+import { createRootRouteWithContext, Outlet, HeadContent, Scripts, Link, useRouterState } from "@tanstack/react-router";
 import appCss from "../styles.css?url";
+
+function RootComponent() {
+  const { isLoading } = useRouterState();
+  
+  return (
+    <html lang="en">
+      <head><HeadContent /></head>
+      <body>
+        {isLoading && <div className="fixed top-0 left-0 w-full h-px bg-sage animate-pulse z-50" />}
+        <Outlet />
+        <Scripts />
+      </body>
+    </html>
+  );
+}
 
 export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()({
   head: () => ({
@@ -15,12 +30,7 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       { rel: "stylesheet", href: "https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;500;600;700&family=Inter:wght@300;400;500;600&family=Caveat:wght@400;500;600&display=swap" },
     ],
   }),
-  component: () => (
-    <html lang="en">
-      <head><HeadContent /></head>
-      <body><Outlet /><Scripts /></body>
-    </html>
-  ),
+  component: RootComponent,
   notFoundComponent: () => (
     <div className="min-h-screen flex items-center justify-center bg-cream p-8 text-center">
       <div>

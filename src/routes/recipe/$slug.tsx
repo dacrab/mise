@@ -78,7 +78,7 @@ function RecipePage() {
                 ))}
               </ol>
               <div className="mt-12 pt-8 border-t border-cream-dark">
-                <SocialActions recipeId={recipe._id} initialLiked={recipe.isLiked} initialBookmarked={recipe.isBookmarked} likesCount={recipe.likesCount} />
+                <SocialActions recipeId={recipe._id} slug={slug} />
               </div>
               <div className="mt-12">
                 <CommentSection recipeId={recipe._id} isLoggedIn={false} />

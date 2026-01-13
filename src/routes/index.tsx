@@ -1,20 +1,49 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { convexQuery } from "@convex-dev/react-query";
-import { useSuspenseQuery } from "@tanstack/react-query";
+import { useSuspenseQuery, useSuspenseInfiniteQuery } from "@tanstack/react-query";
+import { z } from "zod";
 import { api } from "convex/_generated/api";
 import { Header } from "@/components/Header";
 import { Footer } from "@/components/Footer";
+import { useEffect, useRef } from "react";
 
 const CATEGORIES = ["Breakfast", "Lunch", "Dinner", "Dessert", "Vegan", "Quick & Easy", "Baking", "Italian", "Asian", "Mexican"];
 
+const searchSchema = z.object({ q: z.string().default(""), category: z.string().default("") });
+
 export const Route = createFileRoute("/")({
-  validateSearch: (s: Record<string, unknown>) => ({ q: String(s.q || ""), category: String(s.category || "") }),
+  validateSearch: searchSchema.parse,
   component: HomePage,
 });
 
 function HomePage() {
   const { q, category } = Route.useSearch();
-  const { data: recipes } = useSuspenseQuery(convexQuery(api.recipes.list, { search: q || undefined, category: category || undefined, limit: 50 }));
+  const hasSearch = !!q;
+
+  // Use regular query for search, infinite for browsing
+  const searchQuery = useSuspenseQuery(convexQuery(api.recipes.list, { search: q || undefined, category: category || undefined, limit: 50 }));
+  const infiniteQuery = useSuspenseInfiniteQuery({
+    queryKey: ["recipes", "paginated", category],
+    queryFn: async ({ pageParam }) => {
+      const fn = convexQuery(api.recipes.listPaginated, { paginationOpts: { cursor: pageParam ?? null, numItems: 20 }, category: category || undefined });
+      return fn.queryFn!();
+    },
+    getNextPageParam: (lastPage) => lastPage.isDone ? undefined : lastPage.continueCursor,
+    initialPageParam: null as string | null,
+  });
+
+  const recipes = hasSearch ? searchQuery.data : infiniteQuery.data.pages.flatMap((p) => p.page);
+  const hasMore = !hasSearch && infiniteQuery.hasNextPage;
+  const { fetchNextPage } = infiniteQuery;
+
+  // Intersection observer for infinite scroll
+  const loadMoreRef = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    if (!loadMoreRef.current || !hasMore) return;
+    const observer = new IntersectionObserver(([entry]) => entry.isIntersecting && fetchNextPage(), { rootMargin: "200px" });
+    observer.observe(loadMoreRef.current);
+    return () => observer.disconnect();
+  }, [hasMore, fetchNextPage]);
 
   const hasFilters = q || category;
   const featured = !hasFilters && recipes[0];
@@ -23,7 +52,7 @@ function HomePage() {
   return (
     <>
       <Header />
-      <main className="pt-20 min-h-screen">
+      <main className="pt-20 min-h-dvh">
         <section className="wrapper">
           <div className="grid lg:grid-cols-2 gap-8 lg:gap-16 py-12 md:py-20 items-center">
             <div>
@@ -82,23 +111,26 @@ function HomePage() {
         <section id="recipes" className="wrapper pb-24">
           <div className="flex items-baseline justify-between mb-6">
             <h2 className="font-serif text-xl font-medium">{hasFilters ? "Results" : "Latest recipes"}</h2>
-            <span className="text-sm text-stone">{recipes.length} total</span>
+            <span className="text-sm text-stone">{recipes.length} loaded</span>
           </div>
           {grid.length > 0 ? (
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
-              {grid.map((r) => (
-                <Link key={r._id} to={`/recipe/${r.slug}`} className="group flex gap-4 p-3 -m-3 rounded-xl hover:bg-warm-white transition-colors">
-                  <div className="w-24 h-24 rounded-lg overflow-hidden bg-cream-dark shrink-0">
-                    {r.coverImageUrl ? <img src={r.coverImageUrl} alt={r.title} className="w-full h-full object-cover" /> : <RecipePlaceholder size={24} />}
-                  </div>
-                  <div className="flex-1 min-w-0 py-1">
-                    <span className="text-[11px] text-stone uppercase tracking-wide">{r.category}</span>
-                    <h3 className="font-serif text-base font-medium mt-0.5 mb-1 group-hover:text-sage transition-colors line-clamp-1">{r.title}</h3>
-                    <p className="text-sm text-stone line-clamp-2">{r.description || "A delicious recipe."}</p>
-                  </div>
-                </Link>
-              ))}
-            </div>
+            <>
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
+                {grid.map((r) => (
+                  <Link key={r._id} to={`/recipe/${r.slug}`} className="group flex gap-4 p-3 -m-3 rounded-xl hover:bg-warm-white transition-colors">
+                    <div className="w-24 h-24 rounded-lg overflow-hidden bg-cream-dark shrink-0">
+                      {r.coverImageUrl ? <img src={r.coverImageUrl} alt={r.title} className="w-full h-full object-cover" /> : <RecipePlaceholder size={24} />}
+                    </div>
+                    <div className="flex-1 min-w-0 py-1">
+                      <span className="text-[11px] text-stone uppercase tracking-wide">{r.category}</span>
+                      <h3 className="font-serif text-base font-medium mt-0.5 mb-1 group-hover:text-sage transition-colors line-clamp-1">{r.title}</h3>
+                      <p className="text-sm text-stone line-clamp-2">{r.description || "A delicious recipe."}</p>
+                    </div>
+                  </Link>
+                ))}
+              </div>
+              {hasMore && <div ref={loadMoreRef} className="py-8 text-center text-stone text-sm">Loading more...</div>}
+            </>
           ) : (
             <div className="py-16 text-center">
               <p className="text-stone mb-4">No recipes yet.</p>

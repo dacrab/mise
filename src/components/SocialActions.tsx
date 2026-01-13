@@ -1,49 +1,64 @@
 "use client";
 
-import { useState } from "react";
-import { useMutation } from "convex/react";
+import { useMutation, useQuery } from "convex/react";
 import { api } from "convex/_generated/api";
 import type { Id } from "convex/_generated/dataModel";
 import { useToast } from "./ui/toast";
 
 interface Props {
   recipeId: Id<"recipes">;
-  initialLiked: boolean;
-  initialBookmarked: boolean;
-  likesCount: number;
+  slug: string;
 }
 
-export function SocialActions({ recipeId, initialLiked, initialBookmarked, likesCount }: Props) {
+export function SocialActions({ recipeId, slug }: Props) {
   const { toast } = useToast();
-  const toggleLike = useMutation(api.social.toggleLike);
-  const toggleBookmark = useMutation(api.social.toggleBookmark);
+  const recipe = useQuery(api.recipes.getBySlug, { slug });
 
-  const [liked, setLiked] = useState(initialLiked);
-  const [bookmarked, setBookmarked] = useState(initialBookmarked);
-  const [count, setCount] = useState(likesCount);
+  const toggleLike = useMutation(api.social.toggleLike).withOptimisticUpdate(
+    (localStore, _args) => {
+      const current = localStore.getQuery(api.recipes.getBySlug, { slug });
+      if (current) {
+        localStore.setQuery(api.recipes.getBySlug, { slug }, {
+          ...current,
+          isLiked: !current.isLiked,
+          likesCount: current.isLiked ? current.likesCount - 1 : current.likesCount + 1,
+        });
+      }
+    }
+  );
+
+  const toggleBookmark = useMutation(api.social.toggleBookmark).withOptimisticUpdate(
+    (localStore, _args) => {
+      const current = localStore.getQuery(api.recipes.getBySlug, { slug });
+      if (current) {
+        localStore.setQuery(api.recipes.getBySlug, { slug }, {
+          ...current,
+          isBookmarked: !current.isBookmarked,
+        });
+      }
+    }
+  );
 
   const handleLike = async () => {
-    setLiked(!liked);
-    setCount(liked ? count - 1 : count + 1);
     try {
       await toggleLike({ recipeId });
     } catch {
-      setLiked(liked);
-      setCount(count);
       toast("Sign in to like recipes", "error");
     }
   };
 
   const handleBookmark = async () => {
-    setBookmarked(!bookmarked);
     try {
-      await toggleBookmark({ recipeId });
-      toast(bookmarked ? "Removed from saved" : "Saved!", "success");
+      const result = await toggleBookmark({ recipeId });
+      toast(result?.bookmarked ? "Saved!" : "Removed from saved", "success");
     } catch {
-      setBookmarked(bookmarked);
       toast("Sign in to save recipes", "error");
     }
   };
+
+  const liked = recipe?.isLiked ?? false;
+  const bookmarked = recipe?.isBookmarked ?? false;
+  const count = recipe?.likesCount ?? 0;
 
   return (
     <div className="flex items-center gap-3">
