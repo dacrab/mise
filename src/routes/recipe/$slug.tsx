@@ -21,13 +21,15 @@ function RecipePage() {
     throw notFound();
   }
 
+  const delay = (s: number) => ({ "--delay": `${s}s` } as React.CSSProperties);
+
   return (
     <>
       <Header variant="minimal" backLink={{ href: "/", label: "Recipes" }} />
       <main className="pt-20 pb-24">
         <article className="wrapper max-w-4xl">
           {/* Header */}
-          <header className="py-12 md:py-16">
+          <header className="py-12 md:py-16 fade-in" style={delay(0)}>
             <span className="tag-sage mb-4 inline-block">{recipe.category || "Recipe"}</span>
             <h1 className="heading-1 text-3xl sm:text-4xl md:text-5xl mb-4">{recipe.title}</h1>
             {recipe.description && (
@@ -59,7 +61,7 @@ function RecipePage() {
 
           {/* Cover Image */}
           {recipe.coverImageUrl && (
-            <div className="rounded-2xl overflow-hidden aspect-video bg-cream-dark mb-12 relative group">
+            <div className="rounded-2xl overflow-hidden aspect-video bg-cream-dark mb-12 relative group scale-in" style={delay(0.1)}>
               <img src={recipe.coverImageUrl} alt={recipe.title} className="w-full h-full object-cover" />
               {recipe.videoUrl && (
                 <a href={recipe.videoUrl} target="_blank" rel="noopener noreferrer" className="absolute bottom-4 right-4 btn-primary text-sm">
@@ -75,7 +77,7 @@ function RecipePage() {
           {/* Content */}
           <div className="grid md:grid-cols-[280px_1fr] gap-8 md:gap-12">
             {/* Ingredients Sidebar */}
-            <aside>
+            <aside className="fade-in" style={delay(0.2)}>
               <div className="card p-6 sticky top-24">
                 <h3 className="font-serif text-lg font-medium mb-4">Ingredients</h3>
                 <ul className="space-y-3">
@@ -90,7 +92,7 @@ function RecipePage() {
             </aside>
 
             {/* Steps */}
-            <section>
+            <section className="fade-in" style={delay(0.3)}>
               <h3 className="font-serif text-lg font-medium mb-6">Instructions</h3>
               <ol className="space-y-6">
                 {recipe.steps.map((step, i) => (

@@ -24,6 +24,7 @@ function ChefPage() {
   );
 
   const publishedRecipes = chefRecipes.filter((r) => r.status === "published");
+  const delay = (s: number) => ({ "--delay": `${s}s` } as React.CSSProperties);
 
   return (
     <>
@@ -31,9 +32,9 @@ function ChefPage() {
       <main className="pt-20 pb-24">
         <div className="wrapper">
           {/* Profile */}
-          <div className="py-12 md:py-16 border-b border-cream-dark mb-10">
+          <div className="py-12 md:py-16 border-b border-cream-dark mb-10 fade-in" style={delay(0)}>
             <div className="flex flex-col sm:flex-row items-center sm:items-start gap-6">
-              <div className="w-24 h-24 rounded-full bg-sage/15 overflow-hidden shrink-0">
+              <div className="w-24 h-24 rounded-full bg-sage/15 overflow-hidden shrink-0 scale-in" style={delay(0.1)}>
                 {chef.image ? (
                   <img src={chef.image} alt={chef.name} className="w-full h-full object-cover" />
                 ) : (
@@ -54,13 +55,13 @@ function ChefPage() {
           </div>
 
           {/* Recipes */}
-          <section>
+          <section className="fade-in" style={delay(0.2)}>
             <h2 className="font-serif text-xl font-medium mb-6">Recipes</h2>
 
             {publishedRecipes.length > 0 ? (
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-                {publishedRecipes.map((recipe) => (
-                  <Link key={recipe._id} to={`/recipe/${recipe.slug}`} className="recipe-card group">
+                {publishedRecipes.map((recipe, i) => (
+                  <Link key={recipe._id} to={`/recipe/${recipe.slug}`} className="recipe-card group stagger-item" style={delay(0.25 + i * 0.05)}>
                     <div className="relative overflow-hidden">
                       {recipe.coverImageUrl ? (
                         <img src={recipe.coverImageUrl} alt={recipe.title} className="recipe-card-image" />

@@ -11,7 +11,7 @@ function CreateRecipePage() {
   return (
     <>
       <Header variant="dashboard" backLink={{ href: "/dashboard", label: "Dashboard" }} />
-      <main className="pt-20 min-h-screen">
+      <main className="pt-20 min-h-screen fade-in" style={{ "--delay": "0s" } as React.CSSProperties}>
         <RecipeEditor />
       </main>
       <Footer />

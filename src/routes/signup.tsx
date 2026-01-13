@@ -6,12 +6,14 @@ export const Route = createFileRoute("/signup")({
 });
 
 function SignupPage() {
+  const delay = (s: number) => ({ "--delay": `${s}s` } as React.CSSProperties);
+
   return (
     <div className="min-h-screen flex">
       {/* Left panel */}
-      <div className="hidden lg:flex lg:w-1/2 bg-sage p-12 flex-col justify-between">
+      <div className="hidden lg:flex lg:w-1/2 bg-sage p-12 flex-col justify-between fade-in" style={delay(0)}>
         <Link to="/" className="font-serif text-2xl font-semibold text-warm-white">mise</Link>
-        <div>
+        <div className="fade-in" style={delay(0.1)}>
           <p className="font-hand text-3xl text-cream mb-4">join the kitchen</p>
           <p className="text-cream/80 text-lg max-w-md">
             Share your favorite recipes with a community of home cooks who care about real food.
@@ -22,7 +24,7 @@ function SignupPage() {
 
       {/* Right panel */}
       <div className="flex-1 flex items-center justify-center p-8 bg-cream">
-        <div className="w-full max-w-md">
+        <div className="w-full max-w-md fade-in" style={delay(0.15)}>
           <div className="lg:hidden mb-8">
             <Link to="/" className="font-serif text-2xl font-semibold text-charcoal">mise</Link>
           </div>
