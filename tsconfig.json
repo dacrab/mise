@@ -13,10 +13,12 @@
     "noEmit": true,
     "baseUrl": ".",
     "paths": {
-      "~/*": ["./src/*"],
-      "~/convex/*": ["./convex/*"]
+      "@/*": ["./src/*"],
+      "@/components/*": ["./src/components/*"],
+      "@/routes/*": ["./src/routes/*"],
+      "convex/*": ["./convex/*"]
     }
   },
   "include": ["src/**/*", "convex/**/*"],
-  "exclude": ["node_modules", "dist", ".vinxi"]
+  "exclude": ["node_modules", "dist"]
 }

@@ -1,8 +1,8 @@
 import { useQuery, useMutation } from "convex/react";
 import { useAuthActions } from "@convex-dev/auth/react";
 import { Link, useNavigate, useSearch } from "@tanstack/react-router";
-import { api } from "~/convex/_generated/api";
-import type { Id } from "~/convex/_generated/dataModel";
+import { api } from "convex/_generated/api";
+import type { Id } from "convex/_generated/dataModel";
 
 export function Dashboard() {
   const navigate = useNavigate();

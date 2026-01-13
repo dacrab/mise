@@ -1,11 +1,11 @@
 import { createFileRoute, Link, notFound } from "@tanstack/react-router";
 import { convexQuery } from "@convex-dev/react-query";
 import { useSuspenseQuery } from "@tanstack/react-query";
-import { api } from "~/convex/_generated/api";
-import { Header } from "~/components/Header";
-import { Footer } from "~/components/Footer";
-import { SocialActions } from "~/components/SocialActions";
-import { CommentSection } from "~/components/CommentSection";
+import { api } from "convex/_generated/api";
+import { Header } from "@/components/Header";
+import { Footer } from "@/components/Footer";
+import { SocialActions } from "@/components/SocialActions";
+import { CommentSection } from "@/components/CommentSection";
 
 export const Route = createFileRoute("/recipe/$slug")({
   component: RecipePage,

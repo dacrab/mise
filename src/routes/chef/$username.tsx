@@ -1,9 +1,9 @@
 import { createFileRoute, Link, notFound } from "@tanstack/react-router";
 import { convexQuery } from "@convex-dev/react-query";
 import { useSuspenseQuery } from "@tanstack/react-query";
-import { api } from "~/convex/_generated/api";
-import { Header } from "~/components/Header";
-import { Footer } from "~/components/Footer";
+import { api } from "convex/_generated/api";
+import { Header } from "@/components/Header";
+import { Footer } from "@/components/Footer";
 
 export const Route = createFileRoute("/chef/$username")({
   component: ChefPage,

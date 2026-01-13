@@ -2,8 +2,8 @@ import { useState, useEffect } from "react";
 import { useMutation } from "convex/react";
 import { useAuthToken } from "@convex-dev/auth/react";
 import { Link, useNavigate } from "@tanstack/react-router";
-import { api } from "~/convex/_generated/api";
-import type { Id } from "~/convex/_generated/dataModel";
+import { api } from "convex/_generated/api";
+import type { Id } from "convex/_generated/dataModel";
 
 const CATEGORIES = ["General", "Breakfast", "Lunch", "Dinner", "Dessert", "Vegan", "Quick & Easy", "Baking", "Italian", "Asian", "Mexican"];
 
