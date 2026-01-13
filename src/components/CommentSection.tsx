@@ -1,7 +1,6 @@
 import { useState } from "react";
 import { useMutation, useQuery } from "convex/react";
 import { api } from "../../convex/_generated/api";
-import { Avatar } from "../lib";
 import { withConvex } from "../convex";
 import type { Id } from "../../convex/_generated/dataModel";
 
@@ -31,49 +30,55 @@ function CommentSectionInner({ recipeId, isLoggedIn }: Props) {
   };
 
   return (
-    <section className="mt-16 pt-12 border-t border-gray-100">
-      <h3 className="section-heading text-2xl mb-8">Discussion ({comments.length})</h3>
+    <section>
+      <h3 className="font-serif text-lg font-medium mb-6">
+        Comments {comments.length > 0 && <span className="text-stone font-normal">({comments.length})</span>}
+      </h3>
 
       {isLoggedIn ? (
-        <form onSubmit={handleSubmit} className="mb-12">
+        <form onSubmit={handleSubmit} className="mb-8">
           <textarea
-            className="input-field min-h-[100px] rounded-2xl py-4 mb-4"
-            placeholder="What do you think of this recipe?"
+            className="textarea-field h-24 mb-3"
+            placeholder="Share your thoughts..."
             value={content}
             onChange={(e) => setContent(e.target.value)}
           />
-          <button type="submit" disabled={loading} className="btn-primary">
-            {loading ? "Posting..." : "Post Comment"}
+          <button type="submit" disabled={loading} className="btn-primary text-sm">
+            {loading ? "Posting..." : "Post comment"}
           </button>
         </form>
       ) : (
-        <div className="bg-brand-accent/30 p-6 rounded-2xl mb-12 text-center">
-          <p className="text-gray-600 mb-4">You must be signed in to join the conversation.</p>
-          <a href="/login" className="btn-outline text-sm">
-            Sign In
-          </a>
+        <div className="card p-6 mb-8 text-center">
+          <p className="text-stone text-sm mb-3">Sign in to join the conversation.</p>
+          <a href="/login" className="btn-secondary text-sm">Sign in</a>
         </div>
       )}
 
-      <div className="space-y-8">
+      <div className="space-y-6">
         {comments.length === 0 && (
-          <p className="text-gray-400 italic">No comments yet. Be the first!</p>
+          <p className="text-stone text-sm">No comments yet.</p>
         )}
         {comments.map((comment) => (
-          <div key={comment._id} className="flex gap-4">
-            <div className="shrink-0">
-              <Avatar src={comment.user?.image} name={comment.user?.name} />
+          <div key={comment._id} className="flex gap-3">
+            <div className="w-9 h-9 rounded-full bg-sage/15 overflow-hidden shrink-0">
+              {comment.user?.image ? (
+                <img src={comment.user.image} alt="" className="w-full h-full object-cover" />
+              ) : (
+                <div className="w-full h-full flex items-center justify-center text-sm font-medium text-sage">
+                  {(comment.user?.name || "?")[0]}
+                </div>
+              )}
             </div>
-            <div className="flex-1">
-              <div className="flex items-center gap-2 mb-1">
-                <span className="text-sm font-bold text-brand-text">
+            <div className="flex-1 min-w-0">
+              <div className="flex items-baseline gap-2 mb-1">
+                <span className="text-sm font-medium text-charcoal">
                   {comment.user?.name || "Anonymous"}
                 </span>
-                <span className="text-[10px] text-gray-400 font-bold uppercase tracking-widest">
+                <span className="text-xs text-stone-light">
                   {new Date(comment._creationTime).toLocaleDateString()}
                 </span>
               </div>
-              <p className="text-gray-600 leading-relaxed text-sm">{comment.content}</p>
+              <p className="text-sm text-charcoal-light leading-relaxed">{comment.content}</p>
             </div>
           </div>
         ))}

@@ -1,21 +1,25 @@
 ---
 ---
-<footer class="border-t border-brand-border bg-white mt-auto">
-    <div class="max-w-6xl mx-auto px-6 py-12 flex flex-col md:flex-row items-center justify-between gap-6">
-        <div class="text-center md:text-left">
-            <span class="font-serif text-xl font-bold">Mise.</span>
-            <p class="text-sm text-gray-500 mt-2">Crafted with care for the home chef community.</p>
+<footer class="border-t border-cream-dark bg-warm-white mt-auto">
+    <div class="wrapper py-12">
+        <div class="flex flex-col md:flex-row items-start md:items-center justify-between gap-8">
+            <div>
+                <span class="font-serif text-xl font-semibold text-charcoal">mise</span>
+                <p class="text-sm text-stone mt-2 max-w-xs">
+                    A place for home cooks to share recipes made with love.
+                </p>
+            </div>
+            <nav class="flex flex-wrap gap-x-6 gap-y-2 text-sm">
+                <a href="/about" class="text-stone hover:text-charcoal transition-colors">About</a>
+                <a href="/privacy" class="text-stone hover:text-charcoal transition-colors">Privacy</a>
+                <a href="/terms" class="text-stone hover:text-charcoal transition-colors">Terms</a>
+                <a href="https://github.com/dacrab/mise" class="text-stone hover:text-charcoal transition-colors">GitHub</a>
+            </nav>
         </div>
-        <div class="flex gap-6 text-sm text-gray-600 font-medium">
-            <a href="/about" class="hover:text-brand-primary transition-colors">About</a>
-            <a href="/privacy" class="hover:text-brand-primary transition-colors">Privacy</a>
-            <a href="/terms" class="hover:text-brand-primary transition-colors">Terms</a>
-            <a href="https://github.com/dacrab/mise" class="hover:text-brand-primary transition-colors">GitHub</a>
+        <div class="mt-8 pt-6 border-t border-cream-dark">
+            <p class="text-xs text-stone-light">
+                © {new Date().getFullYear()} mise. Made with care.
+            </p>
         </div>
-    </div>
-    <div class="max-w-6xl mx-auto px-6 pb-8 text-center md:text-left">
-        <p class="text-[10px] text-gray-400 uppercase tracking-widest font-bold">
-            © {new Date().getFullYear()} Mise — All rights reserved.
-        </p>
     </div>
 </footer>

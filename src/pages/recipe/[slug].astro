@@ -18,96 +18,112 @@ if (!recipe) return Astro.redirect('/404');
 export const prerender = false;
 ---
 
-<Layout title={`${recipe.title} - Mise`}>
-    <Header variant="minimal" />
+<Layout title={`${recipe.title} — mise`}>
+    <Header variant="minimal" backLink={{ href: '/', label: 'Recipes' }} />
 
-    <main class="pt-24 pb-20">
+    <main class="pt-20 pb-24">
         <article class="wrapper max-w-4xl">
             <!-- Header -->
-            <header class="mb-12 text-center">
-                <span class="inline-flex items-center px-3 py-1 rounded-full bg-brand-accent text-brand-primary text-xs font-bold uppercase tracking-widest mb-6">
-                    {recipe.category || 'General'}
-                </span>
-                <h1 class="display-heading mb-6 text-4xl md:text-6xl leading-tight">{recipe.title}</h1>
-                <p class="prose-text text-xl max-w-2xl mx-auto mb-8">{recipe.description}</p>
+            <header class="py-12 md:py-16">
+                <span class="tag-sage mb-4 inline-block">{recipe.category || 'Recipe'}</span>
+                <h1 class="heading-1 text-3xl sm:text-4xl md:text-5xl mb-4">{recipe.title}</h1>
+                {recipe.description && (
+                    <p class="body-large max-w-2xl">{recipe.description}</p>
+                )}
 
-                <div class="flex items-center justify-center gap-4 py-6 border-y border-gray-100">
-                    <a href={`/chef/${recipe.author?.username || recipe.author?.name}`} class="flex items-center gap-2 hover:opacity-80">
+                <div class="flex flex-wrap items-center gap-4 mt-8 pt-6 border-t border-cream-dark">
+                    <a href={`/chef/${recipe.author?.username || recipe.author?.name}`} class="flex items-center gap-3 group">
                         {recipe.author?.image ? (
-                            <img src={recipe.author.image} alt={recipe.author.name || 'Author'} class="w-10 h-10 rounded-full ring-2 ring-brand-accent shadow-sm" />
+                            <img src={recipe.author.image} alt={recipe.author.name || 'Author'} class="w-10 h-10 rounded-full object-cover ring-2 ring-cream-dark" />
                         ) : (
-                            <div class="w-10 h-10 rounded-full bg-brand-accent flex items-center justify-center text-brand-primary font-bold">
+                            <div class="w-10 h-10 rounded-full bg-sage/15 flex items-center justify-center text-sage font-medium">
                                 {(recipe.author?.name || 'U')[0]}
                             </div>
                         )}
-                        <div class="text-left">
-                            <span class="block text-sm font-bold text-brand-text">{recipe.author?.name || 'Community Chef'}</span>
-                            <span class="block text-[10px] uppercase tracking-widest text-gray-400 font-bold">View Kitchen →</span>
+                        <div>
+                            <span class="block text-sm font-medium text-charcoal group-hover:text-sage transition-colors">
+                                {recipe.author?.name || 'Community Chef'}
+                            </span>
+                            <span class="block text-xs text-stone">View kitchen →</span>
                         </div>
                     </a>
-                    <div class="w-px h-8 bg-gray-100"></div>
-                    <div class="text-left">
-                        <span class="block text-sm font-bold text-brand-text">Published</span>
-                        <time class="block text-xs text-gray-500">{new Date(recipe._creationTime).toLocaleDateString(undefined, { year: 'numeric', month: 'long', day: 'numeric' })}</time>
-                    </div>
+                    <span class="text-stone-light">·</span>
+                    <time class="text-sm text-stone">
+                        {new Date(recipe._creationTime).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}
+                    </time>
                 </div>
             </header>
 
             <!-- Cover Image -->
             {recipe.coverImageUrl && (
-                <div class="rounded-3xl overflow-hidden aspect-video bg-gray-100 mb-16 shadow-2xl shadow-black/5 relative group">
-                    <Image src={recipe.coverImageUrl} alt={recipe.title} width={1200} height={675}
-                        class="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105" />
+                <div class="rounded-2xl overflow-hidden aspect-video bg-cream-dark mb-12 relative group">
+                    <Image 
+                        src={recipe.coverImageUrl} 
+                        alt={recipe.title} 
+                        width={1200} 
+                        height={675}
+                        class="w-full h-full object-cover" 
+                    />
                     {recipe.videoUrl && (
-                        <a href={recipe.videoUrl} target="_blank" rel="noopener noreferrer"
-                            class="absolute bottom-6 right-6 btn-primary flex items-center gap-2 shadow-2xl">
-                            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
-                                <path d="m22 8-6 4 6 4V8Z"/><rect width="14" height="12" x="2" y="6" rx="2" ry="2"/>
+                        <a 
+                            href={recipe.videoUrl} 
+                            target="_blank" 
+                            rel="noopener noreferrer"
+                            class="absolute bottom-4 right-4 btn-primary text-sm"
+                        >
+                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+                                <polygon points="5 3 19 12 5 21 5 3"/>
                             </svg>
-                            Watch Tutorial
+                            Watch video
                         </a>
                     )}
                 </div>
             )}
 
-            <!-- Content Grid -->
-            <div class="grid-recipe-layout">
+            <!-- Content -->
+            <div class="grid md:grid-cols-[280px_1fr] gap-8 md:gap-12">
+                <!-- Ingredients Sidebar -->
                 <aside>
-                    <div class="p-8 rounded-2xl bg-brand-accent/50 border border-brand-accent-border sticky top-24">
-                        <h3 class="section-heading text-2xl mb-6">Ingredients</h3>
-                        <ul class="space-y-4">
+                    <div class="card p-6 sticky top-24">
+                        <h3 class="font-serif text-lg font-medium mb-4">Ingredients</h3>
+                        <ul class="space-y-3">
                             {recipe.ingredients.map((ing) => (
-                                <li class="flex gap-3 text-brand-text text-sm font-medium">
-                                    <div class="w-5 h-5 rounded-full bg-brand-surface border border-brand-accent-border flex items-center justify-center shrink-0 mt-0.5">
-                                        <div class="w-1.5 h-1.5 rounded-full bg-brand-primary"></div>
-                                    </div>
-                                    <span class="leading-tight">{ing}</span>
+                                <li class="flex items-start gap-3 text-sm text-charcoal-light">
+                                    <span class="w-1.5 h-1.5 rounded-full bg-sage mt-2 shrink-0"></span>
+                                    <span>{ing}</span>
                                 </li>
                             ))}
                         </ul>
                     </div>
                 </aside>
 
+                <!-- Steps -->
                 <section>
-                    <h3 class="section-heading text-2xl mb-8">Preparation Steps</h3>
-                    <div class="space-y-12">
-                        {recipe.steps.map((step, i, arr) => (
-                            <div class="group relative flex gap-6">
-                                <div class="flex flex-col items-center">
-                                    <div class="flex items-center justify-center w-10 h-10 rounded-full bg-brand-text text-white font-serif text-lg font-bold shadow-lg shrink-0 z-10">
-                                        {i + 1}
-                                    </div>
-                                    {i !== arr.length - 1 && <div class="w-0.5 h-full bg-gray-100 absolute top-10"></div>}
-                                </div>
-                                <p class="text-lg text-gray-700 leading-relaxed pt-1 pb-8 group-hover:text-black">{step}</p>
-                            </div>
+                    <h3 class="font-serif text-lg font-medium mb-6">Instructions</h3>
+                    <ol class="space-y-6">
+                        {recipe.steps.map((step, i) => (
+                            <li class="flex gap-4">
+                                <span class="flex items-center justify-center w-7 h-7 rounded-full bg-charcoal text-cream text-sm font-medium shrink-0">
+                                    {i + 1}
+                                </span>
+                                <p class="text-charcoal-light leading-relaxed pt-0.5">{step}</p>
+                            </li>
                         ))}
+                    </ol>
+
+                    <div class="mt-12 pt-8 border-t border-cream-dark">
+                        <SocialActions 
+                            client:idle 
+                            recipeId={recipe._id} 
+                            initialLiked={recipe.isLiked}
+                            initialBookmarked={recipe.isBookmarked} 
+                            likesCount={recipe.likesCount} 
+                        />
                     </div>
 
-                    <SocialActions client:load recipeId={recipe._id} initialLiked={recipe.isLiked}
-                        initialBookmarked={recipe.isBookmarked} likesCount={recipe.likesCount} />
-
-                    <CommentSection client:visible recipeId={recipe._id} isLoggedIn={false} />
+                    <div class="mt-12">
+                        <CommentSection client:visible recipeId={recipe._id} isLoggedIn={false} />
+                    </div>
                 </section>
             </div>
         </article>

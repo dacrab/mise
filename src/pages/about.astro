@@ -1,26 +1,40 @@
 ---
 import Layout from '@/layouts/Layout.astro';
+import Header from '@/components/Header.astro';
 import Footer from '@/components/Footer.astro';
 ---
 
-<Layout title="About Us - Mise">
-    <header class="fixed top-0 w-full z-50 glass">
-        <div class="wrapper h-16 flex items-center justify-between">
-            <a href="/" class="font-serif text-2xl font-bold tracking-tight">Mise.</a>
-            <a href="/" class="btn-ghost text-sm font-medium">Back to Home</a>
-        </div>
-    </header>
+<Layout title="About — mise">
+    <Header backLink={{ href: '/', label: 'Back' }} />
 
-    <main class="pt-32 pb-20">
-        <article class="wrapper max-w-3xl prose-text text-center">
-            <h1 class="display-heading mb-8">The story behind the flavor.</h1>
-            <p class="text-xl mb-12">Mise is a platform born from the love of home cooking and the desire to share culinary secrets with a global community.</p>
+    <main class="pt-20 pb-24">
+        <article class="wrapper max-w-2xl py-12 md:py-16">
+            <p class="font-hand text-xl text-sage mb-3">our story</p>
+            <h1 class="heading-1 text-3xl md:text-4xl mb-6">A place for home cooks</h1>
+            <p class="body-large mb-12">
+                Mise is a platform born from the love of home cooking and the desire to share 
+                culinary secrets with a global community.
+            </p>
             
-            <div class="aspect-video rounded-3xl bg-brand-accent/30 overflow-hidden mb-12">
-                <img src="https://images.unsplash.com/photo-1556910103-1c02745a3002?q=80&w=2070&auto=format&fit=crop" class="w-full h-full object-cover opacity-80" alt="Cooking" />
+            <div class="aspect-video rounded-xl bg-cream-dark overflow-hidden mb-12">
+                <img 
+                    src="https://images.unsplash.com/photo-1556910103-1c02745a3002?q=80&w=2070&auto=format&fit=crop" 
+                    class="w-full h-full object-cover" 
+                    alt="Cooking" 
+                    loading="lazy" 
+                />
             </div>
 
-            <p>Our mission is simple: provide a beautiful, fast, and secure space for chefs of all levels to document their creations and discover new tastes.</p>
+            <div class="space-y-4 text-charcoal-light leading-relaxed">
+                <p>
+                    Our mission is simple: provide a beautiful, fast, and secure space for cooks 
+                    of all levels to document their creations and discover new tastes.
+                </p>
+                <p>
+                    No algorithms pushing viral content. No ads interrupting your flow. 
+                    Just good food, shared with intention.
+                </p>
+            </div>
         </article>
     </main>
     <Footer />

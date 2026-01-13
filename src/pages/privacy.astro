@@ -1,32 +1,36 @@
 ---
 import Layout from '@/layouts/Layout.astro';
+import Header from '@/components/Header.astro';
 import Footer from '@/components/Footer.astro';
 ---
 
-<Layout title="Privacy Policy - Mise">
-    <header class="fixed top-0 w-full z-50 glass">
-        <div class="wrapper h-16 flex items-center justify-between">
-            <a href="/" class="font-serif text-2xl font-bold tracking-tight">Mise.</a>
-            <a href="/" class="btn-ghost text-sm font-medium">Back to Home</a>
-        </div>
-    </header>
+<Layout title="Privacy — mise">
+    <Header backLink={{ href: '/', label: 'Back' }} />
 
-    <main class="pt-32 pb-20">
-        <article class="wrapper max-w-3xl prose-text">
-            <h1 class="display-heading mb-8 text-4xl md:text-5xl">Privacy Policy</h1>
-            <p class="mb-6">At Mise, we respect your privacy and are committed to protecting your personal data.</p>
+    <main class="pt-20 pb-24">
+        <article class="wrapper max-w-2xl py-12 md:py-16">
+            <h1 class="heading-1 text-3xl md:text-4xl mb-6">Privacy Policy</h1>
+            <p class="body-large mb-12">We respect your privacy and are committed to protecting your personal data.</p>
             
-            <h2 class="section-heading text-2xl mt-12 mb-4">1. Information We Collect</h2>
-            <p>We collect information you provide directly to us when you create an account, such as your name and email address.</p>
+            <div class="space-y-10 text-charcoal-light leading-relaxed">
+                <section>
+                    <h2 class="font-serif text-xl font-medium text-charcoal mb-3">1. Information We Collect</h2>
+                    <p>We collect information you provide directly when you create an account, such as your name and email address.</p>
+                </section>
 
-            <h2 class="section-heading text-2xl mt-12 mb-4">2. How We Use Your Information</h2>
-            <p>We use your information to provide, maintain, and improve our services, including personalize your experience and manage your recipe collection.</p>
+                <section>
+                    <h2 class="font-serif text-xl font-medium text-charcoal mb-3">2. How We Use Your Information</h2>
+                    <p>We use your information to provide, maintain, and improve our services, including personalizing your experience and managing your recipe collection.</p>
+                </section>
 
-            <h2 class="section-heading text-2xl mt-12 mb-4">3. Data Storage</h2>
-            <p>Your data is stored securely using Convex, a real-time backend platform with built-in file storage.</p>
+                <section>
+                    <h2 class="font-serif text-xl font-medium text-charcoal mb-3">3. Data Storage</h2>
+                    <p>Your data is stored securely using Convex, a real-time backend platform with built-in file storage.</p>
+                </section>
+            </div>
 
-            <footer class="mt-20 pt-8 border-t border-gray-100 text-sm text-gray-400">
-                Last updated: December 18, 2025
+            <footer class="mt-16 pt-6 border-t border-cream-dark text-sm text-stone">
+                Last updated: January 2026
             </footer>
         </article>
     </main>

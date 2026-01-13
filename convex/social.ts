@@ -11,9 +11,7 @@ export const toggleLike = mutation({
 
     const existing = await ctx.db
       .query("likes")
-      .withIndex("by_user_recipe", (q) =>
-        q.eq("userId", userId).eq("recipeId", recipeId)
-      )
+      .withIndex("by_user_recipe", (q) => q.eq("userId", userId).eq("recipeId", recipeId))
       .first();
 
     if (existing) {
@@ -22,22 +20,33 @@ export const toggleLike = mutation({
     }
 
     await ctx.db.insert("likes", { recipeId, userId });
+
+    // Notify recipe owner
+    const recipe = await ctx.db.get(recipeId);
+    if (recipe && recipe.userId !== userId) {
+      await ctx.db.insert("notifications", {
+        userId: recipe.userId,
+        type: "like",
+        actorId: userId,
+        recipeId,
+        read: false,
+      });
+    }
+
     return { liked: true };
   },
 });
 
 // Toggle bookmark
 export const toggleBookmark = mutation({
-  args: { recipeId: v.id("recipes") },
-  handler: async (ctx, { recipeId }) => {
+  args: { recipeId: v.id("recipes"), collectionId: v.optional(v.id("collections")) },
+  handler: async (ctx, { recipeId, collectionId }) => {
     const userId = await getAuthUserId(ctx);
     if (!userId) throw new Error("Unauthorized");
 
     const existing = await ctx.db
       .query("bookmarks")
-      .withIndex("by_user_recipe", (q) =>
-        q.eq("userId", userId).eq("recipeId", recipeId)
-      )
+      .withIndex("by_user_recipe", (q) => q.eq("userId", userId).eq("recipeId", recipeId))
       .first();
 
     if (existing) {
@@ -45,7 +54,7 @@ export const toggleBookmark = mutation({
       return { bookmarked: false };
     }
 
-    await ctx.db.insert("bookmarks", { recipeId, userId });
+    await ctx.db.insert("bookmarks", { recipeId, userId, collectionId });
     return { bookmarked: true };
   },
 });
@@ -82,11 +91,27 @@ export const addComment = mutation({
     const userId = await getAuthUserId(ctx);
     if (!userId) throw new Error("Unauthorized");
 
-    if (content.length < 1 || content.length > 500) {
+    const trimmed = content.trim();
+    if (trimmed.length < 1 || trimmed.length > 500) {
       throw new Error("Comment must be 1-500 characters");
     }
 
-    const id = await ctx.db.insert("comments", { recipeId, userId, content });
+    const recipe = await ctx.db.get(recipeId);
+    if (!recipe) throw new Error("Recipe not found");
+
+    const id = await ctx.db.insert("comments", { recipeId, userId, content: trimmed });
+
+    // Notify recipe owner
+    if (recipe.userId !== userId) {
+      await ctx.db.insert("notifications", {
+        userId: recipe.userId,
+        type: "comment",
+        actorId: userId,
+        recipeId,
+        read: false,
+      });
+    }
+
     return { id };
   },
 });

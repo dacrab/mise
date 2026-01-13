@@ -1,32 +1,36 @@
 ---
 import Layout from '@/layouts/Layout.astro';
+import Header from '@/components/Header.astro';
 import Footer from '@/components/Footer.astro';
 ---
 
-<Layout title="Terms of Service - Mise">
-    <header class="fixed top-0 w-full z-50 glass">
-        <div class="wrapper h-16 flex items-center justify-between">
-            <a href="/" class="font-serif text-2xl font-bold tracking-tight">Mise.</a>
-            <a href="/" class="btn-ghost text-sm font-medium">Back to Home</a>
-        </div>
-    </header>
+<Layout title="Terms — mise">
+    <Header backLink={{ href: '/', label: 'Back' }} />
 
-    <main class="pt-32 pb-20">
-        <article class="wrapper max-w-3xl prose-text">
-            <h1 class="display-heading mb-8 text-4xl md:text-5xl">Terms of Service</h1>
-            <p class="mb-6">By using Mise, you agree to these terms. Please read them carefully.</p>
+    <main class="pt-20 pb-24">
+        <article class="wrapper max-w-2xl py-12 md:py-16">
+            <h1 class="heading-1 text-3xl md:text-4xl mb-6">Terms of Service</h1>
+            <p class="body-large mb-12">By using mise, you agree to these terms.</p>
             
-            <h2 class="section-heading text-2xl mt-12 mb-4">1. Content Ownership</h2>
-            <p>You retain ownership of the recipes and images you upload. However, by posting content, you grant Mise a non-exclusive license to display it to other users.</p>
+            <div class="space-y-10 text-charcoal-light leading-relaxed">
+                <section>
+                    <h2 class="font-serif text-xl font-medium text-charcoal mb-3">1. Content Ownership</h2>
+                    <p>You retain ownership of the recipes and images you upload. By posting content, you grant mise a non-exclusive license to display it to other users.</p>
+                </section>
 
-            <h2 class="section-heading text-2xl mt-12 mb-4">2. Prohibited Conduct</h2>
-            <p>You agree not to upload content that is illegal, offensive, or infringes on the intellectual property of others.</p>
+                <section>
+                    <h2 class="font-serif text-xl font-medium text-charcoal mb-3">2. Prohibited Conduct</h2>
+                    <p>You agree not to upload content that is illegal, offensive, or infringes on the intellectual property of others.</p>
+                </section>
 
-            <h2 class="section-heading text-2xl mt-12 mb-4">3. Termination</h2>
-            <p>We reserve the right to suspend or terminate accounts that violate these terms.</p>
+                <section>
+                    <h2 class="font-serif text-xl font-medium text-charcoal mb-3">3. Termination</h2>
+                    <p>We reserve the right to suspend or terminate accounts that violate these terms.</p>
+                </section>
+            </div>
 
-            <footer class="mt-20 pt-8 border-t border-gray-100 text-sm text-gray-400">
-                Last updated: December 18, 2025
+            <footer class="mt-16 pt-6 border-t border-cream-dark text-sm text-stone">
+                Last updated: January 2026
             </footer>
         </article>
     </main>

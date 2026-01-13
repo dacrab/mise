@@ -1,45 +1,35 @@
 ---
 import Layout from '@/layouts/Layout.astro';
 import LoginForm from '@/components/LoginForm';
-
-// Use auth from locals
-const auth = Astro.locals.auth;
-
-const session = await auth.api.getSession({
-    headers: Astro.request.headers
-});
-
-if (session) {
-    return Astro.redirect("/dashboard");
-}
 ---
 
-<Layout>
+<Layout title="Sign in — mise">
     <main class="min-h-screen grid lg:grid-cols-2">
-        <div class="hidden lg:flex flex-col justify-between p-12 accent-panel relative overflow-hidden">
-            <div class="absolute inset-0 bg-[radial-gradient(circle_at_30%_30%,rgba(230,126,34,0.05),transparent)]"></div>
-            <a href="/" class="text-2xl font-serif italic tracking-tighter relative z-10 text-brand-text">Mise</a>
+        <!-- Left Panel -->
+        <div class="hidden lg:flex flex-col justify-between p-12 bg-charcoal text-cream relative overflow-hidden">
+            <a href="/" class="font-serif text-2xl font-semibold relative z-10">mise</a>
             
-            <div class="relative z-10">
-                <blockquote class="text-4xl font-serif italic leading-tight mb-6 text-brand-text">
+            <div class="relative z-10 max-w-md">
+                <blockquote class="font-serif text-3xl italic leading-snug mb-4">
                     "Cooking is like love. It should be entered into with abandon or not at all."
                 </blockquote>
-                <cite class="text-sm font-bold uppercase tracking-widest text-brand-primary not-italic">
+                <cite class="text-sm text-stone-light not-italic">
                     — Harriet Van Horne
                 </cite>
             </div>
 
-            <div class="text-[10px] font-bold uppercase tracking-[0.3em] text-brand-primary/40 relative z-10">
-                Culinary Archives &bull; Vol. 01
-            </div>
+            <p class="text-xs text-stone relative z-10">
+                A place for home cooks
+            </p>
         </div>
 
-        <div class="flex items-center justify-center p-6 bg-brand-bg">
+        <!-- Right Panel -->
+        <div class="flex items-center justify-center p-6 bg-cream">
             <div class="w-full max-w-sm">
-                <div class="lg:hidden mb-12 text-center">
-                    <a href="/" class="text-3xl font-serif italic tracking-tighter text-brand-text">Mise</a>
+                <div class="lg:hidden mb-10 text-center">
+                    <a href="/" class="font-serif text-2xl font-semibold text-charcoal">mise</a>
                 </div>
-                <LoginForm client:load />
+                <LoginForm client:idle />
             </div>
         </div>
     </main>

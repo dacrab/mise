@@ -8,7 +8,7 @@ import { Image } from 'astro:assets';
 const search = Astro.url.searchParams.get('q') || '';
 const category = Astro.url.searchParams.get('category') || '';
 
-const CATEGORIES = ['Breakfast', 'Lunch', 'Dinner', 'Dessert', 'Vegan', 'Vegetarian', 'Quick & Easy', 'Baking', 'Italian', 'Asian', 'Mexican'];
+const CATEGORIES = ['Breakfast', 'Lunch', 'Dinner', 'Dessert', 'Vegan', 'Quick & Easy', 'Baking', 'Italian', 'Asian', 'Mexican'];
 
 const convex = getConvexClient();
 const allRecipes = await convex.query(api.recipes.list, {
@@ -18,95 +18,147 @@ const allRecipes = await convex.query(api.recipes.list, {
 });
 
 const hasFilters = search || category;
+const featuredRecipe = !hasFilters && allRecipes.length > 0 ? allRecipes[0] : null;
+const gridRecipes = featuredRecipe ? allRecipes.slice(1) : allRecipes;
 
 export const prerender = false;
 ---
 
-<Layout title="Mise — Discover and share amazing recipes">
+<Layout title="mise — recipes worth sharing">
     <Header />
 
-    <main class="pt-24 pb-20 min-h-screen">
-        <!-- Hero -->
-        <section class="wrapper py-16 md:py-24 text-center">
-            <h1 class="display-heading mb-6 animate-fade-in-up">
-                Taste the world, <br /><span class="text-brand-primary italic">one plate at a time.</span>
-            </h1>
-            <p class="prose-text text-lg md:text-xl max-w-2xl mx-auto mb-10">
-                Discover curated recipes from home cooks around the globe. Join our community to share your culinary secrets.
-            </p>
-
-            <!-- Search Form -->
-            <form action="/" method="get" class="max-w-2xl mx-auto">
-                <div class="flex flex-col md:flex-row gap-3">
-                    <div class="relative flex-1 group">
-                        <input type="text" name="q" placeholder="Search for 'Avocado Toast'..." value={search} class="input-field pl-12" />
-                        <svg class="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 group-focus-within:text-brand-primary transition-colors" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
+    <main class="pt-20 min-h-screen">
+        <!-- Hero - Asymmetric layout -->
+        <section class="wrapper">
+            <div class="grid lg:grid-cols-2 gap-8 lg:gap-16 py-12 md:py-20 items-center">
+                <div>
+                    <p class="font-hand text-2xl text-sage mb-3 fade-in" style="--delay: 0s">from our kitchen to yours</p>
+                    <h1 class="font-serif text-4xl sm:text-5xl lg:text-6xl font-medium tracking-tight leading-[1.1] mb-6 fade-in" style="--delay: 0.1s">
+                        Recipes made<br/>with <span class="italic text-sage">real love</span>
+                    </h1>
+                    <p class="text-lg text-charcoal-light leading-relaxed mb-8 max-w-md fade-in" style="--delay: 0.2s">
+                        No algorithms. No ads. Just home cooks sharing dishes that actually matter to them.
+                    </p>
+                    <div class="flex flex-wrap gap-3 fade-in" style="--delay: 0.3s">
+                        <a href="/dashboard/create" class="btn-primary">Share a recipe</a>
+                        <a href="#recipes" class="btn-ghost">Browse recipes ↓</a>
                     </div>
-                    <select name="category" class="input-field md:w-48">
-                        <option value="">All Categories</option>
+                </div>
+
+                <!-- Featured recipe or decorative element -->
+                {featuredRecipe ? (
+                    <a href={`/recipe/${featuredRecipe.slug}`} class="group relative block fade-in scale-in" style="--delay: 0.2s">
+                        <div class="aspect-[4/3] rounded-2xl overflow-hidden bg-cream-dark">
+                            {featuredRecipe.coverImageUrl ? (
+                                <Image 
+                                    src={featuredRecipe.coverImageUrl} 
+                                    alt={featuredRecipe.title} 
+                                    width={800} 
+                                    height={600} 
+                                    class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" 
+                                />
+                            ) : (
+                                <div class="w-full h-full flex items-center justify-center text-stone-light">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1">
+                                        <path d="M6 13.87A4 4 0 0 1 7.41 6a5.11 5.11 0 0 1 1.05-1.54 5 5 0 0 1 7.08 0A5.11 5.11 0 0 1 16.59 6 4 4 0 0 1 18 13.87V21H6Z"/>
+                                    </svg>
+                                </div>
+                            )}
+                        </div>
+                        <div class="absolute bottom-4 left-4 right-4 bg-warm-white/95 backdrop-blur-sm rounded-xl p-4 shadow-card slide-up" style="--delay: 0.4s">
+                            <span class="tag-sage text-[10px] mb-2">Featured</span>
+                            <h3 class="font-serif text-lg font-medium group-hover:text-sage transition-colors">{featuredRecipe.title}</h3>
+                        </div>
+                    </a>
+                ) : (
+                    <div class="hidden lg:block aspect-[4/3] rounded-2xl bg-gradient-to-br from-sage/10 to-cream-dark relative overflow-hidden fade-in" style="--delay: 0.2s">
+                        <div class="absolute inset-0 flex items-center justify-center">
+                            <p class="font-hand text-3xl text-sage/40 rotate-[-5deg]">your recipe here</p>
+                        </div>
+                    </div>
+                )}
+            </div>
+        </section>
+
+        <!-- Search bar - Floating style -->
+        <section class="wrapper -mt-2 mb-12 fade-in" style="--delay: 0.35s">
+            <form action="/" method="get" class="card p-3 flex flex-col sm:flex-row gap-2">
+                <div class="relative flex-1">
+                    <input 
+                        type="text" 
+                        name="q" 
+                        placeholder="What are you craving?" 
+                        value={search} 
+                        class="w-full pl-10 pr-4 py-2.5 bg-transparent border-0 focus:outline-none focus:ring-0 text-charcoal placeholder:text-stone"
+                    />
+                    <svg class="absolute left-3 top-1/2 -translate-y-1/2 text-stone" xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
+                </div>
+                <div class="flex gap-2">
+                    <select name="category" class="px-3 py-2 bg-cream-dark rounded-lg border-0 text-sm text-charcoal-light focus:outline-none focus:ring-2 focus:ring-sage/20">
+                        <option value="">All categories</option>
                         {CATEGORIES.map(cat => <option value={cat} selected={category === cat}>{cat}</option>)}
                     </select>
-                    <button type="submit" class="btn-primary px-8">Find</button>
+                    <button type="submit" class="btn-primary px-6">Search</button>
                 </div>
             </form>
 
             {hasFilters && (
-                <div class="mt-6 flex items-center justify-center gap-2 animate-fade-in">
-                    <p class="text-gray-600">
-                        Showing results for
-                        {search && <span class="font-bold text-brand-text"> "{search}"</span>}
-                        {search && category && <span> in</span>}
-                        {category && <span class="font-bold text-brand-text"> {category}</span>}
-                    </p>
-                    <a href="/" class="text-sm text-brand-primary font-medium hover:underline ml-2">× Clear</a>
+                <div class="mt-4 flex items-center gap-3 text-sm">
+                    <span class="text-stone">
+                        {allRecipes.length} result{allRecipes.length !== 1 ? 's' : ''}
+                        {search && <> for "<span class="text-charcoal font-medium">{search}</span>"</>}
+                        {category && <> in <span class="text-charcoal font-medium">{category}</span></>}
+                    </span>
+                    <a href="/" class="text-sage hover:underline">Clear</a>
                 </div>
             )}
         </section>
 
-        <!-- Recipe Grid -->
-        <section class="wrapper">
-            <div class="flex items-center justify-between mb-8 border-b border-gray-100 pb-4">
-                <h2 class="section-heading mb-0">{hasFilters ? 'Search Results' : 'Fresh from the Kitchen'}</h2>
-                <span class="text-sm text-gray-500 font-medium">{allRecipes.length} recipes</span>
+        <!-- Recipes Grid -->
+        <section id="recipes" class="wrapper pb-24">
+            <div class="flex items-baseline justify-between mb-6">
+                <h2 class="font-serif text-xl font-medium text-charcoal">
+                    {hasFilters ? 'Results' : 'Latest recipes'}
+                </h2>
+                <span class="text-sm text-stone">{allRecipes.length} total</span>
             </div>
 
-            {allRecipes.length > 0 ? (
-                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-                    {allRecipes.map((recipe) => (
-                        <a href={`/recipe/${recipe.slug}`} class="recipe-card group h-full">
-                            <div class="recipe-card-image-wrapper">
+            {gridRecipes.length > 0 ? (
+                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
+                    {gridRecipes.map((recipe, i) => (
+                        <a href={`/recipe/${recipe.slug}`} class="group flex gap-4 p-3 -m-3 rounded-xl hover:bg-warm-white transition-colors stagger-item" style={`--delay: ${0.4 + i * 0.05}s`}>
+                            <div class="w-24 h-24 rounded-lg overflow-hidden bg-cream-dark shrink-0">
                                 {recipe.coverImageUrl ? (
-                                    <Image src={recipe.coverImageUrl} alt={recipe.title} width={600} height={450} class="recipe-card-image" loading="lazy" />
+                                    <Image 
+                                        src={recipe.coverImageUrl} 
+                                        alt={recipe.title} 
+                                        width={200} 
+                                        height={200} 
+                                        class="w-full h-full object-cover" 
+                                        loading={i < 9 ? "eager" : "lazy"} 
+                                    />
                                 ) : (
-                                    <div class="flex items-center justify-center h-full bg-brand-accent/30 text-brand-primary/50">
-                                        <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1"><path d="M3 14h18"/><path d="M4 14v4a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-4"/><path d="M12 2v20"/></svg>
+                                    <div class="w-full h-full flex items-center justify-center text-stone-light">
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                                            <path d="M6 13.87A4 4 0 0 1 7.41 6a5.11 5.11 0 0 1 1.05-1.54 5 5 0 0 1 7.08 0A5.11 5.11 0 0 1 16.59 6 4 4 0 0 1 18 13.87V21H6Z"/>
+                                        </svg>
                                     </div>
                                 )}
-                                <span class="absolute top-3 left-3 badge bg-white/90 backdrop-blur px-2 py-1 rounded-md text-[10px] font-bold shadow-sm text-brand-text uppercase tracking-widest">
-                                    {recipe.category}
-                                </span>
                             </div>
-                            <div class="recipe-card-content">
-                                <h3 class="font-serif text-xl font-bold mb-2 group-hover:text-brand-primary transition-colors line-clamp-1">{recipe.title}</h3>
-                                <p class="text-gray-600 text-sm line-clamp-2 mb-4 flex-1">{recipe.description || "A delicious recipe waiting to be discovered."}</p>
-                                <div class="flex items-center justify-between pt-4 border-t border-gray-100 mt-auto">
-                                    <span class="text-[10px] text-gray-400 font-bold uppercase tracking-widest">
-                                        {new Date(recipe._creationTime).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}
-                                    </span>
-                                    <span class="text-xs font-bold text-brand-primary uppercase tracking-tighter">View →</span>
-                                </div>
+                            <div class="flex-1 min-w-0 py-1">
+                                <span class="text-[11px] text-stone uppercase tracking-wide">{recipe.category}</span>
+                                <h3 class="font-serif text-base font-medium mt-0.5 mb-1 group-hover:text-sage transition-colors line-clamp-1">
+                                    {recipe.title}
+                                </h3>
+                                <p class="text-sm text-stone line-clamp-2">{recipe.description || "A delicious recipe."}</p>
                             </div>
                         </a>
                     ))}
                 </div>
             ) : (
-                <div class="flex flex-col items-center justify-center py-20 px-4 text-center border-2 border-dashed border-gray-200 rounded-2xl bg-white/50">
-                    <div class="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mb-4 text-gray-400">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
-                    </div>
-                    <h3 class="text-xl font-bold mb-2 font-serif">No recipes found</h3>
-                    <p class="text-gray-500 max-w-sm mb-6">Try exploring different categories!</p>
-                    <a href="/" class="btn-outline">Clear filters</a>
+                <div class="py-16 text-center">
+                    <p class="text-stone mb-4">No recipes yet.</p>
+                    <a href="/dashboard/create" class="btn-primary">Be the first to share</a>
                 </div>
             )}
         </section>
@@ -114,3 +166,45 @@ export const prerender = false;
 
     <Footer />
 </Layout>
+
+<style>
+    .fade-in {
+        animation: fadeIn 0.6s ease-out both;
+        animation-delay: var(--delay, 0s);
+    }
+    
+    .scale-in {
+        animation: scaleIn 0.6s ease-out both;
+        animation-delay: var(--delay, 0s);
+    }
+    
+    .slide-up {
+        animation: slideUp 0.5s ease-out both;
+        animation-delay: var(--delay, 0s);
+    }
+    
+    .stagger-item {
+        animation: fadeSlide 0.4s ease-out both;
+        animation-delay: var(--delay, 0s);
+    }
+    
+    @keyframes fadeIn {
+        from { opacity: 0; transform: translateY(10px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
+    
+    @keyframes scaleIn {
+        from { opacity: 0; transform: scale(0.96); }
+        to { opacity: 1; transform: scale(1); }
+    }
+    
+    @keyframes slideUp {
+        from { opacity: 0; transform: translateY(20px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
+    
+    @keyframes fadeSlide {
+        from { opacity: 0; transform: translateX(-10px); }
+        to { opacity: 1; transform: translateX(0); }
+    }
+</style>

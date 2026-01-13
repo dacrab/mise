@@ -1,7 +1,8 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useMutation } from "convex/react";
+import { useAuthToken } from "@convex-dev/auth/react";
 import { api } from "../../convex/_generated/api";
-import { CATEGORIES, TrashIcon, PlusIcon, ImageIcon, Label, SectionHeader } from "../lib";
+import { config } from "../config";
 import { withConvex } from "../convex";
 import type { Id } from "../../convex/_generated/dataModel";
 
@@ -26,6 +27,7 @@ function RecipeEditorInner({
   initialData?: RecipeInput;
   isEditing?: boolean;
 }) {
+  const token = useAuthToken();
   const [loading, setLoading] = useState(false);
   const [uploading, setUploading] = useState(false);
   const [form, setForm] = useState({
@@ -43,6 +45,17 @@ function RecipeEditorInner({
   const generateUploadUrl = useMutation(api.recipes.generateUploadUrl);
   const createRecipe = useMutation(api.recipes.create);
   const updateRecipe = useMutation(api.recipes.update);
+
+  // Redirect immediately if no token
+  useEffect(() => {
+    if (token === null) {
+      window.location.href = "/login";
+    }
+  }, [token]);
+
+  if (token === null) {
+    return null;
+  }
 
   const update = (field: string, value: unknown) =>
     setForm((prev) => ({ ...prev, [field]: value }));
@@ -111,212 +124,223 @@ function RecipeEditorInner({
   };
 
   return (
-    <div className="max-w-4xl mx-auto animate-fade-in">
-      <div className="bg-white rounded-3xl p-8 md:p-12 shadow-xl border border-brand-border">
-        <header className="mb-10 border-b border-gray-100 pb-8 flex flex-col md:flex-row md:items-end justify-between gap-6">
-          <div>
-            <span className="text-brand-primary font-bold text-xs uppercase tracking-widest">
-              Recipe Builder
-            </span>
-            <h1 className="text-4xl font-bold font-serif">
-              {isEditing ? "Refine your creation" : "Share a new flavor"}
-            </h1>
-          </div>
-          <div className="flex gap-3">
-            <a href="/dashboard" className="btn-ghost">
-              Cancel
-            </a>
-            <button
-              onClick={() => handleSubmit("draft")}
-              disabled={loading}
-              className="btn-outline px-6"
-            >
-              Save Draft
-            </button>
-            <button
-              onClick={() => handleSubmit("published")}
-              disabled={loading}
-              className="btn-primary px-10"
-            >
-              {loading ? "Processing..." : isEditing ? "Save & Publish" : "Publish Recipe"}
-            </button>
-          </div>
-        </header>
+    <div className="wrapper max-w-4xl py-8 md:py-12">
+      {/* Header */}
+      <div className="mb-8 pb-6 border-b border-cream-dark">
+        <p className="font-hand text-xl text-sage mb-1">
+          {isEditing ? "editing" : "new recipe"}
+        </p>
+        <h1 className="font-serif text-3xl md:text-4xl font-medium mb-6">
+          {isEditing ? "Refine your recipe" : "Share something delicious"}
+        </h1>
+        <div className="flex flex-wrap gap-3">
+          <a href="/dashboard" className="btn-ghost text-sm">Cancel</a>
+          <button
+            onClick={() => handleSubmit("draft")}
+            disabled={loading}
+            className="btn-secondary text-sm"
+          >
+            Save as draft
+          </button>
+          <button
+            onClick={() => handleSubmit("published")}
+            disabled={loading}
+            className="btn-primary text-sm"
+          >
+            {loading ? "Saving..." : isEditing ? "Update recipe" : "Publish"}
+          </button>
+        </div>
+      </div>
 
-        <div className="grid-editor-layout">
-          <div className="space-y-10">
-            <section className="space-y-6">
-              <SectionHeader step={1} title="Essential Information" />
-              <div className="space-y-4">
-                <div className="space-y-2">
-                  <Label htmlFor="title">Recipe Title</Label>
-                  <input
-                    id="title"
-                    type="text"
-                    className="input-field text-xl font-bold"
-                    value={form.title}
-                    onChange={(e) => update("title", e.target.value)}
-                    placeholder="The name of your dish..."
-                  />
-                </div>
-                <div className="grid md:grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="category">Category</Label>
-                    <select
-                      id="category"
-                      className="input-field"
-                      value={form.category}
-                      onChange={(e) => update("category", e.target.value)}
-                    >
-                      {CATEGORIES.map((cat) => (
-                        <option key={cat} value={cat}>
-                          {cat}
-                        </option>
-                      ))}
-                    </select>
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="video">Video Link (Optional)</Label>
-                    <input
-                      id="video"
-                      type="url"
-                      className="input-field"
-                      value={form.videoUrl}
-                      onChange={(e) => update("videoUrl", e.target.value)}
-                      placeholder="YouTube or TikTok URL"
-                    />
-                  </div>
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="description">Short Description</Label>
-                  <textarea
-                    id="description"
-                    className="input-field h-32 rounded-2xl py-4"
-                    value={form.description}
-                    onChange={(e) => update("description", e.target.value)}
-                    placeholder="Tell the story behind this recipe..."
-                  />
-                </div>
+      <div className="grid lg:grid-cols-[1fr_300px] gap-8">
+        {/* Main Form */}
+        <div className="space-y-8">
+          {/* Basic Info */}
+          <section className="card p-6 space-y-5">
+            <h2 className="font-serif text-lg font-medium">Basic info</h2>
+            
+            <div>
+              <label htmlFor="title" className="block text-sm font-medium text-charcoal-light mb-2">
+                Title
+              </label>
+              <input
+                id="title"
+                type="text"
+                className="input-field text-lg font-medium"
+                value={form.title}
+                onChange={(e) => update("title", e.target.value)}
+                placeholder="What's cooking?"
+              />
+            </div>
+
+            <div className="grid sm:grid-cols-2 gap-4">
+              <div>
+                <label htmlFor="category" className="block text-sm font-medium text-charcoal-light mb-2">
+                  Category
+                </label>
+                <select
+                  id="category"
+                  className="input-field"
+                  value={form.category}
+                  onChange={(e) => update("category", e.target.value)}
+                >
+                  {config.categories.map((cat) => (
+                    <option key={cat} value={cat}>{cat}</option>
+                  ))}
+                </select>
               </div>
-            </section>
+              <div>
+                <label htmlFor="video" className="block text-sm font-medium text-charcoal-light mb-2">
+                  Video URL <span className="text-stone">(optional)</span>
+                </label>
+                <input
+                  id="video"
+                  type="url"
+                  className="input-field"
+                  value={form.videoUrl}
+                  onChange={(e) => update("videoUrl", e.target.value)}
+                  placeholder="YouTube or TikTok"
+                />
+              </div>
+            </div>
 
-            <section className="space-y-6">
-              <SectionHeader step={2} title="Ingredients" />
-              <div className="space-y-3">
-                {ingredients.map((ing, i) => (
-                  <div key={i} className="flex gap-3">
-                    <input
-                      type="text"
-                      className="input-field"
-                      value={ing}
-                      placeholder="e.g. 2 cups of Flour"
-                      onChange={(e) => updateList(ingredients, setIngredients, i, e.target.value)}
+            <div>
+              <label htmlFor="description" className="block text-sm font-medium text-charcoal-light mb-2">
+                Description
+              </label>
+              <textarea
+                id="description"
+                className="textarea-field h-24"
+                value={form.description}
+                onChange={(e) => update("description", e.target.value)}
+                placeholder="Tell the story behind this dish..."
+              />
+            </div>
+          </section>
+
+          {/* Ingredients */}
+          <section className="card p-6 space-y-4">
+            <h2 className="font-serif text-lg font-medium">Ingredients</h2>
+            <div className="space-y-2">
+              {ingredients.map((ing, i) => (
+                <div key={i} className="flex gap-2">
+                  <input
+                    type="text"
+                    className="input-field"
+                    value={ing}
+                    placeholder="e.g. 2 cups flour"
+                    onChange={(e) => updateList(ingredients, setIngredients, i, e.target.value)}
+                  />
+                  <button
+                    onClick={() => setIngredients(ingredients.filter((_, idx) => idx !== i))}
+                    className="btn-ghost px-3 text-stone hover:text-terracotta"
+                    aria-label="Remove ingredient"
+                  >
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                      <path d="M18 6 6 18M6 6l12 12"/>
+                    </svg>
+                  </button>
+                </div>
+              ))}
+            </div>
+            <button
+              onClick={() => setIngredients([...ingredients, ""])}
+              className="text-sm font-medium text-sage hover:text-sage-light transition-colors"
+            >
+              + Add ingredient
+            </button>
+          </section>
+
+          {/* Steps */}
+          <section className="card p-6 space-y-4">
+            <h2 className="font-serif text-lg font-medium">Instructions</h2>
+            <div className="space-y-4">
+              {steps.map((step, i) => (
+                <div key={i} className="flex gap-3">
+                  <span className="flex items-center justify-center w-7 h-7 rounded-full bg-charcoal text-cream text-sm font-medium shrink-0 mt-2">
+                    {i + 1}
+                  </span>
+                  <div className="flex-1">
+                    <textarea
+                      className="textarea-field h-20"
+                      value={step}
+                      placeholder="Describe this step..."
+                      onChange={(e) => updateList(steps, setSteps, i, e.target.value)}
                     />
                     <button
-                      onClick={() => setIngredients(ingredients.filter((_, idx) => idx !== i))}
-                      className="w-12 flex items-center justify-center text-gray-300 hover:text-red-500"
+                      onClick={() => setSteps(steps.filter((_, idx) => idx !== i))}
+                      className="text-xs text-stone hover:text-terracotta mt-1"
                     >
-                      <TrashIcon />
+                      Remove
                     </button>
                   </div>
-                ))}
-                <button
-                  onClick={() => setIngredients([...ingredients, ""])}
-                  className="text-sm font-bold text-brand-primary flex items-center gap-2 hover:translate-x-1 transition-transform"
-                >
-                  <PlusIcon /> Add ingredient
-                </button>
-              </div>
-            </section>
-
-            <section className="space-y-6">
-              <SectionHeader step={3} title="Preparation Steps" />
-              <div className="space-y-6">
-                {steps.map((step, i) => (
-                  <div key={i} className="flex gap-4 group">
-                    <div className="pt-2 text-xs font-bold text-gray-300 group-hover:text-brand-primary">
-                      #{i + 1}
-                    </div>
-                    <div className="flex-1 space-y-2">
-                      <textarea
-                        className="input-field h-24 rounded-2xl"
-                        value={step}
-                        placeholder="What's the next step?"
-                        onChange={(e) => updateList(steps, setSteps, i, e.target.value)}
-                      />
-                      <button
-                        onClick={() => setSteps(steps.filter((_, idx) => idx !== i))}
-                        className="text-xs text-gray-400 hover:text-red-500 font-medium"
-                      >
-                        Remove step
-                      </button>
-                    </div>
-                  </div>
-                ))}
-                <button
-                  onClick={() => setSteps([...steps, ""])}
-                  className="text-sm font-bold text-brand-primary flex items-center gap-2 hover:translate-x-1 transition-transform"
-                >
-                  <PlusIcon /> Add step
-                </button>
-              </div>
-            </section>
-          </div>
-
-          <aside>
-            <div className="p-6 rounded-2xl bg-brand-bg border border-brand-border space-y-4">
-              <h3 className="text-sm font-bold uppercase tracking-wider text-gray-500 flex items-center gap-2">
-                <ImageIcon /> Visuals
-              </h3>
-              <div
-                className={`relative aspect-video rounded-xl overflow-hidden border-2 border-dashed transition-colors ${
-                  form.coverImageUrl
-                    ? "border-transparent"
-                    : "border-gray-200 bg-white hover:border-brand-primary"
-                }`}
-              >
-                {form.coverImageUrl ? (
-                  <>
-                    <img
-                      src={form.coverImageUrl}
-                      className="w-full h-full object-cover"
-                      alt="Preview"
-                    />
-                    <div className="absolute inset-0 bg-black/40 opacity-0 hover:opacity-100 transition-opacity flex items-center justify-center">
-                      <label className="btn-primary text-xs py-2 cursor-pointer">
-                        Change Image
-                        <input
-                          type="file"
-                          accept="image/*"
-                          onChange={handleUpload}
-                          className="hidden"
-                        />
-                      </label>
-                    </div>
-                  </>
-                ) : (
-                  <label className="absolute inset-0 flex flex-col items-center justify-center cursor-pointer">
-                    <span className="text-xs font-bold text-gray-400">Upload Cover</span>
-                    <input
-                      type="file"
-                      accept="image/*"
-                      onChange={handleUpload}
-                      className="hidden"
-                    />
-                  </label>
-                )}
-              </div>
-              {uploading && (
-                <div className="text-[10px] text-center font-bold text-brand-primary animate-pulse uppercase">
-                  Uploading...
                 </div>
-              )}
-              <p className="text-[10px] text-gray-400 pt-4 border-t border-gray-100">
-                Recommended: High-res JPG/PNG under 10MB.
-              </p>
+              ))}
             </div>
-          </aside>
+            <button
+              onClick={() => setSteps([...steps, ""])}
+              className="text-sm font-medium text-sage hover:text-sage-light transition-colors"
+            >
+              + Add step
+            </button>
+          </section>
         </div>
+
+        {/* Sidebar */}
+        <aside>
+          <div className="card p-5 sticky top-24 space-y-4">
+            <h3 className="text-sm font-medium text-charcoal-light">Cover image</h3>
+            <div
+              className={`relative aspect-video rounded-lg overflow-hidden border-2 border-dashed transition-colors ${
+                form.coverImageUrl
+                  ? "border-transparent"
+                  : "border-stone-light hover:border-sage bg-cream-dark"
+              }`}
+            >
+              {form.coverImageUrl ? (
+                <>
+                  <img
+                    src={form.coverImageUrl}
+                    className="w-full h-full object-cover"
+                    alt="Preview"
+                  />
+                  <div className="absolute inset-0 bg-charcoal/50 opacity-0 hover:opacity-100 transition-opacity flex items-center justify-center">
+                    <label className="btn-primary text-xs cursor-pointer">
+                      Change
+                      <input
+                        type="file"
+                        accept="image/*"
+                        onChange={handleUpload}
+                        className="hidden"
+                      />
+                    </label>
+                  </div>
+                </>
+              ) : (
+                <label className="absolute inset-0 flex flex-col items-center justify-center cursor-pointer text-stone hover:text-sage transition-colors">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="mb-2">
+                    <rect width="18" height="18" x="3" y="3" rx="2" ry="2"/>
+                    <circle cx="9" cy="9" r="2"/>
+                    <path d="m21 15-3.086-3.086a2 2 0 0 0-2.828 0L6 21"/>
+                  </svg>
+                  <span className="text-xs font-medium">Upload image</span>
+                  <input
+                    type="file"
+                    accept="image/*"
+                    onChange={handleUpload}
+                    className="hidden"
+                  />
+                </label>
+              )}
+            </div>
+            {uploading && (
+              <p className="text-xs text-sage text-center animate-pulse">Uploading...</p>
+            )}
+            <p className="text-xs text-stone">
+              JPG or PNG, max 10MB
+            </p>
+          </div>
+        </aside>
       </div>
     </div>
   );

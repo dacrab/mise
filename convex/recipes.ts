@@ -170,12 +170,18 @@ export const myBookmarks = query({
   },
 });
 
-// Get recipe by ID (for editing)
+// Get recipe by ID (for editing - owner only for drafts)
 export const getById = query({
   args: { id: v.id("recipes") },
   handler: async (ctx, { id }) => {
     const recipe = await ctx.db.get(id);
     if (!recipe) return null;
+
+    // Draft recipes only visible to owner
+    if (recipe.status === "draft") {
+      const userId = await getAuthUserId(ctx);
+      if (recipe.userId !== userId) return null;
+    }
 
     return {
       ...recipe,
@@ -197,6 +203,10 @@ export const create = mutation({
     coverImage: v.optional(v.id("_storage")),
     videoUrl: v.optional(v.string()),
     status: v.union(v.literal("draft"), v.literal("published")),
+    servings: v.optional(v.number()),
+    prepTime: v.optional(v.number()),
+    cookTime: v.optional(v.number()),
+    difficulty: v.optional(v.union(v.literal("easy"), v.literal("medium"), v.literal("hard"))),
   },
   handler: async (ctx, args) => {
     const userId = await getAuthUserId(ctx);
@@ -247,13 +257,13 @@ export const remove = mutation({
     const [comments, likes, bookmarks] = await Promise.all([
       ctx.db.query("comments").withIndex("by_recipe", (q) => q.eq("recipeId", id)).collect(),
       ctx.db.query("likes").withIndex("by_recipe", (q) => q.eq("recipeId", id)).collect(),
-      ctx.db.query("bookmarks").withIndex("by_user_recipe").collect(),
+      ctx.db.query("bookmarks").withIndex("by_recipe", (q) => q.eq("recipeId", id)).collect(),
     ]);
 
     await Promise.all([
       ...comments.map((c) => ctx.db.delete(c._id)),
       ...likes.map((l) => ctx.db.delete(l._id)),
-      ...bookmarks.filter((b) => b.recipeId === id).map((b) => ctx.db.delete(b._id)),
+      ...bookmarks.map((b) => ctx.db.delete(b._id)),
       recipe.coverImage ? ctx.storage.delete(recipe.coverImage) : Promise.resolve(),
       ctx.db.delete(id),
     ]);
@@ -267,5 +277,49 @@ export const generateUploadUrl = mutation({
     const userId = await getAuthUserId(ctx);
     if (!userId) throw new Error("Unauthorized");
     return await ctx.storage.generateUploadUrl();
+  },
+});
+
+// Fork a recipe
+export const fork = mutation({
+  args: { id: v.id("recipes") },
+  handler: async (ctx, { id }) => {
+    const userId = await getAuthUserId(ctx);
+    if (!userId) throw new Error("Unauthorized");
+
+    const original = await ctx.db.get(id);
+    if (!original || original.status !== "published") throw new Error("Recipe not found");
+
+    const slug = generateSlug(original.title);
+    const newId = await ctx.db.insert("recipes", {
+      title: original.title,
+      description: original.description,
+      category: original.category,
+      ingredients: [...original.ingredients],
+      steps: [...original.steps],
+      coverImage: original.coverImage,
+      videoUrl: original.videoUrl,
+      servings: original.servings,
+      prepTime: original.prepTime,
+      cookTime: original.cookTime,
+      difficulty: original.difficulty,
+      status: "draft",
+      slug,
+      userId,
+      forkedFrom: id,
+    });
+
+    // Notify original author
+    if (original.userId !== userId) {
+      await ctx.db.insert("notifications", {
+        userId: original.userId,
+        type: "fork",
+        actorId: userId,
+        recipeId: id,
+        read: false,
+      });
+    }
+
+    return { id: newId, slug };
   },
 });

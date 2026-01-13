@@ -1,126 +1,176 @@
 @import "tailwindcss";
 
 @theme {
-  --font-sans: "Inter", "Instrument Sans", sans-serif;
-  --font-serif: "Instrument Serif", serif;
+  /* Typography - Warm editorial feel */
+  --font-sans: "Inter", system-ui, sans-serif;
+  --font-serif: "Playfair Display", "Georgia", serif;
+  --font-hand: "Caveat", cursive;
 
-  --color-brand-primary: #E67E22;
-  --color-brand-primary-hover: #D35400;
-  --color-brand-text: #2D2926;
-  --color-brand-bg: #FCFAF7;
-  --color-brand-accent: #FFF3E0;
-  --color-brand-accent-border: #FFE0B2;
-  --color-brand-surface: #FFFFFF;
-  --color-brand-border: #E5E7EB;
+  /* Warm & Cozy Palette */
+  --color-cream: #FAF7F2;
+  --color-cream-dark: #F3EDE4;
+  --color-warm-white: #FFFDFB;
+  --color-charcoal: #2D2A26;
+  --color-charcoal-light: #4A4640;
+  --color-sage: #8B9A7D;
+  --color-sage-light: #A8B89A;
+  --color-terracotta: #C4846C;
+  --color-terracotta-light: #D9A08C;
+  --color-honey: #D4A853;
+  --color-stone: #9C9488;
+  --color-stone-light: #C4BEB4;
 
-  @keyframes fade-in-up {
-    from {
-      opacity: 0;
-      transform: translateY(20px);
-    }
-    to {
-      opacity: 1;
-      transform: translateY(0);
-    }
+  /* Shadows - Soft and warm */
+  --shadow-soft: 0 2px 8px rgba(45, 42, 38, 0.06);
+  --shadow-card: 0 4px 20px rgba(45, 42, 38, 0.08);
+  --shadow-hover: 0 8px 30px rgba(45, 42, 38, 0.12);
+
+  /* Animations */
+  @keyframes fade-up {
+    from { opacity: 0; transform: translateY(16px); }
+    to { opacity: 1; transform: translateY(0); }
   }
   @keyframes fade-in {
     from { opacity: 0; }
     to { opacity: 1; }
   }
-
-  --animation-fade-in-up: fade-in-up 0.6s ease-out forwards;
-  --animation-fade-in: fade-in 0.4s ease-out forwards;
+  --animation-fade-up: fade-up 0.5s ease-out forwards;
+  --animation-fade-in: fade-in 0.3s ease-out forwards;
 }
+
+/* Google Fonts */
+@import url('https://fonts.googleapis.com/css2?family=Caveat:wght@400;500;600&family=Inter:wght@400;500;600&family=Playfair+Display:ital,wght@0,400;0,500;0,600;0,700;1,400;1,500&display=swap');
 
 @layer base {
   body {
-    @apply text-brand-text antialiased bg-brand-bg font-sans;
+    @apply bg-cream text-charcoal font-sans antialiased;
   }
-  h1, h2, h3, h4, h5, h6 {
-    @apply font-serif tracking-tight text-brand-text;
+  h1, h2, h3, h4 {
+    @apply font-serif text-charcoal;
+  }
+  ::selection {
+    @apply bg-sage/30 text-charcoal;
   }
 }
 
-@utility glass {
-  @apply bg-white/80 backdrop-blur-md border-b border-white/20;
-}
-
+/* Utilities */
 @utility wrapper {
-  @apply max-w-6xl mx-auto px-6;
+  @apply max-w-6xl mx-auto px-5 sm:px-8;
 }
 
+@utility text-balance {
+  text-wrap: balance;
+}
+
+/* Buttons */
 @utility btn {
-  @apply inline-flex items-center justify-center px-6 py-2.5 rounded-full font-medium transition-all duration-200 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed;
+  @apply inline-flex items-center justify-center gap-2 font-medium transition-all duration-200 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed;
 }
 
 @utility btn-primary {
-  @apply btn bg-brand-primary text-white hover:bg-brand-primary-hover shadow-lg shadow-brand-primary/20 active:scale-95;
+  @apply btn px-5 py-2.5 bg-charcoal text-cream rounded-lg hover:bg-charcoal-light active:scale-[0.98];
+}
+
+@utility btn-secondary {
+  @apply btn px-5 py-2.5 bg-cream-dark text-charcoal rounded-lg hover:bg-stone-light/50 border border-stone-light/50;
 }
 
 @utility btn-ghost {
-  @apply btn bg-transparent text-brand-text hover:bg-black/5;
+  @apply btn px-4 py-2 text-charcoal-light hover:text-charcoal hover:bg-cream-dark rounded-lg;
 }
 
-@utility btn-outline {
-  @apply btn border border-brand-border bg-white text-brand-text hover:border-brand-primary hover:text-brand-primary;
+@utility btn-sage {
+  @apply btn px-5 py-2.5 bg-sage text-warm-white rounded-lg hover:bg-sage-light active:scale-[0.98];
 }
 
-@utility badge {
-  @apply inline-flex items-center px-2 py-0.5 rounded text-xs font-bold uppercase tracking-wider bg-brand-accent text-brand-primary;
-}
-
+/* Form inputs */
 @utility input-field {
-  @apply w-full rounded-full border border-gray-300 bg-white px-5 py-3 text-brand-text placeholder-gray-400 shadow-sm transition-all focus:border-brand-primary focus:outline-none focus:ring-4 focus:ring-brand-primary/10;
+  @apply w-full px-4 py-3 bg-warm-white border border-stone-light/60 rounded-lg text-charcoal placeholder:text-stone transition-all focus:outline-none focus:border-sage focus:ring-2 focus:ring-sage/20;
 }
 
+@utility textarea-field {
+  @apply input-field resize-none;
+}
+
+/* Cards */
+@utility card {
+  @apply bg-warm-white rounded-xl border border-cream-dark shadow-soft;
+}
+
+@utility card-hover {
+  @apply card transition-all duration-300 hover:shadow-card hover:border-stone-light/60;
+}
+
+/* Tags/Badges */
+@utility tag {
+  @apply inline-flex items-center px-2.5 py-1 text-xs font-medium rounded-md bg-cream-dark text-charcoal-light;
+}
+
+@utility tag-sage {
+  @apply tag bg-sage/15 text-sage;
+}
+
+/* Typography helpers */
+@utility heading-1 {
+  @apply font-serif text-4xl sm:text-5xl md:text-6xl font-medium tracking-tight leading-[1.1];
+}
+
+@utility heading-2 {
+  @apply font-serif text-2xl sm:text-3xl font-medium tracking-tight;
+}
+
+@utility heading-3 {
+  @apply font-serif text-xl sm:text-2xl font-medium;
+}
+
+@utility body-large {
+  @apply text-lg text-charcoal-light leading-relaxed;
+}
+
+@utility handwritten {
+  @apply font-hand text-2xl text-sage;
+}
+
+/* Dividers */
+@utility divider {
+  @apply border-t border-cream-dark;
+}
+
+/* Links */
+@utility link {
+  @apply text-charcoal underline decoration-stone-light underline-offset-2 hover:decoration-sage transition-colors;
+}
+
+/* Recipe card specific */
 @utility recipe-card {
-  @apply relative flex flex-col overflow-hidden rounded-2xl bg-brand-surface border border-brand-border shadow-sm transition-all duration-300 hover:shadow-xl hover:-translate-y-1 hover:border-brand-primary/30;
+  @apply block bg-warm-white rounded-2xl overflow-hidden border border-cream-dark transition-all duration-300 hover:shadow-card hover:-translate-y-1;
 }
 
-@utility display-heading {
-  @apply font-serif text-5xl md:text-7xl font-bold tracking-tight leading-tight text-brand-text;
+@utility recipe-card-image {
+  @apply aspect-[4/3] w-full object-cover transition-transform duration-500;
 }
 
-@utility section-heading {
-  @apply font-serif text-3xl md:text-4xl font-bold mb-6 text-brand-text;
+/* Group hover for recipe cards - applied via parent .group class in HTML */
+.group:hover .recipe-card-image {
+  transform: scale(1.05);
 }
 
-@layer components {
-  /* Layouts */
-  .grid-recipe-layout {
-    display: grid;
-    gap: 4rem;
-    @media (min-width: 768px) {
-      grid-template-columns: 1fr 2fr;
-    }
-  }
-
-  .grid-editor-layout {
-    display: grid;
-    gap: 3rem;
-    @media (min-width: 1024px) {
-      grid-template-columns: 1fr 350px;
-    }
-  }
-
-  .recipe-card-image-wrapper {
-    @apply relative aspect-video overflow-hidden bg-gray-100;
-  }
-
-  .recipe-card-image {
-    @apply h-full w-full object-cover transition-transform duration-500;
-  }
-
-  .recipe-card-content {
-    @apply p-5 flex flex-col flex-1;
-  }
-  
-  /* Manual Hover Effect for images within cards since we removed @apply group */
-  .recipe-card:hover .recipe-card-image {
-    @apply scale-105;
-  }
-
-  .prose-text {
-    @apply text-gray-600 leading-relaxed;
-  }
+/* Glass effect for header */
+@utility glass {
+  @apply bg-cream/80 backdrop-blur-md border-b border-cream-dark;
 }
+
+/* Animations */
+@utility animate-fade-up {
+  animation: var(--animation-fade-up);
+}
+
+@utility animate-fade-in {
+  animation: var(--animation-fade-in);
+}
+
+/* Stagger children animations */
+@utility stagger-1 { animation-delay: 0.1s; }
+@utility stagger-2 { animation-delay: 0.2s; }
+@utility stagger-3 { animation-delay: 0.3s; }
+@utility stagger-4 { animation-delay: 0.4s; }

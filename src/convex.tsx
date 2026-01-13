@@ -1,6 +1,6 @@
-import { ConvexProvider, ConvexReactClient } from "convex/react";
 import { ConvexAuthProvider } from "@convex-dev/auth/react";
-import type { FunctionComponent, ReactNode } from "react";
+import { ConvexReactClient } from "convex/react";
+import type { FunctionComponent } from "react";
 
 const convex = new ConvexReactClient(import.meta.env.PUBLIC_CONVEX_URL);
 
@@ -14,14 +14,3 @@ export function withConvex<Props extends object>(Component: FunctionComponent<Pr
     );
   };
 }
-
-// Provider component for wrapping multiple children
-export function ConvexClientProvider({ children }: { children: ReactNode }) {
-  return (
-    <ConvexAuthProvider client={convex}>
-      {children}
-    </ConvexAuthProvider>
-  );
-}
-
-export { convex };

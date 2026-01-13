@@ -1,29 +1,5 @@
 import { useState, useCallback } from 'react';
-import { config, type Category, type RecipeStatus, type AvatarSize } from './config';
-
-// Re-export config values for convenience
-export const CATEGORIES = config.categories;
-export type { Category, RecipeStatus, AvatarSize };
-
-// Shared types
-export interface Comment {
-  id: string;
-  content: string;
-  createdAt: Date | string;
-  user?: { name: string | null; image: string | null } | null;
-}
-
-export interface RecipeInput {
-  id?: string;
-  title: string;
-  description?: string | null;
-  coverImage?: string | null;
-  ingredients: string[];
-  steps: string[];
-  category?: string | null; // Allow any string for DB compatibility
-  videoUrl?: string | null;
-  status?: RecipeStatus;
-}
+import { config, type AvatarSize } from './config';
 
 // Hooks
 export function useOptimisticToggle(initial: boolean, onToggle: () => Promise<{ error?: unknown }>) {

@@ -8,37 +8,26 @@ function EditRecipeInner({ recipeId }: { recipeId: Id<"recipes"> }) {
   const recipe = useQuery(api.recipes.getById, { id: recipeId });
   const user = useQuery(api.users.currentUser);
 
-  // Redirect if not logged in
   if (user === null) {
     window.location.href = "/login";
     return null;
   }
 
-  // Loading
   if (recipe === undefined || user === undefined) {
     return (
       <div className="flex items-center justify-center min-h-screen">
-        <div className="animate-pulse text-gray-400">Loading...</div>
+        <div className="text-stone animate-pulse">Loading...</div>
       </div>
     );
   }
 
-  // Not found or not owner
   if (!recipe || recipe.userId !== user._id) {
     window.location.href = "/dashboard";
     return null;
   }
 
   return (
-    <div className="bg-gray-50 min-h-screen py-10">
-      <div className="max-w-4xl mx-auto px-4 mb-4">
-        <a
-          href="/dashboard"
-          className="text-xs font-bold uppercase tracking-widest text-slate-400 hover:text-brand-text transition-colors"
-        >
-          Back to Kitchen
-        </a>
-      </div>
+    <div className="min-h-screen pt-20 pb-24 bg-cream">
       <RecipeEditor
         initialData={{
           id: recipe._id,

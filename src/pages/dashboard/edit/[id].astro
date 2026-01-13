@@ -1,5 +1,6 @@
 ---
 import Layout from '@/layouts/Layout.astro';
+import Header from '@/components/Header.astro';
 import EditRecipe from '@/components/EditRecipe';
 import type { Id } from '../../../convex/_generated/dataModel';
 
@@ -9,6 +10,7 @@ if (!id) return Astro.redirect('/dashboard');
 export const prerender = false;
 ---
 
-<Layout>
-    <EditRecipe client:load recipeId={id as Id<"recipes">} />
+<Layout title="Edit Recipe - Mise">
+    <Header backLink={{ href: '/dashboard', label: 'Back to Kitchen' }} />
+    <EditRecipe client:idle recipeId={id as Id<"recipes">} />
 </Layout>

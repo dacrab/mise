@@ -33,6 +33,18 @@ export const updateProfile = mutation({
   handler: async (ctx, args) => {
     const userId = await getAuthUserId(ctx);
     if (!userId) throw new Error("Unauthorized");
+    
+    // Check username uniqueness
+    if (args.username) {
+      const existing = await ctx.db
+        .query("users")
+        .withIndex("by_username", (q) => q.eq("username", args.username!))
+        .first();
+      if (existing && existing._id !== userId) {
+        throw new Error("Username already taken");
+      }
+    }
+    
     await ctx.db.patch(userId, args);
   },
 });
