@@ -1,8 +1,5 @@
 # Dependencies
 node_modules/
-.pnp
-.pnp.js
-bun.lockb
 
 # Build Outputs
 dist/
@@ -13,41 +10,22 @@ dist/
 # Environment Variables
 .env
 .env.*
-.env.local
-.env.development.local
-.env.test.local
-.env.production.local
 !.env.example
 
 # Cloudflare
 .wrangler/
 .dev.vars
-wrangler.json
-_worker.js
+
+# Convex
+convex/_generated/
 
 # IDE & System
 .vscode/*
 !.vscode/extensions.json
-!.vscode/settings.json
 !.vscode/launch.json
 .idea/
 .DS_Store
 *.log
-npm-debug.log*
-yarn-debug.log*
-yarn-error.log*
-logs/
-*.log
 
-# Drizzle / DB
-drizzle/
-.drizzle/
-
-# Testing
-coverage/
-
-# OS specific files
+# OS
 Thumbs.db
-db.sqlite3
-db.sqlite3-journal
-package-lock.json

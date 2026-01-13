@@ -9,9 +9,6 @@ import cloudflare from '@astrojs/cloudflare';
 export default defineConfig({
   vite: {
     plugins: [tailwindcss()],
-    ssr: {
-      external: ['node:async_hooks']
-    }
   },
 
   integrations: [react()],

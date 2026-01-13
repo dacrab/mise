@@ -2,8 +2,7 @@
 import Layout from '@/layouts/Layout.astro';
 import Footer from '@/components/Footer.astro';
 import Header from '@/components/Header.astro';
-import { recipes } from '@/db';
-import { desc, ilike, or, eq, and } from 'drizzle-orm';
+import { getConvexClient, api } from '@/convex-server';
 import { Image } from 'astro:assets';
 
 const search = Astro.url.searchParams.get('q') || '';
@@ -11,20 +10,12 @@ const category = Astro.url.searchParams.get('category') || '';
 
 const CATEGORIES = ['Breakfast', 'Lunch', 'Dinner', 'Dessert', 'Vegan', 'Vegetarian', 'Quick & Easy', 'Baking', 'Italian', 'Asian', 'Mexican'];
 
-const db = Astro.locals.db;
-
-// Build query conditions
-const conditions = [eq(recipes.status, 'published')];
-if (search) {
-    const searchCond = or(ilike(recipes.title, `%${search}%`), ilike(recipes.description, `%${search}%`));
-    if (searchCond) conditions.push(searchCond);
-}
-if (category) conditions.push(eq(recipes.category, category));
-
-const allRecipes = await db.select().from(recipes)
-    .where(and(...conditions as any))
-    .orderBy(desc(recipes.createdAt))
-    .limit(50);
+const convex = getConvexClient();
+const allRecipes = await convex.query(api.recipes.list, {
+    search: search || undefined,
+    category: category || undefined,
+    limit: 50,
+});
 
 const hasFilters = search || category;
 
@@ -32,7 +23,7 @@ export const prerender = false;
 ---
 
 <Layout title="Mise — Discover and share amazing recipes">
-    <Header user={Astro.locals.user} />
+    <Header />
 
     <main class="pt-24 pb-20 min-h-screen">
         <!-- Hero -->
@@ -84,8 +75,8 @@ export const prerender = false;
                     {allRecipes.map((recipe) => (
                         <a href={`/recipe/${recipe.slug}`} class="recipe-card group h-full">
                             <div class="recipe-card-image-wrapper">
-                                {recipe.coverImage ? (
-                                    <Image src={recipe.coverImage} alt={recipe.title} width={600} height={450} class="recipe-card-image" loading="lazy" />
+                                {recipe.coverImageUrl ? (
+                                    <Image src={recipe.coverImageUrl} alt={recipe.title} width={600} height={450} class="recipe-card-image" loading="lazy" />
                                 ) : (
                                     <div class="flex items-center justify-center h-full bg-brand-accent/30 text-brand-primary/50">
                                         <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1"><path d="M3 14h18"/><path d="M4 14v4a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-4"/><path d="M12 2v20"/></svg>
@@ -100,7 +91,7 @@ export const prerender = false;
                                 <p class="text-gray-600 text-sm line-clamp-2 mb-4 flex-1">{recipe.description || "A delicious recipe waiting to be discovered."}</p>
                                 <div class="flex items-center justify-between pt-4 border-t border-gray-100 mt-auto">
                                     <span class="text-[10px] text-gray-400 font-bold uppercase tracking-widest">
-                                        {new Date(recipe.createdAt).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}
+                                        {new Date(recipe._creationTime).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}
                                     </span>
                                     <span class="text-xs font-bold text-brand-primary uppercase tracking-tighter">View →</span>
                                 </div>

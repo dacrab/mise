@@ -1,10 +1,9 @@
 ---
 interface Props {
-    user?: { name: string } | null;
     variant?: 'default' | 'dashboard' | 'minimal';
 }
 
-const { user, variant = 'default' } = Astro.props;
+const { variant = 'default' } = Astro.props;
 ---
 
 <header class="fixed top-0 w-full z-50 glass">
@@ -19,27 +18,8 @@ const { user, variant = 'default' } = Astro.props;
         <nav class="flex items-center gap-4">
             {variant === 'default' && (
                 <>
-                    {user ? (
-                        <a href="/dashboard" class="nav-link flex items-center gap-2">
-                            <span class="w-2 h-2 rounded-full bg-green-500 animate-pulse"></span>
-                            {user.name}
-                        </a>
-                    ) : (
-                        <a href="/login" class="nav-link hidden md:block">Sign In</a>
-                    )}
+                    <a href="/login" class="nav-link hidden md:block">Sign In</a>
                     <a href="/dashboard/create" class="btn-primary">Submit Recipe</a>
-                </>
-            )}
-            
-            {variant === 'dashboard' && (
-                <>
-                    <div class="hidden md:flex flex-col items-end mr-2">
-                        <span class="text-xs font-bold text-brand-text leading-tight">{user?.name}</span>
-                        <span class="text-[10px] text-gray-400 font-medium">Verified Chef</span>
-                    </div>
-                    <button id="logout-btn" class="btn-ghost text-xs py-2 px-4 border border-brand-border rounded-full hover:bg-red-50 hover:text-red-600 hover:border-red-100 transition-all">
-                        Sign Out
-                    </button>
                 </>
             )}
             

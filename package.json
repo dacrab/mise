@@ -1,5 +1,5 @@
 {
-  "name": "recipeswap",
+  "name": "mise",
   "type": "module",
   "version": "0.0.1",
   "scripts": {
@@ -10,32 +10,22 @@
     "check": "astro check",
     "typecheck": "tsc --noEmit",
     "lint": "bun run check && bun run typecheck",
-    "db:push": "bunx drizzle-kit push",
-    "db:generate": "bunx drizzle-kit generate",
-    "db:migrate": "bunx drizzle-kit migrate",
-    "db:studio": "bunx drizzle-kit studio",
     "deploy": "bun run build && wrangler pages deploy dist"
   },
   "dependencies": {
     "@astrojs/check": "^0.9.6",
     "@astrojs/cloudflare": "^12.6.12",
     "@astrojs/react": "^4.4.2",
-    "@aws-sdk/client-s3": "^3.966.0",
-    "@aws-sdk/s3-request-presigner": "^3.966.0",
-    "@neondatabase/serverless": "^1.0.2",
+    "@convex-dev/auth": "^0.0.90",
     "@tailwindcss/vite": "^4.1.18",
     "@types/react": "^19.2.8",
     "@types/react-dom": "^19.2.3",
     "astro": "^5.16.8",
-    "better-auth": "^1.4.10",
-    "drizzle-orm": "^0.45.1",
-    "nanoid": "^5.1.6",
+    "convex": "^1.31.4",
+    "jose": "^6.1.3",
     "react": "^19.2.3",
     "react-dom": "^19.2.3",
     "tailwindcss": "^4.1.18",
     "typescript": "^5.9.3"
-  },
-  "devDependencies": {
-    "drizzle-kit": "^0.31.8"
   }
 }

@@ -1,42 +1,14 @@
 ---
 import Layout from '@/layouts/Layout.astro';
-import RecipeEditor from '@/components/RecipeEditor';
-import { recipes } from '@/db';
-import { eq, and } from 'drizzle-orm';
+import EditRecipe from '@/components/EditRecipe';
+import type { Id } from '../../../convex/_generated/dataModel';
 
 const { id } = Astro.params;
-const user = Astro.locals.user;
+if (!id) return Astro.redirect('/dashboard');
 
-if (!user) {
-    return Astro.redirect('/login');
-}
-
-if (!id) {
-    return Astro.redirect('/dashboard');
-}
-
-const db = Astro.locals.db;
-
-const [recipe] = await db.select().from(recipes).where(
-    and(
-        eq(recipes.id, id),
-        eq(recipes.userId, user.id)
-    )
-);
-
-if (!recipe) {
-    return Astro.redirect('/dashboard');
-}
+export const prerender = false;
 ---
 
 <Layout>
-    <div class="bg-gray-50 min-h-screen py-10">
-        <div class="max-w-4xl mx-auto px-4 mb-4">
-            <a href="/dashboard" class="text-xs font-bold uppercase tracking-widest text-slate-400 hover:text-brand-text transition-colors">Back to Kitchen</a>
-        </div>
-        <RecipeEditor client:load initialData={{
-            ...recipe,
-            status: recipe.status as 'draft' | 'published'
-        }} isEditing={true} />
-    </div>
+    <EditRecipe client:load recipeId={id as Id<"recipes">} />
 </Layout>

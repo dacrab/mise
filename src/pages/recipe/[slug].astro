@@ -2,8 +2,7 @@
 import Layout from '@/layouts/Layout.astro';
 import Footer from '@/components/Footer.astro';
 import Header from '@/components/Header.astro';
-import { recipes, user, comments, likes, bookmarks } from '@/db';
-import { eq, and, desc } from 'drizzle-orm';
+import { getConvexClient, api } from '@/convex-server';
 import SocialActions from '@/components/SocialActions';
 import CommentSection from '@/components/CommentSection';
 import { Image } from 'astro:assets';
@@ -11,42 +10,16 @@ import { Image } from 'astro:assets';
 const { slug } = Astro.params;
 if (!slug) return Astro.redirect('/404');
 
-const db = Astro.locals.db;
-const currentUser = Astro.locals.user;
+const convex = getConvexClient();
+const recipe = await convex.query(api.recipes.getBySlug, { slug });
 
-// Fetch all data in parallel
-const [recipeResult, , bookmarkData] = await Promise.all([
-    db.select({
-        id: recipes.id, title: recipes.title, description: recipes.description,
-        category: recipes.category, ingredients: recipes.ingredients, steps: recipes.steps,
-        coverImage: recipes.coverImage, videoUrl: recipes.videoUrl, createdAt: recipes.createdAt,
-        authorName: user.name, authorUsername: user.username, authorImage: user.image
-    }).from(recipes).leftJoin(user, eq(recipes.userId, user.id)).where(eq(recipes.slug, slug)),
-    db.select().from(likes).where(eq(likes.recipeId, slug)),
-    currentUser ? db.select().from(bookmarks).where(and(eq(bookmarks.recipeId, slug), eq(bookmarks.userId, currentUser.id))) : Promise.resolve([])
-]);
-
-const recipe = recipeResult[0];
 if (!recipe) return Astro.redirect('/404');
-
-// Fetch likes count and comments after we have recipe ID
-const [allLikes, recipeComments] = await Promise.all([
-    db.select().from(likes).where(eq(likes.recipeId, recipe.id)),
-    db.select({
-        id: comments.id, content: comments.content, createdAt: comments.createdAt,
-        user: { name: user.name, image: user.image }
-    }).from(comments).leftJoin(user, eq(comments.userId, user.id))
-      .where(eq(comments.recipeId, recipe.id)).orderBy(desc(comments.createdAt))
-]);
-
-const isLiked = currentUser ? allLikes.some(l => l.userId === currentUser.id) : false;
-const isBookmarked = bookmarkData.length > 0;
 
 export const prerender = false;
 ---
 
 <Layout title={`${recipe.title} - Mise`}>
-    <Header user={currentUser} variant="minimal" />
+    <Header variant="minimal" />
 
     <main class="pt-24 pb-20">
         <article class="wrapper max-w-4xl">
@@ -59,31 +32,31 @@ export const prerender = false;
                 <p class="prose-text text-xl max-w-2xl mx-auto mb-8">{recipe.description}</p>
 
                 <div class="flex items-center justify-center gap-4 py-6 border-y border-gray-100">
-                    <a href={`/chef/${recipe.authorUsername || recipe.authorName}`} class="flex items-center gap-2 hover:opacity-80">
-                        {recipe.authorImage ? (
-                            <img src={recipe.authorImage} alt={recipe.authorName || 'Author'} class="w-10 h-10 rounded-full ring-2 ring-brand-accent shadow-sm" />
+                    <a href={`/chef/${recipe.author?.username || recipe.author?.name}`} class="flex items-center gap-2 hover:opacity-80">
+                        {recipe.author?.image ? (
+                            <img src={recipe.author.image} alt={recipe.author.name || 'Author'} class="w-10 h-10 rounded-full ring-2 ring-brand-accent shadow-sm" />
                         ) : (
                             <div class="w-10 h-10 rounded-full bg-brand-accent flex items-center justify-center text-brand-primary font-bold">
-                                {(recipe.authorName || 'U')[0]}
+                                {(recipe.author?.name || 'U')[0]}
                             </div>
                         )}
                         <div class="text-left">
-                            <span class="block text-sm font-bold text-brand-text">{recipe.authorName || 'Community Chef'}</span>
+                            <span class="block text-sm font-bold text-brand-text">{recipe.author?.name || 'Community Chef'}</span>
                             <span class="block text-[10px] uppercase tracking-widest text-gray-400 font-bold">View Kitchen →</span>
                         </div>
                     </a>
                     <div class="w-px h-8 bg-gray-100"></div>
                     <div class="text-left">
                         <span class="block text-sm font-bold text-brand-text">Published</span>
-                        <time class="block text-xs text-gray-500">{new Date(recipe.createdAt).toLocaleDateString(undefined, { year: 'numeric', month: 'long', day: 'numeric' })}</time>
+                        <time class="block text-xs text-gray-500">{new Date(recipe._creationTime).toLocaleDateString(undefined, { year: 'numeric', month: 'long', day: 'numeric' })}</time>
                     </div>
                 </div>
             </header>
 
             <!-- Cover Image -->
-            {recipe.coverImage && (
+            {recipe.coverImageUrl && (
                 <div class="rounded-3xl overflow-hidden aspect-video bg-gray-100 mb-16 shadow-2xl shadow-black/5 relative group">
-                    <Image src={recipe.coverImage} alt={recipe.title} width={1200} height={675}
+                    <Image src={recipe.coverImageUrl} alt={recipe.title} width={1200} height={675}
                         class="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105" />
                     {recipe.videoUrl && (
                         <a href={recipe.videoUrl} target="_blank" rel="noopener noreferrer"
@@ -103,7 +76,7 @@ export const prerender = false;
                     <div class="p-8 rounded-2xl bg-brand-accent/50 border border-brand-accent-border sticky top-24">
                         <h3 class="section-heading text-2xl mb-6">Ingredients</h3>
                         <ul class="space-y-4">
-                            {(recipe.ingredients as string[]).map((ing) => (
+                            {recipe.ingredients.map((ing) => (
                                 <li class="flex gap-3 text-brand-text text-sm font-medium">
                                     <div class="w-5 h-5 rounded-full bg-brand-surface border border-brand-accent-border flex items-center justify-center shrink-0 mt-0.5">
                                         <div class="w-1.5 h-1.5 rounded-full bg-brand-primary"></div>
@@ -118,7 +91,7 @@ export const prerender = false;
                 <section>
                     <h3 class="section-heading text-2xl mb-8">Preparation Steps</h3>
                     <div class="space-y-12">
-                        {(recipe.steps as string[]).map((step, i, arr) => (
+                        {recipe.steps.map((step, i, arr) => (
                             <div class="group relative flex gap-6">
                                 <div class="flex flex-col items-center">
                                     <div class="flex items-center justify-center w-10 h-10 rounded-full bg-brand-text text-white font-serif text-lg font-bold shadow-lg shrink-0 z-10">
@@ -131,11 +104,10 @@ export const prerender = false;
                         ))}
                     </div>
 
-                    <SocialActions client:load recipeId={recipe.id} initialLiked={isLiked}
-                        initialBookmarked={isBookmarked} likesCount={allLikes.length} />
+                    <SocialActions client:load recipeId={recipe._id} initialLiked={recipe.isLiked}
+                        initialBookmarked={recipe.isBookmarked} likesCount={recipe.likesCount} />
 
-                    <CommentSection client:visible recipeId={recipe.id}
-                        initialComments={recipeComments} isLoggedIn={!!currentUser} />
+                    <CommentSection client:visible recipeId={recipe._id} isLoggedIn={false} />
                 </section>
             </div>
         </article>
