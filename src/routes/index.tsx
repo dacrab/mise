@@ -37,21 +37,21 @@ function HomePage() {
         <section className="wrapper">
           <div className="grid lg:grid-cols-2 gap-8 lg:gap-16 py-12 md:py-20 items-center">
             <div>
-              <p className="font-hand text-2xl text-sage mb-3">from our kitchen to yours</p>
-              <h1 className="font-serif text-4xl sm:text-5xl lg:text-6xl font-medium tracking-tight leading-[1.1] mb-6">
+              <p className="font-hand text-2xl text-sage mb-3 fade-in" style={{ "--delay": "0s" } as React.CSSProperties}>from our kitchen to yours</p>
+              <h1 className="font-serif text-4xl sm:text-5xl lg:text-6xl font-medium tracking-tight leading-[1.1] mb-6 fade-in" style={{ "--delay": "0.1s" } as React.CSSProperties}>
                 Recipes made<br />with <span className="italic text-sage">real love</span>
               </h1>
-              <p className="text-lg text-charcoal-light leading-relaxed mb-8 max-w-md">
+              <p className="text-lg text-charcoal-light leading-relaxed mb-8 max-w-md fade-in" style={{ "--delay": "0.2s" } as React.CSSProperties}>
                 No algorithms. No ads. Just home cooks sharing dishes that actually matter to them.
               </p>
-              <div className="flex flex-wrap gap-3">
+              <div className="flex flex-wrap gap-3 fade-in" style={{ "--delay": "0.3s" } as React.CSSProperties}>
                 <Link to="/dashboard/create" className="btn-primary">Share a recipe</Link>
                 <a href="#recipes" className="btn-ghost">Browse recipes ↓</a>
               </div>
             </div>
 
             {featuredRecipe ? (
-              <Link to={`/recipe/${featuredRecipe.slug}`} className="group relative block">
+              <Link to={`/recipe/${featuredRecipe.slug}`} className="group relative block fade-in scale-in" style={{ "--delay": "0.2s" } as React.CSSProperties}>
                 <div className="aspect-[4/3] rounded-2xl overflow-hidden bg-cream-dark">
                   {featuredRecipe.coverImageUrl ? (
                     <img src={featuredRecipe.coverImageUrl} alt={featuredRecipe.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
@@ -63,13 +63,13 @@ function HomePage() {
                     </div>
                   )}
                 </div>
-                <div className="absolute bottom-4 left-4 right-4 bg-warm-white/95 backdrop-blur-sm rounded-xl p-4 shadow-card">
+                <div className="absolute bottom-4 left-4 right-4 bg-warm-white/95 backdrop-blur-sm rounded-xl p-4 shadow-card slide-up" style={{ "--delay": "0.4s" } as React.CSSProperties}>
                   <span className="tag-sage text-[10px] mb-2">Featured</span>
                   <h3 className="font-serif text-lg font-medium group-hover:text-sage transition-colors">{featuredRecipe.title}</h3>
                 </div>
               </Link>
             ) : (
-              <div className="hidden lg:block aspect-[4/3] rounded-2xl bg-gradient-to-br from-sage/10 to-cream-dark relative overflow-hidden">
+              <div className="hidden lg:block aspect-[4/3] rounded-2xl bg-gradient-to-br from-sage/10 to-cream-dark relative overflow-hidden fade-in" style={{ "--delay": "0.2s" } as React.CSSProperties}>
                 <div className="absolute inset-0 flex items-center justify-center">
                   <p className="font-hand text-3xl text-sage/40 rotate-[-5deg]">your recipe here</p>
                 </div>
@@ -79,7 +79,7 @@ function HomePage() {
         </section>
 
         {/* Search */}
-        <section className="wrapper -mt-2 mb-12">
+        <section className="wrapper -mt-2 mb-12 fade-in" style={{ "--delay": "0.35s" } as React.CSSProperties}>
           <form className="card p-3 flex flex-col sm:flex-row gap-2">
             <div className="relative flex-1">
               <input
@@ -128,8 +128,8 @@ function HomePage() {
 
           {gridRecipes.length > 0 ? (
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
-              {gridRecipes.map((recipe) => (
-                <Link key={recipe._id} to={`/recipe/${recipe.slug}`} className="group flex gap-4 p-3 -m-3 rounded-xl hover:bg-warm-white transition-colors">
+              {gridRecipes.map((recipe, i) => (
+                <Link key={recipe._id} to={`/recipe/${recipe.slug}`} className="group flex gap-4 p-3 -m-3 rounded-xl hover:bg-warm-white transition-colors stagger-item" style={{ "--delay": `${0.4 + i * 0.05}s` } as React.CSSProperties}>
                   <div className="w-24 h-24 rounded-lg overflow-hidden bg-cream-dark shrink-0">
                     {recipe.coverImageUrl ? (
                       <img src={recipe.coverImageUrl} alt={recipe.title} className="w-full h-full object-cover" />
