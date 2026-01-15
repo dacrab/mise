@@ -26,12 +26,12 @@ export default defineSchema({
     coverImage: v.optional(v.id("_storage")),
     videoUrl: v.optional(v.string()),
     status: v.union(v.literal("draft"), v.literal("published")),
+    publishAt: v.optional(v.float64()), // scheduled publishing
     userId: v.id("users"),
-    // New fields
     forkedFrom: v.optional(v.id("recipes")),
     servings: v.optional(v.number()),
-    prepTime: v.optional(v.number()), // minutes
-    cookTime: v.optional(v.number()), // minutes
+    prepTime: v.optional(v.number()),
+    cookTime: v.optional(v.number()),
     difficulty: v.optional(v.union(v.literal("easy"), v.literal("medium"), v.literal("hard"))),
   })
     .index("by_slug", ["slug"])
@@ -44,7 +44,9 @@ export default defineSchema({
     content: v.string(),
     recipeId: v.id("recipes"),
     userId: v.id("users"),
-  }).index("by_recipe", ["recipeId"]),
+  })
+    .index("by_recipe", ["recipeId"])
+    .index("by_user", ["userId"]),
 
   likes: defineTable({
     recipeId: v.id("recipes"),
@@ -63,11 +65,10 @@ export default defineSchema({
     .index("by_user_recipe", ["userId", "recipeId"])
     .index("by_collection", ["collectionId"]),
 
-  // New tables
   notifications: defineTable({
-    userId: v.id("users"), // recipient
+    userId: v.id("users"),
     type: v.union(v.literal("like"), v.literal("comment"), v.literal("follow"), v.literal("fork")),
-    actorId: v.id("users"), // who triggered it
+    actorId: v.id("users"),
     recipeId: v.optional(v.id("recipes")),
     read: v.boolean(),
   })
@@ -85,7 +86,7 @@ export default defineSchema({
   ratings: defineTable({
     recipeId: v.id("recipes"),
     userId: v.id("users"),
-    value: v.number(), // 1-5
+    value: v.number(),
   })
     .index("by_recipe", ["recipeId"])
     .index("by_user_recipe", ["userId", "recipeId"]),
@@ -94,13 +95,22 @@ export default defineSchema({
     name: v.string(),
     userId: v.id("users"),
     isDefault: v.optional(v.boolean()),
-  })
-    .index("by_user", ["userId"]),
+  }).index("by_user", ["userId"]),
 
   recipeViews: defineTable({
     recipeId: v.id("recipes"),
-    timestamp: v.number(),
+    timestamp: v.float64(),
   })
     .index("by_recipe", ["recipeId"])
-    .index("by_timestamp", ["timestamp"]),
+    .index("by_timestamp", ["timestamp"])
+    .index("by_recipe_timestamp", ["recipeId", "timestamp"]),
+
+  // Live presence - who's cooking this recipe right now
+  presence: defineTable({
+    recipeId: v.id("recipes"),
+    userId: v.id("users"),
+    lastSeen: v.float64(),
+  })
+    .index("by_recipe", ["recipeId"])
+    .index("by_user_recipe", ["userId", "recipeId"]),
 });

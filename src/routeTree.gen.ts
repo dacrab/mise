@@ -9,25 +9,17 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
-import { Route as SignupRouteImport } from './routes/signup'
-import { Route as LoginRouteImport } from './routes/login'
 import { Route as AuthedRouteImport } from './routes/_authed'
 import { Route as IndexRouteImport } from './routes/index'
-import { Route as RecipeSlugRouteImport } from './routes/recipe/$slug'
-import { Route as ChefUsernameRouteImport } from './routes/chef/$username'
+import { Route as RecipeSlugRouteImport } from './routes/recipe.$slug'
+import { Route as ChefUsernameRouteImport } from './routes/chef.$username'
+import { Route as AuthedDashboardRouteImport } from './routes/_authed/dashboard'
+import { Route as authSignupRouteImport } from './routes/(auth)/signup'
+import { Route as authLoginRouteImport } from './routes/(auth)/login'
 import { Route as AuthedDashboardIndexRouteImport } from './routes/_authed/dashboard/index'
+import { Route as RecipeSlugPrintRouteImport } from './routes/recipe.$slug.print'
 import { Route as AuthedDashboardCreateRouteImport } from './routes/_authed/dashboard/create'
 
-const SignupRoute = SignupRouteImport.update({
-  id: '/signup',
-  path: '/signup',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const LoginRoute = LoginRouteImport.update({
-  id: '/login',
-  path: '/login',
-  getParentRoute: () => rootRouteImport,
-} as any)
 const AuthedRoute = AuthedRouteImport.update({
   id: '/_authed',
   getParentRoute: () => rootRouteImport,
@@ -47,44 +39,69 @@ const ChefUsernameRoute = ChefUsernameRouteImport.update({
   path: '/chef/$username',
   getParentRoute: () => rootRouteImport,
 } as any)
-const AuthedDashboardIndexRoute = AuthedDashboardIndexRouteImport.update({
-  id: '/dashboard/',
-  path: '/dashboard/',
+const AuthedDashboardRoute = AuthedDashboardRouteImport.update({
+  id: '/dashboard',
+  path: '/dashboard',
   getParentRoute: () => AuthedRoute,
 } as any)
+const authSignupRoute = authSignupRouteImport.update({
+  id: '/(auth)/signup',
+  path: '/signup',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const authLoginRoute = authLoginRouteImport.update({
+  id: '/(auth)/login',
+  path: '/login',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AuthedDashboardIndexRoute = AuthedDashboardIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => AuthedDashboardRoute,
+} as any)
+const RecipeSlugPrintRoute = RecipeSlugPrintRouteImport.update({
+  id: '/print',
+  path: '/print',
+  getParentRoute: () => RecipeSlugRoute,
+} as any)
 const AuthedDashboardCreateRoute = AuthedDashboardCreateRouteImport.update({
-  id: '/dashboard/create',
-  path: '/dashboard/create',
-  getParentRoute: () => AuthedRoute,
+  id: '/create',
+  path: '/create',
+  getParentRoute: () => AuthedDashboardRoute,
 } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
-  '/login': typeof LoginRoute
-  '/signup': typeof SignupRoute
+  '/login': typeof authLoginRoute
+  '/signup': typeof authSignupRoute
+  '/dashboard': typeof AuthedDashboardRouteWithChildren
   '/chef/$username': typeof ChefUsernameRoute
-  '/recipe/$slug': typeof RecipeSlugRoute
+  '/recipe/$slug': typeof RecipeSlugRouteWithChildren
   '/dashboard/create': typeof AuthedDashboardCreateRoute
-  '/dashboard': typeof AuthedDashboardIndexRoute
+  '/recipe/$slug/print': typeof RecipeSlugPrintRoute
+  '/dashboard/': typeof AuthedDashboardIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
-  '/login': typeof LoginRoute
-  '/signup': typeof SignupRoute
+  '/login': typeof authLoginRoute
+  '/signup': typeof authSignupRoute
   '/chef/$username': typeof ChefUsernameRoute
-  '/recipe/$slug': typeof RecipeSlugRoute
+  '/recipe/$slug': typeof RecipeSlugRouteWithChildren
   '/dashboard/create': typeof AuthedDashboardCreateRoute
+  '/recipe/$slug/print': typeof RecipeSlugPrintRoute
   '/dashboard': typeof AuthedDashboardIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/_authed': typeof AuthedRouteWithChildren
-  '/login': typeof LoginRoute
-  '/signup': typeof SignupRoute
+  '/(auth)/login': typeof authLoginRoute
+  '/(auth)/signup': typeof authSignupRoute
+  '/_authed/dashboard': typeof AuthedDashboardRouteWithChildren
   '/chef/$username': typeof ChefUsernameRoute
-  '/recipe/$slug': typeof RecipeSlugRoute
+  '/recipe/$slug': typeof RecipeSlugRouteWithChildren
   '/_authed/dashboard/create': typeof AuthedDashboardCreateRoute
+  '/recipe/$slug/print': typeof RecipeSlugPrintRoute
   '/_authed/dashboard/': typeof AuthedDashboardIndexRoute
 }
 export interface FileRouteTypes {
@@ -93,10 +110,12 @@ export interface FileRouteTypes {
     | '/'
     | '/login'
     | '/signup'
+    | '/dashboard'
     | '/chef/$username'
     | '/recipe/$slug'
     | '/dashboard/create'
-    | '/dashboard'
+    | '/recipe/$slug/print'
+    | '/dashboard/'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -105,44 +124,33 @@ export interface FileRouteTypes {
     | '/chef/$username'
     | '/recipe/$slug'
     | '/dashboard/create'
+    | '/recipe/$slug/print'
     | '/dashboard'
   id:
     | '__root__'
     | '/'
     | '/_authed'
-    | '/login'
-    | '/signup'
+    | '/(auth)/login'
+    | '/(auth)/signup'
+    | '/_authed/dashboard'
     | '/chef/$username'
     | '/recipe/$slug'
     | '/_authed/dashboard/create'
+    | '/recipe/$slug/print'
     | '/_authed/dashboard/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AuthedRoute: typeof AuthedRouteWithChildren
-  LoginRoute: typeof LoginRoute
-  SignupRoute: typeof SignupRoute
+  authLoginRoute: typeof authLoginRoute
+  authSignupRoute: typeof authSignupRoute
   ChefUsernameRoute: typeof ChefUsernameRoute
-  RecipeSlugRoute: typeof RecipeSlugRoute
+  RecipeSlugRoute: typeof RecipeSlugRouteWithChildren
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
-    '/signup': {
-      id: '/signup'
-      path: '/signup'
-      fullPath: '/signup'
-      preLoaderRoute: typeof SignupRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/login': {
-      id: '/login'
-      path: '/login'
-      fullPath: '/login'
-      preLoaderRoute: typeof LoginRouteImport
-      parentRoute: typeof rootRouteImport
-    }
     '/_authed': {
       id: '/_authed'
       path: ''
@@ -171,43 +179,95 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ChefUsernameRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/_authed/dashboard/': {
-      id: '/_authed/dashboard/'
+    '/_authed/dashboard': {
+      id: '/_authed/dashboard'
       path: '/dashboard'
       fullPath: '/dashboard'
-      preLoaderRoute: typeof AuthedDashboardIndexRouteImport
+      preLoaderRoute: typeof AuthedDashboardRouteImport
       parentRoute: typeof AuthedRoute
+    }
+    '/(auth)/signup': {
+      id: '/(auth)/signup'
+      path: '/signup'
+      fullPath: '/signup'
+      preLoaderRoute: typeof authSignupRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/(auth)/login': {
+      id: '/(auth)/login'
+      path: '/login'
+      fullPath: '/login'
+      preLoaderRoute: typeof authLoginRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/_authed/dashboard/': {
+      id: '/_authed/dashboard/'
+      path: '/'
+      fullPath: '/dashboard/'
+      preLoaderRoute: typeof AuthedDashboardIndexRouteImport
+      parentRoute: typeof AuthedDashboardRoute
+    }
+    '/recipe/$slug/print': {
+      id: '/recipe/$slug/print'
+      path: '/print'
+      fullPath: '/recipe/$slug/print'
+      preLoaderRoute: typeof RecipeSlugPrintRouteImport
+      parentRoute: typeof RecipeSlugRoute
     }
     '/_authed/dashboard/create': {
       id: '/_authed/dashboard/create'
-      path: '/dashboard/create'
+      path: '/create'
       fullPath: '/dashboard/create'
       preLoaderRoute: typeof AuthedDashboardCreateRouteImport
-      parentRoute: typeof AuthedRoute
+      parentRoute: typeof AuthedDashboardRoute
     }
   }
 }
 
-interface AuthedRouteChildren {
+interface AuthedDashboardRouteChildren {
   AuthedDashboardCreateRoute: typeof AuthedDashboardCreateRoute
   AuthedDashboardIndexRoute: typeof AuthedDashboardIndexRoute
 }
 
-const AuthedRouteChildren: AuthedRouteChildren = {
+const AuthedDashboardRouteChildren: AuthedDashboardRouteChildren = {
   AuthedDashboardCreateRoute: AuthedDashboardCreateRoute,
   AuthedDashboardIndexRoute: AuthedDashboardIndexRoute,
+}
+
+const AuthedDashboardRouteWithChildren = AuthedDashboardRoute._addFileChildren(
+  AuthedDashboardRouteChildren,
+)
+
+interface AuthedRouteChildren {
+  AuthedDashboardRoute: typeof AuthedDashboardRouteWithChildren
+}
+
+const AuthedRouteChildren: AuthedRouteChildren = {
+  AuthedDashboardRoute: AuthedDashboardRouteWithChildren,
 }
 
 const AuthedRouteWithChildren =
   AuthedRoute._addFileChildren(AuthedRouteChildren)
 
+interface RecipeSlugRouteChildren {
+  RecipeSlugPrintRoute: typeof RecipeSlugPrintRoute
+}
+
+const RecipeSlugRouteChildren: RecipeSlugRouteChildren = {
+  RecipeSlugPrintRoute: RecipeSlugPrintRoute,
+}
+
+const RecipeSlugRouteWithChildren = RecipeSlugRoute._addFileChildren(
+  RecipeSlugRouteChildren,
+)
+
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AuthedRoute: AuthedRouteWithChildren,
-  LoginRoute: LoginRoute,
-  SignupRoute: SignupRoute,
+  authLoginRoute: authLoginRoute,
+  authSignupRoute: authSignupRoute,
   ChefUsernameRoute: ChefUsernameRoute,
-  RecipeSlugRoute: RecipeSlugRoute,
+  RecipeSlugRoute: RecipeSlugRouteWithChildren,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

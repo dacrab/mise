@@ -15,4 +15,11 @@ crons.weekly(
   internal.analytics.recalculateTrending
 );
 
+// Check for scheduled recipes every 5 minutes
+crons.interval(
+  "publish scheduled recipes",
+  { minutes: 5 },
+  internal.recipes.publishScheduled
+);
+
 export default crons;

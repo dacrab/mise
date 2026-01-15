@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { useAuthActions } from "@convex-dev/auth/react";
 import { useNavigate } from "@tanstack/react-router";
-import { FormField, FormError, Divider, GoogleIcon } from "./ui/form";
+import { FormField, FormError, Divider, GoogleIcon } from "@/components/ui/form";
 
 export function LoginForm() {
   const { signIn } = useAuthActions();

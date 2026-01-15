@@ -1,14 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { Header } from "@/components/Header";
-import { Footer } from "@/components/Footer";
-import { Dashboard } from "@/components/Dashboard";
+import { Dashboard } from "@/components/recipe/Dashboard";
 
 export const Route = createFileRoute("/_authed/dashboard/")({
-  component: () => (
-    <>
-      <Header variant="dashboard" />
-      <main className="pt-20 min-h-screen"><Dashboard /></main>
-      <Footer />
-    </>
-  ),
+  component: Dashboard,
 });

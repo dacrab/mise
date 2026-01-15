@@ -1,12 +1,12 @@
 import { query, mutation } from "./_generated/server";
 import { v } from "convex/values";
-import { getAuthUserId } from "@convex-dev/auth/server";
+import { requireAuth, getOptionalAuth, withCoverUrls, validateLength } from "./lib/helpers";
 
 // List user's collections
 export const list = query({
   args: {},
   handler: async (ctx) => {
-    const userId = await getAuthUserId(ctx);
+    const userId = await getOptionalAuth(ctx);
     if (!userId) return [];
 
     const collections = await ctx.db
@@ -14,7 +14,6 @@ export const list = query({
       .withIndex("by_user", (q) => q.eq("userId", userId))
       .collect();
 
-    // Get bookmark counts for each collection
     return Promise.all(
       collections.map(async (c) => {
         const bookmarks = await ctx.db
@@ -31,30 +30,21 @@ export const list = query({
 export const create = mutation({
   args: { name: v.string() },
   handler: async (ctx, { name }) => {
-    const userId = await getAuthUserId(ctx);
-    if (!userId) throw new Error("Unauthorized");
-
-    const trimmed = name.trim();
-    if (trimmed.length < 1 || trimmed.length > 50) {
-      throw new Error("Name must be 1-50 characters");
-    }
-
+    const userId = await requireAuth(ctx);
+    const trimmed = validateLength(name, 1, 50, "Name");
     const id = await ctx.db.insert("collections", { name: trimmed, userId });
     return { id };
   },
 });
 
-// Delete collection (moves bookmarks to uncategorized)
+// Delete collection
 export const remove = mutation({
   args: { id: v.id("collections") },
   handler: async (ctx, { id }) => {
-    const userId = await getAuthUserId(ctx);
-    if (!userId) throw new Error("Unauthorized");
-
+    const userId = await requireAuth(ctx);
     const collection = await ctx.db.get(id);
     if (!collection || collection.userId !== userId) throw new Error("Not found");
 
-    // Move bookmarks to uncategorized
     const bookmarks = await ctx.db
       .query("bookmarks")
       .withIndex("by_collection", (q) => q.eq("collectionId", id))
@@ -69,14 +59,9 @@ export const remove = mutation({
 
 // Move bookmark to collection
 export const moveBookmark = mutation({
-  args: {
-    bookmarkId: v.id("bookmarks"),
-    collectionId: v.optional(v.id("collections")),
-  },
+  args: { bookmarkId: v.id("bookmarks"), collectionId: v.optional(v.id("collections")) },
   handler: async (ctx, { bookmarkId, collectionId }) => {
-    const userId = await getAuthUserId(ctx);
-    if (!userId) throw new Error("Unauthorized");
-
+    const userId = await requireAuth(ctx);
     const bookmark = await ctx.db.get(bookmarkId);
     if (!bookmark || bookmark.userId !== userId) throw new Error("Not found");
 
@@ -93,31 +78,14 @@ export const moveBookmark = mutation({
 export const getBookmarks = query({
   args: { collectionId: v.optional(v.id("collections")) },
   handler: async (ctx, { collectionId }) => {
-    const userId = await getAuthUserId(ctx);
+    const userId = await getOptionalAuth(ctx);
     if (!userId) return [];
 
-    let bookmarks;
-    if (collectionId) {
-      bookmarks = await ctx.db
-        .query("bookmarks")
-        .withIndex("by_collection", (q) => q.eq("collectionId", collectionId))
-        .collect();
-    } else {
-      // Uncategorized bookmarks
-      bookmarks = await ctx.db
-        .query("bookmarks")
-        .withIndex("by_user", (q) => q.eq("userId", userId))
-        .filter((q) => q.eq(q.field("collectionId"), undefined))
-        .collect();
-    }
+    const bookmarks = collectionId
+      ? await ctx.db.query("bookmarks").withIndex("by_collection", (q) => q.eq("collectionId", collectionId)).collect()
+      : await ctx.db.query("bookmarks").withIndex("by_user", (q) => q.eq("userId", userId)).filter((q) => q.eq(q.field("collectionId"), undefined)).collect();
 
     const recipes = await Promise.all(bookmarks.map((b) => ctx.db.get(b.recipeId)));
-
-    return Promise.all(
-      recipes.filter(Boolean).map(async (recipe) => ({
-        ...recipe!,
-        coverImageUrl: recipe!.coverImage ? await ctx.storage.getUrl(recipe!.coverImage) : null,
-      }))
-    );
+    return withCoverUrls(ctx, recipes.filter(Boolean) as NonNullable<typeof recipes[number]>[]);
   },
 });

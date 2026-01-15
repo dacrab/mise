@@ -5,7 +5,7 @@ import { useAuthActions } from "@convex-dev/auth/react";
 import { Link, useNavigate, useSearch } from "@tanstack/react-router";
 import { api } from "convex/_generated/api";
 import type { Id } from "convex/_generated/dataModel";
-import { useToast } from "./ui/toast";
+import { useToast } from "@/components/ui/toast";
 
 export function Dashboard() {
   const { toast } = useToast();
@@ -19,8 +19,17 @@ export function Dashboard() {
   const { tab = "my-recipes" } = useSearch({ strict: false }) as { tab?: string };
   const recipes = tab === "saved" ? myBookmarks : myRecipes;
 
-  if (user === null) { navigate({ to: "/login" }); return null; }
-  if (!user || !recipes) return <div className="flex items-center justify-center min-h-[60vh] text-stone animate-pulse">Loading...</div>;
+  // Handle auth states properly - undefined = loading, null = not authenticated
+  if (user === undefined) {
+    return <div className="flex items-center justify-center min-h-[60vh] text-stone animate-pulse">Loading...</div>;
+  }
+  if (user === null) {
+    navigate({ to: "/login" });
+    return null;
+  }
+  if (!recipes) {
+    return <div className="flex items-center justify-center min-h-[60vh] text-stone animate-pulse">Loading...</div>;
+  }
 
   const handleDelete = async (id: Id<"recipes">) => {
     if (!confirm("Delete this recipe?")) return;
@@ -35,7 +44,7 @@ export function Dashboard() {
   const handleLogout = async () => {
     await signOut();
     toast("Signed out", "info");
-    navigate({ to: "/" });
+    navigate({ to: "/", search: { q: "", category: "" } });
   };
 
   return (
@@ -53,13 +62,20 @@ export function Dashboard() {
         </div>
       </div>
 
-      <div className="flex gap-6 mb-8">
+      <nav className="flex gap-6 mb-8" role="tablist" aria-label="Recipe tabs">
         {["my-recipes", "saved"].map((t) => (
-          <Link key={t} to="/dashboard" search={{ tab: t }} className={`text-sm font-medium pb-2 border-b-2 ${tab === t ? "border-charcoal text-charcoal" : "border-transparent text-stone hover:text-charcoal-light"}`}>
+          <Link
+            key={t}
+            to="/dashboard"
+            search={{ tab: t }}
+            role="tab"
+            aria-selected={tab === t}
+            className={`text-sm font-medium pb-2 border-b-2 ${tab === t ? "border-charcoal text-charcoal" : "border-transparent text-stone hover:text-charcoal-light"}`}
+          >
             {t === "my-recipes" ? "My Recipes" : "Saved"}
           </Link>
         ))}
-      </div>
+      </nav>
 
       {recipes.length === 0 ? (
         <div className="card p-12 text-center">
@@ -68,7 +84,7 @@ export function Dashboard() {
           {tab !== "saved" && <Link to="/dashboard/create" className="btn-primary text-sm">Create recipe</Link>}
         </div>
       ) : (
-        <div className="space-y-3">
+        <div className="space-y-3" role="tabpanel">
           {recipes.map((r) => (
             <div key={r._id} className="card-hover flex items-center gap-4 p-4 group">
               <div className="w-16 h-16 md:w-20 md:h-20 rounded-lg overflow-hidden bg-cream-dark shrink-0">
@@ -79,12 +95,12 @@ export function Dashboard() {
                   <h3 className="font-serif text-lg font-medium truncate group-hover:text-sage">{r.title}</h3>
                   {r.status === "draft" && <span className="tag text-[10px] bg-honey/20 text-honey">Draft</span>}
                 </div>
-                <Link to={`/recipe/${r.slug}`} className="text-xs text-stone hover:text-sage">View →</Link>
+                <Link to="/recipe/$slug" params={{ slug: r.slug }} className="text-xs text-stone hover:text-sage">View →</Link>
               </div>
               {tab === "my-recipes" && (
                 <div className="flex gap-2">
-                  <Link to={`/dashboard/edit/${r._id}`} className="btn-ghost text-xs py-1.5 px-3">Edit</Link>
-                  <button onClick={() => handleDelete(r._id)} className="btn-ghost text-xs py-1.5 px-3 text-terracotta">Delete</button>
+                  <a href={`/dashboard/edit/${r._id}`} className="btn-ghost text-xs py-1.5 px-3">Edit</a>
+                  <button onClick={() => handleDelete(r._id)} className="btn-ghost text-xs py-1.5 px-3 text-terracotta" aria-label={`Delete ${r.title}`}>Delete</button>
                 </div>
               )}
             </div>

@@ -15,7 +15,9 @@ export function IngredientScaler({ ingredients, defaultServings = 4 }: Props) {
     return ingredients.map((ing) => {
       return ing.replace(/(\d+\/\d+|\d+\.?\d*)/g, (match) => {
         if (match.includes("/")) {
-          const [num, den] = match.split("/").map(Number);
+          const parts = match.split("/").map(Number);
+          const num = parts[0] ?? 0;
+          const den = parts[1] ?? 1;
           const scaled = (num / den) * scale;
           return formatNumber(scaled);
         }
@@ -32,6 +34,7 @@ export function IngredientScaler({ ingredients, defaultServings = 4 }: Props) {
         <button
           onClick={() => setServings(Math.max(1, servings - 1))}
           className="w-8 h-8 rounded-lg bg-cream-dark hover:bg-stone-light/50 flex items-center justify-center text-charcoal transition-colors"
+          aria-label="Decrease servings"
         >
           −
         </button>
@@ -39,6 +42,7 @@ export function IngredientScaler({ ingredients, defaultServings = 4 }: Props) {
         <button
           onClick={() => setServings(servings + 1)}
           className="w-8 h-8 rounded-lg bg-cream-dark hover:bg-stone-light/50 flex items-center justify-center text-charcoal transition-colors"
+          aria-label="Increase servings"
         >
           +
         </button>

@@ -3,7 +3,7 @@
 import { useState, useMemo } from "react";
 import { useAuthActions } from "@convex-dev/auth/react";
 import { useNavigate } from "@tanstack/react-router";
-import { FormField, FormError, Divider, GoogleIcon } from "./ui/form";
+import { FormField, FormError, Divider, GoogleIcon } from "@/components/ui/form";
 
 const STRENGTH_COLORS = ["bg-stone-light", "bg-terracotta", "bg-honey", "bg-sage-light", "bg-sage"];
 const STRENGTH_LABELS = ["Too weak", "Weak", "Fair", "Good", "Strong"];

@@ -6,6 +6,7 @@ dist/
 .vinxi/
 .output/
 .cache/
+.tanstack/
 
 # Environment Variables
 .env

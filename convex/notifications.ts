@@ -1,12 +1,12 @@
 import { query, mutation } from "./_generated/server";
 import { v } from "convex/values";
-import { getAuthUserId } from "@convex-dev/auth/server";
+import { requireAuth, getOptionalAuth } from "./lib/helpers";
 
 // Get user's notifications
 export const list = query({
   args: { limit: v.optional(v.number()) },
   handler: async (ctx, { limit = 20 }) => {
-    const userId = await getAuthUserId(ctx);
+    const userId = await getOptionalAuth(ctx);
     if (!userId) return [];
 
     const notifications = await ctx.db
@@ -15,17 +15,27 @@ export const list = query({
       .order("desc")
       .take(limit);
 
-    return Promise.all(
-      notifications.map(async (n) => {
-        const actor = await ctx.db.get(n.actorId);
-        const recipe = n.recipeId ? await ctx.db.get(n.recipeId) : null;
-        return {
-          ...n,
-          actor: actor ? { name: actor.name, image: actor.image, username: actor.username } : null,
-          recipe: recipe ? { title: recipe.title, slug: recipe.slug } : null,
-        };
-      })
-    );
+    // Batch fetch actors and recipes
+    const actorIds = [...new Set(notifications.map((n) => n.actorId))];
+    const recipeIds = [...new Set(notifications.filter((n) => n.recipeId).map((n) => n.recipeId!))];
+
+    const [actors, recipes] = await Promise.all([
+      Promise.all(actorIds.map((id) => ctx.db.get(id))),
+      Promise.all(recipeIds.map((id) => ctx.db.get(id))),
+    ]);
+
+    const actorMap = new Map(actors.filter(Boolean).map((a) => [a!._id, a]));
+    const recipeMap = new Map(recipes.filter(Boolean).map((r) => [r!._id, r]));
+
+    return notifications.map((n) => {
+      const actor = actorMap.get(n.actorId);
+      const recipe = n.recipeId ? recipeMap.get(n.recipeId) : null;
+      return {
+        ...n,
+        actor: actor ? { name: actor.name, image: actor.image, username: actor.username } : null,
+        recipe: recipe ? { title: recipe.title, slug: recipe.slug } : null,
+      };
+    });
   },
 });
 
@@ -33,14 +43,12 @@ export const list = query({
 export const unreadCount = query({
   args: {},
   handler: async (ctx) => {
-    const userId = await getAuthUserId(ctx);
+    const userId = await getOptionalAuth(ctx);
     if (!userId) return 0;
-
     const unread = await ctx.db
       .query("notifications")
       .withIndex("by_user_unread", (q) => q.eq("userId", userId).eq("read", false))
       .collect();
-
     return unread.length;
   },
 });
@@ -49,14 +57,11 @@ export const unreadCount = query({
 export const markAllRead = mutation({
   args: {},
   handler: async (ctx) => {
-    const userId = await getAuthUserId(ctx);
-    if (!userId) throw new Error("Unauthorized");
-
+    const userId = await requireAuth(ctx);
     const unread = await ctx.db
       .query("notifications")
       .withIndex("by_user_unread", (q) => q.eq("userId", userId).eq("read", false))
       .collect();
-
     await Promise.all(unread.map((n) => ctx.db.patch(n._id, { read: true })));
   },
 });
@@ -65,28 +70,10 @@ export const markAllRead = mutation({
 export const markRead = mutation({
   args: { id: v.id("notifications") },
   handler: async (ctx, { id }) => {
-    const userId = await getAuthUserId(ctx);
-    if (!userId) throw new Error("Unauthorized");
-
+    const userId = await requireAuth(ctx);
     const notification = await ctx.db.get(id);
-    if (!notification || notification.userId !== userId) return;
-
-    await ctx.db.patch(id, { read: true });
-  },
-});
-
-// Internal: Create notification (called from other mutations)
-export const create = mutation({
-  args: {
-    userId: v.id("users"),
-    type: v.union(v.literal("like"), v.literal("comment"), v.literal("follow"), v.literal("fork")),
-    actorId: v.id("users"),
-    recipeId: v.optional(v.id("recipes")),
-  },
-  handler: async (ctx, args) => {
-    // Don't notify yourself
-    if (args.userId === args.actorId) return;
-
-    await ctx.db.insert("notifications", { ...args, read: false });
+    if (notification?.userId === userId) {
+      await ctx.db.patch(id, { read: true });
+    }
   },
 });

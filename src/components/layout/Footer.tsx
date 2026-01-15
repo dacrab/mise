@@ -1,5 +1,3 @@
-import { Link } from "@tanstack/react-router";
-
 export function Footer() {
   return (
     <footer className="border-t border-cream-dark bg-warm-white mt-auto">
@@ -10,9 +8,9 @@ export function Footer() {
             <p className="text-sm text-stone mt-2 max-w-xs">A place for home cooks to share recipes made with love.</p>
           </div>
           <nav className="flex flex-wrap gap-x-6 gap-y-2 text-sm">
-            <Link to="/about" className="text-stone hover:text-charcoal transition-colors">About</Link>
-            <Link to="/privacy" className="text-stone hover:text-charcoal transition-colors">Privacy</Link>
-            <Link to="/terms" className="text-stone hover:text-charcoal transition-colors">Terms</Link>
+            <a href="/about" className="text-stone hover:text-charcoal transition-colors">About</a>
+            <a href="/privacy" className="text-stone hover:text-charcoal transition-colors">Privacy</a>
+            <a href="/terms" className="text-stone hover:text-charcoal transition-colors">Terms</a>
             <a href="https://github.com/dacrab/mise" className="text-stone hover:text-charcoal transition-colors">GitHub</a>
           </nav>
         </div>

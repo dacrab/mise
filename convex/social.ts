@@ -1,19 +1,13 @@
 import { query, mutation } from "./_generated/server";
 import { v } from "convex/values";
-import { getAuthUserId } from "@convex-dev/auth/server";
+import { requireAuth, requirePublishedRecipe, sanitizeInput, validateLength, createNotification } from "./lib/helpers";
 
-// Toggle like - validates recipe exists and is published
+// Toggle like
 export const toggleLike = mutation({
   args: { recipeId: v.id("recipes") },
   handler: async (ctx, { recipeId }) => {
-    const userId = await getAuthUserId(ctx);
-    if (!userId) throw new Error("Unauthorized");
-
-    // Validate recipe exists and is published
-    const recipe = await ctx.db.get(recipeId);
-    if (!recipe || recipe.status !== "published") {
-      throw new Error("Recipe not found");
-    }
+    const userId = await requireAuth(ctx);
+    const recipe = await requirePublishedRecipe(ctx, recipeId);
 
     const existing = await ctx.db
       .query("likes")
@@ -26,41 +20,21 @@ export const toggleLike = mutation({
     }
 
     await ctx.db.insert("likes", { recipeId, userId });
-
-    // Notify recipe owner
-    if (recipe.userId !== userId) {
-      await ctx.db.insert("notifications", {
-        userId: recipe.userId,
-        type: "like",
-        actorId: userId,
-        recipeId,
-        read: false,
-      });
-    }
-
+    await createNotification(ctx, { userId: recipe.userId, type: "like", actorId: userId, recipeId });
     return { liked: true };
   },
 });
 
-// Toggle bookmark - validates recipe exists and is published
+// Toggle bookmark
 export const toggleBookmark = mutation({
   args: { recipeId: v.id("recipes"), collectionId: v.optional(v.id("collections")) },
   handler: async (ctx, { recipeId, collectionId }) => {
-    const userId = await getAuthUserId(ctx);
-    if (!userId) throw new Error("Unauthorized");
+    const userId = await requireAuth(ctx);
+    await requirePublishedRecipe(ctx, recipeId);
 
-    // Validate recipe exists and is published
-    const recipe = await ctx.db.get(recipeId);
-    if (!recipe || recipe.status !== "published") {
-      throw new Error("Recipe not found");
-    }
-
-    // Validate collection ownership if provided
     if (collectionId) {
       const collection = await ctx.db.get(collectionId);
-      if (!collection || collection.userId !== userId) {
-        throw new Error("Collection not found");
-      }
+      if (!collection || collection.userId !== userId) throw new Error("Collection not found");
     }
 
     const existing = await ctx.db
@@ -78,7 +52,7 @@ export const toggleBookmark = mutation({
   },
 });
 
-// Get comments for a recipe
+// Get comments - batch user lookups
 export const getComments = query({
   args: { recipeId: v.id("recipes") },
   handler: async (ctx, { recipeId }) => {
@@ -88,52 +62,27 @@ export const getComments = query({
       .order("desc")
       .collect();
 
-    return Promise.all(
-      comments.map(async (comment) => {
-        const user = await ctx.db.get(comment.userId);
-        return {
-          ...comment,
-          user: user ? { name: user.name, image: user.image } : null,
-        };
-      })
-    );
+    const userIds = [...new Set(comments.map((c) => c.userId))];
+    const users = await Promise.all(userIds.map((id) => ctx.db.get(id)));
+    const userMap = new Map(users.filter(Boolean).map((u) => [u!._id, u]));
+
+    return comments.map((comment) => {
+      const user = userMap.get(comment.userId);
+      return { ...comment, user: user ? { name: user.name, image: user.image } : null };
+    });
   },
 });
 
-// Add comment - validates recipe exists and is published
+// Add comment
 export const addComment = mutation({
-  args: {
-    recipeId: v.id("recipes"),
-    content: v.string(),
-  },
+  args: { recipeId: v.id("recipes"), content: v.string() },
   handler: async (ctx, { recipeId, content }) => {
-    const userId = await getAuthUserId(ctx);
-    if (!userId) throw new Error("Unauthorized");
+    const userId = await requireAuth(ctx);
+    const sanitized = sanitizeInput(validateLength(content, 1, 500, "Comment"));
+    const recipe = await requirePublishedRecipe(ctx, recipeId);
 
-    const trimmed = content.trim();
-    if (trimmed.length < 1 || trimmed.length > 500) {
-      throw new Error("Comment must be 1-500 characters");
-    }
-
-    // Validate recipe exists and is published
-    const recipe = await ctx.db.get(recipeId);
-    if (!recipe || recipe.status !== "published") {
-      throw new Error("Recipe not found");
-    }
-
-    const id = await ctx.db.insert("comments", { recipeId, userId, content: trimmed });
-
-    // Notify recipe owner
-    if (recipe.userId !== userId) {
-      await ctx.db.insert("notifications", {
-        userId: recipe.userId,
-        type: "comment",
-        actorId: userId,
-        recipeId,
-        read: false,
-      });
-    }
-
+    const id = await ctx.db.insert("comments", { recipeId, userId, content: sanitized });
+    await createNotification(ctx, { userId: recipe.userId, type: "comment", actorId: userId, recipeId });
     return { id };
   },
 });
