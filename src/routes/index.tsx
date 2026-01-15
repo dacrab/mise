@@ -1,11 +1,11 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { convexQuery } from "@convex-dev/react-query";
-import { useSuspenseQuery, useSuspenseInfiniteQuery } from "@tanstack/react-query";
+import { useSuspenseQuery } from "@tanstack/react-query";
+import { usePaginatedQuery } from "convex/react";
 import { z } from "zod";
 import { api } from "convex/_generated/api";
 import { PageLayout, HomeLink } from "@/components/ui/Layout";
 import { RecipeCard } from "@/components/ui/RecipeCard";
-import { useEffect, useRef } from "react";
 
 const CATEGORIES = ["Breakfast", "Lunch", "Dinner", "Dessert", "Vegan", "Quick & Easy", "Baking", "Italian", "Asian", "Mexican"];
 const searchSchema = z.object({ q: z.string().default(""), category: z.string().default("") });
@@ -29,34 +29,22 @@ function HomePage() {
   const { q, category } = Route.useSearch();
   const hasSearch = !!q;
 
+  // For search, use TanStack Query with Convex
   const searchQuery = useSuspenseQuery(convexQuery(api.recipes.list, { search: q || undefined, category: category || undefined, limit: 50 }));
-  const infiniteQuery = useSuspenseInfiniteQuery({
-    queryKey: ["recipes", "paginated", category],
-    queryFn: async ({ pageParam }: { pageParam: string | null }) => {
-      const fn = convexQuery(api.recipes.listPaginated, { paginationOpts: { cursor: pageParam, numItems: 20 }, category: category || undefined });
-      const queryFn = fn.queryFn;
-      if (!queryFn) throw new Error("Query function not available");
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      return queryFn({} as any);
-    },
-    getNextPageParam: (lastPage) => lastPage.isDone ? undefined : lastPage.continueCursor,
-    initialPageParam: null as string | null,
-  });
+  
+  // For browsing, use Convex's native pagination (works on client)
+  const paginatedQuery = usePaginatedQuery(
+    api.recipes.listPaginated,
+    { category: category || undefined },
+    { initialNumItems: 20 }
+  );
 
-  const recipes = hasSearch ? searchQuery.data : infiniteQuery.data.pages.flatMap((p) => p.page);
-  const hasMore = !hasSearch && infiniteQuery.hasNextPage;
-  const { fetchNextPage } = infiniteQuery;
-
-  const loadMoreRef = useRef<HTMLDivElement>(null);
-  useEffect(() => {
-    if (!loadMoreRef.current || !hasMore) return;
-    const observer = new IntersectionObserver(([entry]) => { if (entry?.isIntersecting) fetchNextPage(); }, { rootMargin: "200px" });
-    observer.observe(loadMoreRef.current);
-    return () => observer.disconnect();
-  }, [hasMore, fetchNextPage]);
+  const recipes = hasSearch ? searchQuery.data : paginatedQuery.results;
+  const hasMore = !hasSearch && paginatedQuery.status === "CanLoadMore";
+  const loadMore = () => paginatedQuery.loadMore(20);
 
   const hasFilters = q || category;
-  const featured = !hasFilters ? recipes[0] : undefined;
+  const featured = !hasFilters && recipes.length > 0 ? recipes[0] : undefined;
   const grid = featured ? recipes.slice(1) : recipes;
 
   return (
@@ -118,7 +106,11 @@ function HomePage() {
                 <RecipeCard key={r._id} slug={r.slug} title={r.title} description={r.description} category={r.category} coverImageUrl={r.coverImageUrl} variant="list" />
               ))}
             </div>
-            {hasMore && <div ref={loadMoreRef} className="py-8 text-center text-stone text-sm">Loading more...</div>}
+            {hasMore && (
+              <div className="py-8 text-center">
+                <button onClick={loadMore} className="btn-ghost">Load more</button>
+              </div>
+            )}
           </>
         ) : (
           <div className="py-16 text-center">
