@@ -11,6 +11,7 @@ export default defineSchema({
     email: v.optional(v.string()),
     emailVerificationTime: v.optional(v.float64()),
     image: v.optional(v.string()),
+    profileImage: v.optional(v.id("_storage")),
     bio: v.optional(v.string()),
   })
     .index("by_email", ["email"])
@@ -26,7 +27,7 @@ export default defineSchema({
     coverImage: v.optional(v.id("_storage")),
     videoUrl: v.optional(v.string()),
     status: v.union(v.literal("draft"), v.literal("published")),
-    publishAt: v.optional(v.float64()), // scheduled publishing
+    publishAt: v.optional(v.float64()),
     userId: v.id("users"),
     forkedFrom: v.optional(v.id("recipes")),
     servings: v.optional(v.number()),
@@ -105,7 +106,6 @@ export default defineSchema({
     .index("by_timestamp", ["timestamp"])
     .index("by_recipe_timestamp", ["recipeId", "timestamp"]),
 
-  // Live presence - who's cooking this recipe right now
   presence: defineTable({
     recipeId: v.id("recipes"),
     userId: v.id("users"),

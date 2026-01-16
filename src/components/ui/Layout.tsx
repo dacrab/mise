@@ -3,14 +3,10 @@ import { Header } from "@/components/layout/Header";
 import { Footer } from "@/components/layout/Footer";
 
 // Standard page layout with Header + main + Footer
-export function PageLayout({ children, headerVariant = "default", backLink }: {
-  children: React.ReactNode;
-  headerVariant?: "default" | "dashboard" | "minimal";
-  backLink?: { href: string; label: string };
-}) {
+export function PageLayout({ children }: { children: React.ReactNode }) {
   return (
     <>
-      <Header variant={headerVariant} backLink={backLink} />
+      <Header />
       <main className="pt-20 pb-24">{children}</main>
       <Footer />
     </>
@@ -50,10 +46,10 @@ export function AuthLayout({ children, variant, tagline, subtitle }: {
   );
 }
 
-// Home link with search params
+// Home link without search params
 export function HomeLink({ children, className = "" }: { children: React.ReactNode; className?: string }) {
   return (
-    <Link to="/" search={{ q: "", category: "" }} className={className}>
+    <Link to="/" className={className}>
       {children}
     </Link>
   );

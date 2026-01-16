@@ -7,6 +7,12 @@ import { PageLayout } from "@/components/ui/Layout";
 import { SocialActions } from "@/components/social/SocialActions";
 import { CommentSection } from "@/components/social/CommentSection";
 import { CookingNow } from "@/components/recipe/CookingNow";
+import { CookingTimers } from "@/components/recipe/CookingTimers";
+import { IngredientScaler } from "@/components/recipe/IngredientScaler";
+import { ForkButton } from "@/components/social/ForkButton";
+import { StarRating } from "@/components/social/Rating";
+import { PrinterIcon, ShareIcon } from "@heroicons/react/24/outline";
+import { PlayIcon as PlayIconSolid } from "@heroicons/react/24/solid";
 
 export const Route = createFileRoute("/recipe/$slug")({
   component: RecipePage,
@@ -26,6 +32,25 @@ export const Route = createFileRoute("/recipe/$slug")({
   },
 });
 
+function ShareButton({ title }: { title: string }) {
+  const handleShare = async () => {
+    const url = window.location.href;
+    if (navigator.share) {
+      await navigator.share({ title, url });
+    } else {
+      await navigator.clipboard.writeText(url);
+      alert("Link copied!");
+    }
+  };
+
+  return (
+    <button onClick={handleShare} className="flex items-center gap-1.5 text-sm text-stone hover:text-sage">
+      <ShareIcon className="w-4 h-4" />
+      Share
+    </button>
+  );
+}
+
 function RecipePage() {
   const { slug } = Route.useParams();
   const { data: recipe } = useSuspenseQuery(convexQuery(api.recipes.getBySlug, { slug }));
@@ -34,7 +59,7 @@ function RecipePage() {
   if (!recipe) throw notFound();
 
   return (
-    <PageLayout headerVariant="minimal" backLink={{ href: "/", label: "Recipes" }}>
+    <PageLayout>
       <article className="wrapper max-w-4xl">
         <header className="py-12 md:py-16">
           <div className="flex items-center gap-4 mb-4">
@@ -64,24 +89,24 @@ function RecipePage() {
           <div className="rounded-2xl overflow-hidden aspect-video bg-cream-dark mb-12 relative">
             <img src={recipe.coverImageUrl} alt={recipe.title} className="w-full h-full object-cover" />
             {recipe.videoUrl && (
-              <a href={recipe.videoUrl} target="_blank" rel="noopener noreferrer" className="absolute bottom-4 right-4 btn-primary text-sm">▶ Watch video</a>
+              <a href={recipe.videoUrl} target="_blank" rel="noopener noreferrer" className="absolute bottom-4 right-4 btn-primary text-sm flex items-center gap-1.5">
+                  <PlayIconSolid className="w-4 h-4" />
+                  Watch video
+                </a>
             )}
           </div>
         )}
 
         <div className="grid md:grid-cols-[280px_1fr] gap-8 md:gap-12">
-          <aside>
+          <aside className="space-y-6">
             <div className="card p-6 sticky top-24">
               <h3 className="font-serif text-lg font-medium mb-4">Ingredients</h3>
-              <ul className="space-y-3">
-                {recipe.ingredients.map((ing, i) => (
-                  <li key={i} className="flex items-start gap-3 text-sm text-charcoal-light">
-                    <span className="w-1.5 h-1.5 rounded-full bg-sage mt-2 shrink-0" />
-                    <span>{ing}</span>
-                  </li>
-                ))}
-              </ul>
+              <IngredientScaler 
+                ingredients={recipe.ingredients} 
+                defaultServings={recipe.servings || 4} 
+              />
             </div>
+            <CookingTimers />
           </aside>
 
           <section>
@@ -94,11 +119,22 @@ function RecipePage() {
                 </li>
               ))}
             </ol>
-            <div className="mt-12 pt-8 border-t border-cream-dark flex items-center justify-between">
-              <SocialActions recipeId={recipe._id} slug={slug} />
-              <Link to="/recipe/$slug/print" params={{ slug }} className="text-sm text-stone hover:text-sage flex items-center gap-1">
-                🖨️ Print
-              </Link>
+            <div className="mt-12 pt-8 border-t border-cream-dark">
+              <div className="flex items-center justify-between mb-6">
+                <SocialActions recipeId={recipe._id} slug={slug} />
+                <div className="flex items-center gap-2">
+                  <ShareButton title={recipe.title} />
+                  {user && <ForkButton recipeId={recipe._id} recipeTitle={recipe.title} />}
+                  <Link to="/recipe/$slug/print" params={{ slug }} className="flex items-center gap-1.5 text-sm text-stone hover:text-sage">
+                    <PrinterIcon className="w-4 h-4" />
+                    Print
+                  </Link>
+                </div>
+              </div>
+              <div className="flex items-center justify-between">
+                <span className="text-sm text-stone">Rate this recipe</span>
+                <StarRating recipeId={recipe._id} />
+              </div>
             </div>
             <div className="mt-12">
               <CommentSection recipeId={recipe._id} isLoggedIn={!!user} />

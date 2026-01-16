@@ -1,32 +1,35 @@
 # Dependencies
 node_modules/
 
-# Build Outputs
+# Build
 dist/
-.vinxi/
 .output/
 .cache/
-.tanstack/
+.vinxi/
 
-# Environment Variables
+# TanStack
+.tanstack/
+src/routeTree.gen.ts
+
+# Convex
+convex/_generated/
+.convex-tmp/
+
+# Env
 .env
 .env.*
 !.env.example
 
+# IDE
+.vscode/*
+!.vscode/extensions.json
+.idea/
+
+# OS
+.DS_Store
+Thumbs.db
+*.log
+
 # Cloudflare
 .wrangler/
 .dev.vars
-
-# Convex
-convex/_generated/
-
-# IDE & System
-.vscode/*
-!.vscode/extensions.json
-!.vscode/launch.json
-.idea/
-.DS_Store
-*.log
-
-# OS
-Thumbs.db

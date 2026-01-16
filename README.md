@@ -8,25 +8,70 @@ A modern recipe sharing platform built with TanStack Start, React, and Convex.
 
 - **Framework:** [TanStack Start](https://tanstack.com/start) with React 19
 - **Backend:** [Convex](https://convex.dev/) (Database, Auth, File Storage)
-- **Deployment:** [Cloudflare Pages](https://pages.cloudflare.com/)
 - **Styling:** [Tailwind CSS v4](https://tailwindcss.com/)
+- **UI Components:** [Base UI](https://base-ui.com/) + [Heroicons](https://heroicons.com/)
+- **Testing:** [Vitest](https://vitest.dev/) + [Playwright](https://playwright.dev/)
 
 ## Features
 
-- Recipe CRUD with image uploads
-- Social interactions (likes, bookmarks, comments)
-- Protected routes with auth guards
-- Chef profiles and dashboards
-- Category filtering and search
-- Google OAuth + Email/Password authentication
-- Toast notifications
+### Recipes
+- Create, edit, delete recipes with rich editor
+- Image uploads with cover photos
+- Ingredient scaling (adjust servings)
+- Cooking timers
+- Import recipes from URL (AllRecipes, Food Network, etc.)
+- Fork recipes to your kitchen
+- Print-friendly view
+- Categories and search
+
+### Social
+- Like, bookmark, and comment on recipes
+- Star ratings (1-5)
+- Follow other chefs
+- Real-time notifications
+- Share recipes (native share / clipboard)
+- "Who's cooking now" presence
+
+### User Features
+- Email/password authentication
+- Password reset flow
+- Profile settings with custom avatar upload
+- Recipe collections (organize bookmarks)
+- Chef profiles with follower counts
+- Personal dashboard
 
 ## Quick Start
 
 ```bash
+# Install dependencies
 bun install
-bunx convex dev    # Terminal 1: Convex backend
-bun dev            # Terminal 2: TanStack Start
+
+# Start Convex backend (Terminal 1)
+bunx convex dev
+
+# Start dev server (Terminal 2)
+bun dev
+```
+
+Open [http://localhost:3000](http://localhost:3000)
+
+## Scripts
+
+```bash
+bun dev              # Start development server
+bun build            # Build for production
+bun start            # Preview production build
+
+bun lint             # Run ESLint
+bun lint:fix         # Fix ESLint errors
+bun typecheck        # Run TypeScript checks
+
+bun test             # Run unit tests (watch mode)
+bun test:run         # Run unit tests once
+bun test:coverage    # Run tests with coverage
+bun test:e2e         # Run E2E tests
+bun test:e2e:ui      # Run E2E with Playwright UI
+bun test:all         # Run all checks (typecheck + lint + tests)
 ```
 
 ## Environment Variables
@@ -36,28 +81,70 @@ bun dev            # Terminal 2: TanStack Start
 VITE_CONVEX_URL="https://your-deployment.convex.cloud"
 ```
 
-Set these in [Convex Dashboard](https://dashboard.convex.dev):
-- `AUTH_GOOGLE_ID`
-- `AUTH_GOOGLE_SECRET`
+Set in [Convex Dashboard](https://dashboard.convex.dev):
+- `SITE_URL` - Your site URL
 
 ## Project Structure
 
 ```
 src/
-├── client.tsx          # Client entry
-├── server.tsx          # Server entry
-├── router.tsx          # Router config
 ├── routes/
-│   ├── __root.tsx      # Root layout
-│   ├── _authed.tsx     # Protected route layout
-│   ├── _authed/dashboard/
-│   ├── index.tsx
-│   ├── login.tsx
-│   └── ...
-└── components/
-    └── ui/             # Shared UI (toast, form)
-convex/                 # Backend functions
+│   ├── __root.tsx           # Root layout
+│   ├── _authed.tsx          # Protected route layout
+│   ├── _authed/
+│   │   ├── dashboard/       # Dashboard pages
+│   │   └── settings.tsx     # User settings
+│   ├── (auth)/              # Auth pages (login, signup)
+│   ├── index.tsx            # Home page
+│   ├── recipe.$slug.tsx     # Recipe detail
+│   ├── chef.$username.tsx   # Chef profile
+│   └── about|privacy|terms  # Static pages
+├── components/
+│   ├── auth/                # Auth forms
+│   ├── layout/              # Header, Footer
+│   ├── recipe/              # Recipe components
+│   ├── social/              # Social features
+│   └── ui/                  # Shared UI components
+├── hooks/                   # Custom hooks
+└── styles.css               # Global styles
+
+convex/
+├── auth.ts                  # Auth config
+├── recipes.ts               # Recipe CRUD
+├── social.ts                # Likes, bookmarks, comments
+├── follows.ts               # Follow system
+├── notifications.ts         # Notifications
+├── collections.ts           # Bookmark collections
+├── discovery.ts             # Trending, recommendations
+├── ratings.ts               # Star ratings
+├── presence.ts              # Who's cooking
+└── schema.ts                # Database schema
+
+tests/
+├── unit/                    # Unit tests (Vitest)
+├── e2e/                     # E2E tests (Playwright)
+└── fixtures/                # Test mocks
 ```
+
+## Testing
+
+### Unit Tests
+```bash
+bun test:run
+```
+- Ingredient scaling logic
+- Recipe utilities (slug generation, validation)
+- UI utilities (time formatting, password strength)
+
+### E2E Tests
+```bash
+bun test:e2e
+```
+- Home page navigation and search
+- Authentication flows
+- Recipe interactions
+- Accessibility checks
+- Responsive design
 
 ## License
 

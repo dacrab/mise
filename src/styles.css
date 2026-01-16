@@ -34,6 +34,9 @@
   ::selection {
     @apply bg-sage/30 text-charcoal;
   }
+  a, button, [role="button"], [type="button"], [type="submit"], label[for], select, [tabindex]:not([tabindex="-1"]) {
+    @apply cursor-pointer;
+  }
 }
 
 /* Tailwind v4: Dynamic viewport units */

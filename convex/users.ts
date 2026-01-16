@@ -2,39 +2,51 @@ import { query, mutation } from "./_generated/server";
 import { v } from "convex/values";
 import { getAuthUserId } from "@convex-dev/auth/server";
 
-// Get current user
 export const currentUser = query({
   args: {},
   handler: async (ctx) => {
     const userId = await getAuthUserId(ctx);
     if (!userId) return null;
-    return await ctx.db.get(userId);
+    const user = await ctx.db.get(userId);
+    if (!user) return null;
+    
+    // Get profile image URL if exists
+    const profileImageUrl = user.profileImage 
+      ? await ctx.storage.getUrl(user.profileImage)
+      : null;
+    
+    return { ...user, profileImageUrl };
   },
 });
 
-// Get user by username
 export const getByUsername = query({
   args: { username: v.string() },
   handler: async (ctx, { username }) => {
-    return await ctx.db
+    const user = await ctx.db
       .query("users")
       .withIndex("by_username", (q) => q.eq("username", username))
       .first();
+    if (!user) return null;
+    
+    const profileImageUrl = user.profileImage 
+      ? await ctx.storage.getUrl(user.profileImage)
+      : null;
+    
+    return { ...user, profileImageUrl };
   },
 });
 
-// Update user profile
 export const updateProfile = mutation({
   args: {
     name: v.optional(v.string()),
     username: v.optional(v.string()),
     bio: v.optional(v.string()),
+    profileImage: v.optional(v.id("_storage")),
   },
   handler: async (ctx, args) => {
     const userId = await getAuthUserId(ctx);
     if (!userId) throw new Error("Unauthorized");
-    
-    // Check username uniqueness
+
     if (args.username) {
       const existing = await ctx.db
         .query("users")
@@ -44,7 +56,16 @@ export const updateProfile = mutation({
         throw new Error("Username already taken");
       }
     }
-    
+
     await ctx.db.patch(userId, args);
+  },
+});
+
+export const generateUploadUrl = mutation({
+  args: {},
+  handler: async (ctx) => {
+    const userId = await getAuthUserId(ctx);
+    if (!userId) throw new Error("Unauthorized");
+    return await ctx.storage.generateUploadUrl();
   },
 });

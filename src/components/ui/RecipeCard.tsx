@@ -1,4 +1,5 @@
 import { Link } from "@tanstack/react-router";
+import { CakeIcon } from "@heroicons/react/24/outline";
 
 interface RecipeCardProps {
   slug: string;
@@ -98,9 +99,7 @@ export function RecipeCard({
 export function RecipePlaceholder({ size }: { size: number }) {
   return (
     <div className="w-full h-full flex items-center justify-center text-stone-light">
-      <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
-        <path d="M6 13.87A4 4 0 0 1 7.41 6a5.11 5.11 0 0 1 1.05-1.54 5 5 0 0 1 7.08 0A5.11 5.11 0 0 1 16.59 6 4 4 0 0 1 18 13.87V21H6Z" />
-      </svg>
+      <CakeIcon style={{ width: size, height: size }} />
     </div>
   );
 }

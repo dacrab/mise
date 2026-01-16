@@ -30,18 +30,48 @@ export default [
       "react-hooks": reactHooks,
     },
     rules: {
-      // TypeScript
-      "@typescript-eslint/no-unused-vars": ["error", { argsIgnorePattern: "^_" }],
+      // TypeScript strict
+      "@typescript-eslint/no-unused-vars": ["error", { argsIgnorePattern: "^_", varsIgnorePattern: "^_" }],
       "@typescript-eslint/no-explicit-any": "error",
-      "@typescript-eslint/consistent-type-imports": "error",
-
+      "@typescript-eslint/consistent-type-imports": ["error", { prefer: "type-imports" }],
+      "@typescript-eslint/no-non-null-assertion": "warn",
+      
       // React hooks
       "react-hooks/rules-of-hooks": "error",
       "react-hooks/exhaustive-deps": "warn",
 
-      // General
+      // General quality
       "no-console": ["warn", { allow: ["warn", "error"] }],
       "no-unused-vars": "off",
+      "no-constant-condition": ["error", { checkLoops: false }],
+      "prefer-const": "error",
+      "no-var": "error",
+      "eqeqeq": ["error", "always", { null: "ignore" }],
+    },
+  },
+  {
+    files: ["convex/**/*.ts"],
+    languageOptions: {
+      parser: tsparser,
+      parserOptions: {
+        ecmaVersion: "latest",
+        sourceType: "module",
+      },
+      globals: {
+        ...globals.node,
+        ...globals.es2022,
+      },
+    },
+    plugins: {
+      "@typescript-eslint": tseslint,
+    },
+    rules: {
+      "@typescript-eslint/no-unused-vars": ["error", { argsIgnorePattern: "^_", varsIgnorePattern: "^_" }],
+      "@typescript-eslint/no-explicit-any": "error",
+      "@typescript-eslint/consistent-type-imports": ["error", { prefer: "type-imports" }],
+      "no-unused-vars": "off",
+      "prefer-const": "error",
+      "no-var": "error",
     },
   },
   {
@@ -51,6 +81,8 @@ export default [
       "src/routeTree.gen.ts",
       "convex/_generated/**",
       ".tanstack/**",
+      ".vinxi/**",
+      ".output/**",
     ],
   },
 ];

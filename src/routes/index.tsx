@@ -1,14 +1,18 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { convexQuery } from "@convex-dev/react-query";
 import { useSuspenseQuery } from "@tanstack/react-query";
 import { usePaginatedQuery } from "convex/react";
 import { z } from "zod";
+import { useState } from "react";
 import { api } from "convex/_generated/api";
 import { PageLayout, HomeLink } from "@/components/ui/Layout";
 import { RecipeCard } from "@/components/ui/RecipeCard";
+import { TrendingRecipes } from "@/components/recipe/Discovery";
+import { Select } from "@/components/ui/Select";
+import { MagnifyingGlassIcon } from "@heroicons/react/24/outline";
 
 const CATEGORIES = ["Breakfast", "Lunch", "Dinner", "Dessert", "Vegan", "Quick & Easy", "Baking", "Italian", "Asian", "Mexican"];
-const searchSchema = z.object({ q: z.string().default(""), category: z.string().default("") });
+const searchSchema = z.object({ q: z.string().optional(), category: z.string().optional() });
 
 export const Route = createFileRoute("/")({
   validateSearch: searchSchema.parse,
@@ -27,7 +31,19 @@ export const Route = createFileRoute("/")({
 
 function HomePage() {
   const { q, category } = Route.useSearch();
+  const navigate = useNavigate();
   const hasSearch = !!q;
+  const [selectedCategory, setSelectedCategory] = useState(category || "");
+
+  const handleSearch = (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    const formData = new FormData(e.currentTarget);
+    const newQ = formData.get("q") as string;
+    navigate({
+      to: "/",
+      search: { q: newQ || undefined, category: selectedCategory || undefined },
+    });
+  };
 
   // For search, use TanStack Query with Convex
   const searchQuery = useSuspenseQuery(convexQuery(api.recipes.list, { search: q || undefined, category: category || undefined, limit: 50 }));
@@ -73,16 +89,18 @@ function HomePage() {
       </section>
 
       <section className="wrapper -mt-2 mb-12">
-        <form className="card p-3 flex flex-col sm:flex-row gap-2">
+        <form onSubmit={handleSearch} className="card p-3 flex flex-col sm:flex-row gap-2">
           <div className="relative flex-1">
             <input type="text" name="q" placeholder="What are you craving?" defaultValue={q} className="w-full pl-10 pr-4 py-2.5 bg-transparent border-0 focus:outline-none text-charcoal placeholder:text-stone" />
-            <svg className="absolute left-3 top-1/2 -translate-y-1/2 text-stone" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
+            <MagnifyingGlassIcon className="absolute left-3 top-1/2 -translate-y-1/2 text-stone w-5 h-5" />
           </div>
           <div className="flex gap-2">
-            <select name="category" defaultValue={category} className="px-3 py-2 bg-cream-dark rounded-lg border-0 text-sm text-charcoal-light focus:outline-none focus:ring-2 focus:ring-sage/20">
-              <option value="">All categories</option>
-              {CATEGORIES.map((c) => <option key={c} value={c}>{c}</option>)}
-            </select>
+            <Select
+              value={selectedCategory}
+              onChange={setSelectedCategory}
+              options={[{ label: "All categories", value: "" }, ...CATEGORIES.map((c) => ({ label: c, value: c }))]}
+              placeholder="All categories"
+            />
             <button type="submit" className="btn-primary px-6">Search</button>
           </div>
         </form>
@@ -119,6 +137,12 @@ function HomePage() {
           </div>
         )}
       </section>
+
+      {!hasFilters && (
+        <section className="wrapper pb-24">
+          <TrendingRecipes />
+        </section>
+      )}
     </PageLayout>
   );
 }

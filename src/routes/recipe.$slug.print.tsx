@@ -2,6 +2,7 @@ import { createFileRoute, notFound } from "@tanstack/react-router";
 import { convexQuery } from "@convex-dev/react-query";
 import { useSuspenseQuery } from "@tanstack/react-query";
 import { api } from "convex/_generated/api";
+import { PrinterIcon } from "@heroicons/react/24/outline";
 
 export const Route = createFileRoute("/recipe/$slug/print")({
   component: PrintRecipe,
@@ -56,8 +57,9 @@ function PrintRecipe() {
       </footer>
 
       <div className="mt-8 print:hidden">
-        <button onClick={() => window.print()} className="btn-primary">
-          🖨️ Print Recipe
+        <button onClick={() => window.print()} className="btn-primary flex items-center gap-2">
+          <PrinterIcon className="w-4 h-4" />
+          Print Recipe
         </button>
       </div>
     </div>

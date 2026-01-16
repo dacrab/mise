@@ -1,10 +1,11 @@
-"use client";
 
 import { useMutation, useQuery } from "convex/react";
 import { api } from "convex/_generated/api";
 import type { Id } from "convex/_generated/dataModel";
 import { useAsyncAction } from "@/hooks";
 import { ActionButton } from "@/components/ui/ActionButton";
+import { HeartIcon, BookmarkIcon } from "@heroicons/react/24/outline";
+import { HeartIcon as HeartSolidIcon, BookmarkIcon as BookmarkSolidIcon } from "@heroicons/react/24/solid";
 
 interface Props {
   recipeId: Id<"recipes">;
@@ -59,9 +60,7 @@ export function SocialActions({ recipeId, slug }: Props) {
         inactiveClass="bg-warm-white border-cream-dark text-charcoal-light hover:border-terracotta/30 hover:text-terracotta"
         ariaLabel={liked ? `Unlike recipe (${count} likes)` : `Like recipe (${count} likes)`}
       >
-        <svg width="16" height="16" viewBox="0 0 24 24" fill={liked ? "currentColor" : "none"} stroke="currentColor" strokeWidth="2" aria-hidden="true">
-          <path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z"/>
-        </svg>
+        {liked ? <HeartSolidIcon className="w-4 h-4" /> : <HeartIcon className="w-4 h-4" />}
         {count}
       </ActionButton>
       <ActionButton
@@ -70,9 +69,7 @@ export function SocialActions({ recipeId, slug }: Props) {
         isPending={isBookmarking}
         ariaLabel={bookmarked ? "Remove from saved" : "Save recipe"}
       >
-        <svg width="16" height="16" viewBox="0 0 24 24" fill={bookmarked ? "currentColor" : "none"} stroke="currentColor" strokeWidth="2" aria-hidden="true">
-          <path d="m19 21-7-4-7 4V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2v16z"/>
-        </svg>
+        {bookmarked ? <BookmarkSolidIcon className="w-4 h-4" /> : <BookmarkIcon className="w-4 h-4" />}
         {bookmarked ? "Saved" : "Save"}
       </ActionButton>
     </div>

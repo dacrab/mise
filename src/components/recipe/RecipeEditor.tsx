@@ -1,4 +1,3 @@
-"use client";
 
 import { useState, useEffect } from "react";
 import { useMutation, useQuery } from "convex/react";
@@ -6,6 +5,8 @@ import { Link, useNavigate } from "@tanstack/react-router";
 import { api } from "convex/_generated/api";
 import type { Id } from "convex/_generated/dataModel";
 import { useToast } from "@/components/ui/toast";
+import { Select } from "@/components/ui/Select";
+import { RecipeImporter } from "@/components/recipe/RecipeImporter";
 
 const CATEGORIES = ["General", "Breakfast", "Lunch", "Dinner", "Dessert", "Vegan", "Quick & Easy", "Baking", "Italian", "Asian", "Mexican"];
 
@@ -149,6 +150,18 @@ export function RecipeEditor({ initialData, isEditing }: Props) {
         </div>
       </div>
 
+      {!isEditing && (
+        <div className="mb-8">
+          <RecipeImporter onImport={(imported) => {
+            setTitle(imported.title);
+            setDescription(imported.description);
+            setIngredients(imported.ingredients.length > 0 ? imported.ingredients : [""]);
+            setSteps(imported.steps.length > 0 ? imported.steps : [""]);
+            toast("Recipe imported! Review and edit before publishing.", "success");
+          }} />
+        </div>
+      )}
+
       <div className="grid lg:grid-cols-[1fr_300px] gap-8">
         <div className="space-y-8">
           <section className="card p-6 space-y-5">
@@ -160,9 +173,12 @@ export function RecipeEditor({ initialData, isEditing }: Props) {
             <div className="grid sm:grid-cols-2 gap-4">
               <div>
                 <label htmlFor="recipe-category" className="block text-sm font-medium text-charcoal-light mb-2">Category</label>
-                <select id="recipe-category" className="input-field" value={category} onChange={(e) => setCategory(e.target.value)}>
-                  {CATEGORIES.map((c) => <option key={c}>{c}</option>)}
-                </select>
+                <Select
+                  value={category}
+                  onChange={setCategory}
+                  options={CATEGORIES.map((c) => ({ label: c, value: c }))}
+                  className="w-full"
+                />
               </div>
               <div>
                 <label htmlFor="recipe-video" className="block text-sm font-medium text-charcoal-light mb-2">Video URL <span className="text-stone">(optional)</span></label>

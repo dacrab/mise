@@ -1,6 +1,6 @@
-"use client";
 
 import { useState, useEffect } from "react";
+import { PlayIcon, PauseIcon, ArrowPathIcon, XMarkIcon } from "@heroicons/react/24/outline";
 
 interface Timer {
   id: string;
@@ -83,21 +83,21 @@ export function CookingTimers() {
             </div>
             <button 
               onClick={() => setTimers((prev) => prev.map((x) => x.id === t.id ? { ...x, running: !x.running } : x))} 
-              className="btn-ghost p-2 text-sm"
+              className="btn-ghost p-2"
             >
-              {t.running ? "⏸" : "▶️"}
+              {t.running ? <PauseIcon className="w-5 h-5" /> : <PlayIcon className="w-5 h-5" />}
             </button>
             <button 
               onClick={() => setTimers((prev) => prev.map((x) => x.id === t.id ? { ...x, remaining: x.duration, running: false } : x))} 
-              className="btn-ghost p-2 text-sm"
+              className="btn-ghost p-2"
             >
-              🔄
+              <ArrowPathIcon className="w-5 h-5" />
             </button>
             <button 
               onClick={() => setTimers((prev) => prev.filter((x) => x.id !== t.id))} 
-              className="btn-ghost p-2 text-sm text-terracotta"
+              className="btn-ghost p-2 text-terracotta"
             >
-              ✕
+              <XMarkIcon className="w-5 h-5" />
             </button>
           </div>
         ))}
