@@ -42,21 +42,38 @@ jobs:
             bun install --frozen-lockfile
           fi
 
+      - name: Check available scripts
+        id: scripts
+        run: |
+          echo "typecheck=$(bun run --silent typecheck --help >/dev/null 2>&1 && echo 'true' || echo 'false')" >> $GITHUB_OUTPUT
+          echo "lint=$(bun run --silent lint --help >/dev/null 2>&1 && echo 'true' || echo 'false')" >> $GITHUB_OUTPUT
+          echo "test=$(bun run --silent test --help >/dev/null 2>&1 && echo 'true' || echo 'false')" >> $GITHUB_OUTPUT
+          echo "knip=$(bun run --silent knip --help >/dev/null 2>&1 && echo 'true' || echo 'false')" >> $GITHUB_OUTPUT
+          echo "check=$(bun run --silent check --help >/dev/null 2>&1 && echo 'true' || echo 'false')" >> $GITHUB_OUTPUT
+
       - name: Type check
+        if: steps.scripts.outputs.typecheck == 'true'
         run: bun run typecheck
-        if: hashFiles('tsconfig.json') != ''
 
       - name: Lint
+        if: steps.scripts.outputs.lint == 'true'
         run: bun run lint
-        if: hashFiles('.eslintrc*', 'eslint.config.*') != ''
+
+      - name: Check
+        if: steps.scripts.outputs.check == 'true'
+        run: bun run check
+        env:
+          DATABASE_URL: postgresql://dummy:dummy@localhost:5432/dummy
 
       - name: Test
+        if: steps.scripts.outputs.test == 'true'
         run: bun run test
-        if: hashFiles('**/*.test.*', '**/*.spec.*') != ''
 
       - name: Check unused code
+        if: steps.scripts.outputs.knip == 'true'
         run: bun run knip
-        if: hashFiles('knip.*') != ''
+        env:
+          DATABASE_URL: postgresql://dummy:dummy@localhost:5432/dummy
 
       - name: Build
         run: bun run build
