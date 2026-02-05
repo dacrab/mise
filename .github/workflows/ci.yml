@@ -7,35 +7,56 @@ on:
     branches: [main]
 
 concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
+  group: ci-${{ github.ref }}
   cancel-in-progress: true
 
 permissions:
   contents: read
 
 jobs:
-  build:
+  ci:
     runs-on: ubuntu-latest
-    timeout-minutes: 10
+    timeout-minutes: 15
+    
     steps:
-      - uses: actions/checkout@v6
-      - uses: oven-sh/setup-bun@v2
-      - uses: actions/cache@v5
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+
+      - name: Cache dependencies
+        uses: actions/cache@v5
         with:
           path: ~/.bun/install/cache
-          key: ${{ runner.os }}-bun-${{ hashFiles('bun.lock') }}
-          restore-keys: ${{ runner.os }}-bun-
-      - run: bun install --frozen-lockfile
-      - run: bun run lint
-      - run: bun run build
-        env:
-          DATABASE_URL: "postgres://dummy:dummy@localhost:5432/dummy"
-          BETTER_AUTH_SECRET: "dummy_secret"
-          BETTER_AUTH_URL: "http://localhost:4321"
-          GOOGLE_CLIENT_ID: "dummy_id"
-          GOOGLE_CLIENT_SECRET: "dummy_secret"
-          CLOUDFLARE_ACCOUNT_ID: "dummy_id"
-          CLOUDFLARE_ACCESS_KEY_ID: "dummy_key"
-          CLOUDFLARE_SECRET_ACCESS_KEY: "dummy_secret"
-          R2_BUCKET_NAME: "dummy_bucket"
-          PUBLIC_R2_DOMAIN: "dummy.r2.dev"
+          key: bun-${{ runner.os }}-${{ hashFiles('bun.lock') }}
+          restore-keys: bun-${{ runner.os }}-
+
+      - name: Install dependencies
+        run: |
+          if [ "${{ github.actor }}" = "dependabot[bot]" ]; then
+            bun install
+          else
+            bun install --frozen-lockfile
+          fi
+
+      - name: Type check
+        run: bun run typecheck
+        if: hashFiles('tsconfig.json') != ''
+
+      - name: Lint
+        run: bun run lint
+        if: hashFiles('.eslintrc*', 'eslint.config.*') != ''
+
+      - name: Test
+        run: bun run test
+        if: hashFiles('**/*.test.*', '**/*.spec.*') != ''
+
+      - name: Check unused code
+        run: bun run knip
+        if: hashFiles('knip.*') != ''
+
+      - name: Build
+        run: bun run build
