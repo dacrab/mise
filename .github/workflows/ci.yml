@@ -45,7 +45,6 @@ jobs:
       - name: Check available scripts
         id: scripts
         run: |
-          # Check if scripts exist in package.json
           echo "typecheck=$(jq -r '.scripts.typecheck // empty' package.json | [ -n "$(cat)" ] && echo 'true' || echo 'false')" >> $GITHUB_OUTPUT
           echo "lint=$(jq -r '.scripts.lint // empty' package.json | [ -n "$(cat)" ] && echo 'true' || echo 'false')" >> $GITHUB_OUTPUT
           echo "test=$(jq -r '.scripts.test // empty' package.json | [ -n "$(cat)" ] && echo 'true' || echo 'false')" >> $GITHUB_OUTPUT
@@ -72,7 +71,7 @@ jobs:
 
       - name: Check unused code
         if: steps.scripts.outputs.knip == 'true'
-        run: bun run knip --allow-remove-files
+        run: bun run knip
         env:
           DATABASE_URL: postgresql://dummy:dummy@localhost:5432/dummy
 
