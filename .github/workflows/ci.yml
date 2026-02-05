@@ -62,8 +62,6 @@ jobs:
       - name: Check
         if: steps.scripts.outputs.check == 'true'
         run: bun run check
-        env:
-          DATABASE_URL: postgresql://dummy:dummy@localhost:5432/dummy
 
       - name: Test
         if: steps.scripts.outputs.test == 'true'
@@ -88,3 +86,4 @@ jobs:
           CLOUDFLARE_SECRET_ACCESS_KEY: dummy_secret
           R2_BUCKET_NAME: dummy_bucket
           PUBLIC_R2_DOMAIN: dummy.r2.dev
+          R2_ACCOUNT_ID: dummy_id
