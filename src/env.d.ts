@@ -13,6 +13,18 @@ interface Env {
 	PUBLIC_R2_DOMAIN: string;
 }
 
+interface ImportMeta {
+	readonly env: ImportMetaEnv;
+}
+
+interface ImportMetaEnv extends Env {
+	readonly MODE: string;
+	readonly BASE_URL: string;
+	readonly PROD: boolean;
+	readonly DEV: boolean;
+	readonly SSR: boolean;
+}
+
 type Runtime = import("@astrojs/cloudflare").Runtime<Env>;
 
 declare namespace App {
