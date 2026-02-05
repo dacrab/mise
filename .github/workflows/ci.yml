@@ -45,11 +45,12 @@ jobs:
       - name: Check available scripts
         id: scripts
         run: |
-          echo "typecheck=$(bun run --silent typecheck --help >/dev/null 2>&1 && echo 'true' || echo 'false')" >> $GITHUB_OUTPUT
-          echo "lint=$(bun run --silent lint --help >/dev/null 2>&1 && echo 'true' || echo 'false')" >> $GITHUB_OUTPUT
-          echo "test=$(bun run --silent test --help >/dev/null 2>&1 && echo 'true' || echo 'false')" >> $GITHUB_OUTPUT
-          echo "knip=$(bun run --silent knip --help >/dev/null 2>&1 && echo 'true' || echo 'false')" >> $GITHUB_OUTPUT
-          echo "check=$(bun run --silent check --help >/dev/null 2>&1 && echo 'true' || echo 'false')" >> $GITHUB_OUTPUT
+          # Check if scripts exist in package.json
+          echo "typecheck=$(jq -r '.scripts.typecheck // empty' package.json | [ -n "$(cat)" ] && echo 'true' || echo 'false')" >> $GITHUB_OUTPUT
+          echo "lint=$(jq -r '.scripts.lint // empty' package.json | [ -n "$(cat)" ] && echo 'true' || echo 'false')" >> $GITHUB_OUTPUT
+          echo "test=$(jq -r '.scripts.test // empty' package.json | [ -n "$(cat)" ] && echo 'true' || echo 'false')" >> $GITHUB_OUTPUT
+          echo "knip=$(jq -r '.scripts.knip // empty' package.json | [ -n "$(cat)" ] && echo 'true' || echo 'false')" >> $GITHUB_OUTPUT
+          echo "check=$(jq -r '.scripts.check // empty' package.json | [ -n "$(cat)" ] && echo 'true' || echo 'false')" >> $GITHUB_OUTPUT
 
       - name: Type check
         if: steps.scripts.outputs.typecheck == 'true'
@@ -71,7 +72,7 @@ jobs:
 
       - name: Check unused code
         if: steps.scripts.outputs.knip == 'true'
-        run: bun run knip
+        run: bun run knip --allow-remove-files
         env:
           DATABASE_URL: postgresql://dummy:dummy@localhost:5432/dummy
 
