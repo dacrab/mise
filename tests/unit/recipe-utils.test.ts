@@ -1,91 +1,25 @@
 import { describe, it, expect } from "vitest";
+import { validateLength } from "convex/lib/helpers";
 
-// Slug generation logic from recipes.ts
-function generateSlug(title: string): string {
-  return title.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)+/g, "") + "-" + "abc123";
-}
-
-// Validation helpers
-function validateLength(value: string, min: number, max: number, field: string): string {
-  const trimmed = value.trim();
-  if (trimmed.length < min || trimmed.length > max) {
-    throw new Error(`${field} must be ${min}-${max} characters`);
-  }
-  return trimmed;
-}
-
-function sanitizeInput(input: string): string {
-  return input
-    .replace(/&/g, "&amp;")
-    .replace(/</g, "&lt;")
-    .replace(/>/g, "&gt;")
-    .replace(/"/g, "&quot;")
-    .replace(/'/g, "&#x27;");
-}
-
-describe("Recipe Utilities", () => {
-  describe("generateSlug", () => {
-    it("converts title to lowercase slug", () => {
-      const slug = generateSlug("My Amazing Recipe");
-      expect(slug).toMatch(/^my-amazing-recipe-[a-z0-9]+$/);
-    });
-
-    it("removes special characters", () => {
-      const slug = generateSlug("Recipe! With @Special# Chars");
-      expect(slug).toMatch(/^recipe-with-special-chars-[a-z0-9]+$/);
-    });
-
-    it("handles multiple spaces", () => {
-      const slug = generateSlug("Recipe   With   Spaces");
-      expect(slug).toMatch(/^recipe-with-spaces-[a-z0-9]+$/);
-    });
-
-    it("trims leading/trailing dashes", () => {
-      const slug = generateSlug("---Recipe---");
-      expect(slug).toMatch(/^recipe-[a-z0-9]+$/);
-    });
-
-    it("handles unicode characters", () => {
-      const slug = generateSlug("Crème Brûlée");
-      expect(slug).toMatch(/^cr-me-br-l-e-[a-z0-9]+$/);
-    });
+describe("validateLength", () => {
+  it("returns the value when within bounds", () => {
+    expect(validateLength("hello", 1, 10, "field")).toBe("hello");
   });
 
-  describe("validateLength", () => {
-    it("returns trimmed value when valid", () => {
-      expect(validateLength("  hello  ", 1, 10, "Field")).toBe("hello");
-    });
-
-    it("throws when too short", () => {
-      expect(() => validateLength("", 1, 10, "Title")).toThrow("Title must be 1-10 characters");
-    });
-
-    it("throws when too long", () => {
-      expect(() => validateLength("a".repeat(201), 1, 200, "Title")).toThrow("Title must be 1-200 characters");
-    });
-
-    it("handles whitespace-only input", () => {
-      expect(() => validateLength("   ", 1, 10, "Field")).toThrow();
-    });
+  it("throws when value is too short", () => {
+    expect(() => validateLength("", 1, 10, "field")).toThrow("field");
   });
 
-  describe("sanitizeInput", () => {
-    it("escapes HTML entities", () => {
-      expect(sanitizeInput("<script>alert('xss')</script>")).toBe(
-        "&lt;script&gt;alert(&#x27;xss&#x27;)&lt;/script&gt;"
-      );
-    });
+  it("throws when value exceeds max length", () => {
+    expect(() => validateLength("a".repeat(11), 1, 10, "field")).toThrow("field");
+  });
 
-    it("escapes ampersands", () => {
-      expect(sanitizeInput("salt & pepper")).toBe("salt &amp; pepper");
-    });
+  it("accepts value at exact min boundary", () => {
+    expect(validateLength("a", 1, 10, "field")).toBe("a");
+  });
 
-    it("escapes quotes", () => {
-      expect(sanitizeInput('Say "hello"')).toBe("Say &quot;hello&quot;");
-    });
-
-    it("preserves safe text", () => {
-      expect(sanitizeInput("Normal recipe text")).toBe("Normal recipe text");
-    });
+  it("accepts value at exact max boundary", () => {
+    const s = "a".repeat(10);
+    expect(validateLength(s, 1, 10, "field")).toBe(s);
   });
 });

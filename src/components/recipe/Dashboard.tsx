@@ -1,4 +1,5 @@
 
+import { useState } from "react";
 import { useQuery, useMutation } from "convex/react";
 import { Link, useSearch } from "@tanstack/react-router";
 import { api } from "convex/_generated/api";
@@ -13,16 +14,26 @@ export function Dashboard() {
   const myRecipes = useQuery(api.recipes.myRecipes);
   const myBookmarks = useQuery(api.recipes.myBookmarks);
   const deleteRecipe = useMutation(api.recipes.remove);
+  const [pendingDelete, setPendingDelete] = useState<Id<"recipes"> | null>(null);
 
   const { tab = "my-recipes" } = useSearch({ strict: false }) as { tab?: string };
-  const recipes = tab === "saved" ? myBookmarks : tab === "collections" ? [] : myRecipes;
+  let recipes: typeof myRecipes;
+  if (tab === "saved") recipes = myBookmarks;
+  else if (tab === "collections") recipes = [];
+  else recipes = myRecipes;
 
   if (!user || (tab !== "collections" && recipes === undefined)) {
-    return <div className="flex items-center justify-center min-h-[60vh] text-stone animate-pulse">Loading...</div>;
+    return <div className="flex items-center justify-center min-h-[60vh] text-stone animate-pulse">Loading…</div>;
   }
 
   const handleDelete = async (id: Id<"recipes">) => {
-    if (!confirm("Delete this recipe?")) return;
+    if (pendingDelete !== id) {
+      setPendingDelete(id);
+      toast("Tap delete again to confirm", "info");
+      setTimeout(() => setPendingDelete(null), 3000);
+      return;
+    }
+    setPendingDelete(null);
     try {
       await deleteRecipe({ id });
       toast("Recipe deleted", "success");
@@ -61,7 +72,7 @@ export function Dashboard() {
 
       {tab === "collections" ? (
         <Collections />
-      ) : (recipes?.length ?? 0) === 0 ? (
+      ) : recipes !== undefined && recipes.length === 0 ? (
         <div className="card p-12 text-center">
           <div className="w-14 h-14 bg-cream-dark rounded-full flex items-center justify-center mx-auto mb-4">
             <BookmarkIcon className="w-6 h-6 text-stone" />
@@ -86,8 +97,8 @@ export function Dashboard() {
               </div>
               {tab === "my-recipes" && (
                 <div className="flex gap-2">
-                  <a href={`/dashboard/edit/${r._id}`} className="btn-ghost text-xs py-1.5 px-3">Edit</a>
-                  <button onClick={() => handleDelete(r._id)} className="btn-ghost text-xs py-1.5 px-3 text-terracotta">Delete</button>
+                  <Link to="/dashboard/edit/$id" params={{ id: r._id }} className="btn-ghost text-xs py-1.5 px-3">Edit</Link>
+                  <button onClick={() => handleDelete(r._id)} className={`btn-ghost text-xs py-1.5 px-3 ${pendingDelete === r._id ? "text-terracotta font-semibold" : "text-terracotta"}`}>{pendingDelete === r._id ? "Confirm?" : "Delete"}</button>
                 </div>
               )}
             </div>

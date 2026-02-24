@@ -2,7 +2,9 @@
 node_modules/
 
 # Build
-dist/
+dist
+playwright-report
+test-results/
 .output/
 .cache/
 .vinxi/

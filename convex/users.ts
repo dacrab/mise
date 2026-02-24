@@ -50,7 +50,7 @@ export const updateProfile = mutation({
     if (args.username) {
       const existing = await ctx.db
         .query("users")
-        .withIndex("by_username", (q) => q.eq("username", args.username!))
+        .withIndex("by_username", (q) => q.eq("username", args.username ?? ""))
         .first();
       if (existing && existing._id !== userId) {
         throw new Error("Username already taken");

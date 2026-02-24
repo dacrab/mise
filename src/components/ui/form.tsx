@@ -9,7 +9,9 @@ export function FormField({ label, type, value, onChange, placeholder, error, au
   error?: string;
   autoComplete?: string;
 }) {
-  const defaultAutoComplete = type === "email" ? "email" : type === "password" ? "current-password" : "name";
+  let defaultAutoComplete = "name";
+  if (type === "email") defaultAutoComplete = "email";
+  else if (type === "password") defaultAutoComplete = "current-password";
   return (
     <div>
       <label className="block text-sm font-medium text-charcoal-light mb-2">{label}</label>

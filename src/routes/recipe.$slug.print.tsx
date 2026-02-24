@@ -1,6 +1,5 @@
 import { createFileRoute, notFound } from "@tanstack/react-router";
-import { convexQuery } from "@convex-dev/react-query";
-import { useSuspenseQuery } from "@tanstack/react-query";
+import { useQuery } from "convex/react";
 import { api } from "convex/_generated/api";
 import { PrinterIcon } from "@heroicons/react/24/outline";
 
@@ -10,7 +9,12 @@ export const Route = createFileRoute("/recipe/$slug/print")({
 
 function PrintRecipe() {
   const { slug } = Route.useParams();
-  const { data: recipe } = useSuspenseQuery(convexQuery(api.recipes.getBySlug, { slug }));
+  const recipe = useQuery(api.recipes.getBySlug, { slug });
+
+  // Still loading
+  if (recipe === undefined) {
+    return <div className="flex items-center justify-center min-h-screen text-stone animate-pulse">Loading…</div>;
+  }
 
   if (!recipe) throw notFound();
 

@@ -57,23 +57,6 @@ export const remove = mutation({
   },
 });
 
-// Move bookmark to collection
-export const moveBookmark = mutation({
-  args: { bookmarkId: v.id("bookmarks"), collectionId: v.optional(v.id("collections")) },
-  handler: async (ctx, { bookmarkId, collectionId }) => {
-    const userId = await requireAuth(ctx);
-    const bookmark = await ctx.db.get(bookmarkId);
-    if (!bookmark || bookmark.userId !== userId) throw new Error("Not found");
-
-    if (collectionId) {
-      const collection = await ctx.db.get(collectionId);
-      if (!collection || collection.userId !== userId) throw new Error("Collection not found");
-    }
-
-    await ctx.db.patch(bookmarkId, { collectionId });
-  },
-});
-
 // Get bookmarks by collection
 export const getBookmarks = query({
   args: { collectionId: v.optional(v.id("collections")) },
@@ -86,6 +69,6 @@ export const getBookmarks = query({
       : await ctx.db.query("bookmarks").withIndex("by_user", (q) => q.eq("userId", userId)).filter((q) => q.eq(q.field("collectionId"), undefined)).collect();
 
     const recipes = await Promise.all(bookmarks.map((b) => ctx.db.get(b.recipeId)));
-    return withCoverUrls(ctx, recipes.filter(Boolean) as NonNullable<typeof recipes[number]>[]);
+    return withCoverUrls(ctx, recipes.filter(Boolean) as Array<NonNullable<typeof recipes[number]>>);
   },
 });

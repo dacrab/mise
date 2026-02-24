@@ -3,8 +3,16 @@ import { v } from "convex/values";
 import { paginationOptsValidator } from "convex/server";
 import { requireAuth, getOptionalAuth, withCoverUrls, withCoverUrl, createNotification } from "./lib/helpers";
 
-const generateSlug = (title: string) =>
-  title.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)+/g, "") + "-" + Math.random().toString(36).slice(2, 8);
+function generateSlug(title: string): string {
+  const base = title
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/(^-|-$)+/g, "")
+    .slice(0, 80); // cap base length
+  // Use timestamp + random for extremely low collision probability
+  const suffix = Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
+  return `${base}-${suffix}`;
+}
 
 // Paginated list for infinite scroll
 export const listPaginated = query({
@@ -103,7 +111,7 @@ export const myBookmarks = query({
     if (!userId) return [];
     const bookmarks = await ctx.db.query("bookmarks").withIndex("by_user", (q) => q.eq("userId", userId)).order("desc").collect();
     const recipes = await Promise.all(bookmarks.map((b) => ctx.db.get(b.recipeId)));
-    return withCoverUrls(ctx, recipes.filter(Boolean) as NonNullable<typeof recipes[number]>[]);
+    return withCoverUrls(ctx, recipes.filter(Boolean) as Array<NonNullable<typeof recipes[number]>>);
   },
 });
 
@@ -237,4 +245,20 @@ export const publishScheduled = internalMutation({
 
     return { published: scheduled.length };
   },
+});
+
+// ─── Analytics (internal) ─────────────────────────────────────────────────────
+
+import { internalMutation as internalMutationAnalytics } from "./_generated/server";
+
+export const cleanupOldViews = internalMutationAnalytics({
+  handler: async (ctx) => {
+    const thirtyDaysAgo = Date.now() - 30 * 24 * 60 * 60 * 1000;
+    const old = await ctx.db.query("recipeViews").withIndex("by_timestamp", (q) => q.lt("timestamp", thirtyDaysAgo)).take(500);
+    await Promise.all(old.map((v) => ctx.db.delete(v._id)));
+  },
+});
+
+export const recalculateTrending = internalMutationAnalytics({
+  handler: async (_ctx) => {},
 });

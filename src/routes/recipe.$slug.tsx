@@ -4,17 +4,23 @@ import { useSuspenseQuery } from "@tanstack/react-query";
 import { useQuery } from "convex/react";
 import { api } from "convex/_generated/api";
 import { PageLayout } from "@/components/ui/Layout";
-import { SocialActions } from "@/components/social/SocialActions";
+import { SocialActions } from "@/components/social";
 import { CommentSection } from "@/components/social/CommentSection";
-import { CookingNow } from "@/components/recipe/CookingNow";
-import { CookingTimers } from "@/components/recipe/CookingTimers";
+import { CookingNow } from "@/components/recipe/widgets";
+import { CookingTimers } from "@/components/recipe/widgets";
 import { IngredientScaler } from "@/components/recipe/IngredientScaler";
-import { ForkButton } from "@/components/social/ForkButton";
-import { StarRating } from "@/components/social/Rating";
+import { ForkButton } from "@/components/social";
+import { StarRating } from "@/components/social";
 import { PrinterIcon, ShareIcon } from "@heroicons/react/24/outline";
 import { PlayIcon as PlayIconSolid } from "@heroicons/react/24/solid";
 
 export const Route = createFileRoute("/recipe/$slug")({
+  // Loader pre-fetches recipe data into the QueryClient cache before render.
+  // On the server this populates <head> meta tags for SEO/OG without a client roundtrip.
+  loader: ({ params, context: { queryClient } }) =>
+    queryClient.ensureQueryData(
+      convexQuery(api.recipes.getBySlug, { slug: params.slug })
+    ),
   component: RecipePage,
   head: ({ loaderData }) => {
     const recipe = loaderData as { title?: string; description?: string; coverImageUrl?: string } | undefined;
@@ -39,7 +45,7 @@ function ShareButton({ title }: { title: string }) {
       await navigator.share({ title, url });
     } else {
       await navigator.clipboard.writeText(url);
-      alert("Link copied!");
+      // No alert — clipboard write is silent, which is better UX
     }
   };
 

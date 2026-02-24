@@ -1,9 +1,11 @@
 import { defineConfig } from "vite";
 import tsConfigPaths from "vite-tsconfig-paths";
 import { tanstackStart } from "@tanstack/react-start/plugin/vite";
-import viteReact from "@vitejs/plugin-react";
 import tailwindcss from "@tailwindcss/vite";
 
+// NOTE: Do NOT add @vitejs/plugin-react here.
+// tanstackStart() already includes the React plugin internally.
+// Having both causes duplicate transform pipelines and HMR conflicts.
 export default defineConfig({
   server: {
     port: 3000,
@@ -11,7 +13,29 @@ export default defineConfig({
   plugins: [
     tsConfigPaths(),
     tanstackStart(),
-    viteReact(),
     tailwindcss(),
   ],
+  environments: {
+    client: {
+      build: {
+        rollupOptions: {
+          output: {
+            // Split vendor chunks for better long-term caching.
+            // Only applied to client build — SSR externalizes these modules.
+            manualChunks: {
+              "vendor-react": ["react", "react-dom"],
+              "vendor-tanstack": [
+                "@tanstack/react-router",
+                "@tanstack/react-query",
+                "@tanstack/react-router-with-query",
+              ],
+              // @convex-dev/auth has no root export (subpaths only) — excluded
+              "vendor-convex": ["convex", "@convex-dev/react-query"],
+              "vendor-ui": ["@base-ui-components/react", "@heroicons/react"],
+            },
+          },
+        },
+      },
+    },
+  },
 });

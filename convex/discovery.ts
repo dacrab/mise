@@ -1,4 +1,4 @@
-import { query, mutation } from "./_generated/server";
+import { query } from "./_generated/server";
 import { v } from "convex/values";
 import { getOptionalAuth, withCoverUrls } from "./lib/helpers";
 import type { Id } from "./_generated/dataModel";
@@ -32,14 +32,6 @@ export const trending = query({
   },
 });
 
-// Record a view
-export const recordView = mutation({
-  args: { recipeId: v.id("recipes") },
-  handler: async (ctx, { recipeId }) => {
-    await ctx.db.insert("recipeViews", { recipeId, timestamp: Date.now() });
-  },
-});
-
 // Get recommendations
 export const recommendations = query({
   args: { limit: v.optional(v.number()) },
@@ -63,7 +55,7 @@ export const recommendations = query({
     }
 
     const likedRecipes = await Promise.all([...likedRecipeIds].slice(0, 10).map((id) => ctx.db.get(id)));
-    const categories = [...new Set(likedRecipes.filter(Boolean).map((r) => r!.category))];
+    const categories = [...new Set(likedRecipes.flatMap((r) => r ? [r.category] : []))];
 
     const recommendations = [];
     for (const category of categories) {
@@ -83,43 +75,3 @@ export const recommendations = query({
   },
 });
 
-// Advanced search
-export const search = query({
-  args: {
-    query: v.optional(v.string()), category: v.optional(v.string()),
-    difficulty: v.optional(v.union(v.literal("easy"), v.literal("medium"), v.literal("hard"))),
-    maxTime: v.optional(v.number()), ingredient: v.optional(v.string()), limit: v.optional(v.number()),
-  },
-  handler: async (ctx, { query: searchQuery, category, difficulty, maxTime, ingredient, limit = 20 }) => {
-    let recipes;
-
-    if (searchQuery) {
-      recipes = await ctx.db.query("recipes")
-        .withSearchIndex("search_title", (q) => {
-          let search = q.search("title", searchQuery);
-          if (category) search = search.eq("category", category);
-          return search.eq("status", "published");
-        }).take(100);
-    } else if (category) {
-      recipes = await ctx.db.query("recipes")
-        .withIndex("by_category", (q) => q.eq("category", category))
-        .filter((q) => q.eq(q.field("status"), "published")).order("desc").take(100);
-    } else {
-      recipes = await ctx.db.query("recipes")
-        .withIndex("by_status", (q) => q.eq("status", "published")).order("desc").take(100);
-    }
-
-    let filtered = recipes;
-    if (difficulty) filtered = filtered.filter((r) => r.difficulty === difficulty);
-    if (maxTime) filtered = filtered.filter((r) => {
-      const total = (r.prepTime || 0) + (r.cookTime || 0);
-      return total > 0 && total <= maxTime;
-    });
-    if (ingredient) {
-      const lower = ingredient.toLowerCase();
-      filtered = filtered.filter((r) => r.ingredients.some((i) => i.toLowerCase().includes(lower)));
-    }
-
-    return withCoverUrls(ctx, filtered.slice(0, limit));
-  },
-});

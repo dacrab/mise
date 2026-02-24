@@ -30,7 +30,7 @@ export function ToastProvider({ children }: { children: ReactNode }) {
     setTimeout(() => setToasts((t) => t.filter((x) => x.id !== id)), 3000);
   }, []);
 
-  const dismiss = (id: number) => setToasts((t) => t.filter((x) => x.id !== id));
+  const dismiss = useCallback((id: number) => setToasts((t) => t.filter((x) => x.id !== id)), []);
 
   return (
     <ToastContext.Provider value={{ toast }}>
@@ -41,9 +41,11 @@ export function ToastProvider({ children }: { children: ReactNode }) {
             key={t.id}
             role="alert"
             className={`flex items-center gap-3 px-4 py-3 rounded-lg shadow-lg text-sm font-medium animate-slide-up ${
-              t.type === "success" ? "bg-sage text-white" :
-              t.type === "error" ? "bg-terracotta text-white" :
-              "bg-charcoal text-cream"
+              t.type === "success"
+                ? "bg-sage text-white"
+                : t.type === "error"
+                  ? "bg-terracotta text-white"
+                  : "bg-charcoal text-cream"
             }`}
           >
             <span>{t.message}</span>

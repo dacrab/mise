@@ -15,7 +15,7 @@ export async function getOptionalAuth(ctx: QueryCtx) {
 export async function withCoverUrls<T extends { coverImage?: Id<"_storage"> | null }>(
   ctx: QueryCtx,
   items: T[]
-): Promise<(T & { coverImageUrl: string | null })[]> {
+): Promise<Array<T & { coverImageUrl: string | null }>> {
   return Promise.all(
     items.map(async (item) => ({
       ...item,
@@ -53,14 +53,9 @@ export async function createNotification(
   await ctx.db.insert("notifications", { ...args, read: false });
 }
 
-export function sanitizeInput(input: string): string {
-  return input
-    .replace(/&/g, "&amp;")
-    .replace(/</g, "&lt;")
-    .replace(/>/g, "&gt;")
-    .replace(/"/g, "&quot;")
-    .replace(/'/g, "&#x27;");
-}
+// sanitizeInput was removed: Convex stores data as structured JSON, not HTML,
+// so HTML-escaping at the persistence layer is both wrong and unnecessary.
+// Escaping for display belongs in the React layer (React does this automatically).
 
 export function validateLength(value: string, min: number, max: number, field: string) {
   const trimmed = value.trim();

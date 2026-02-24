@@ -1,5 +1,6 @@
 
 import { useQuery, useMutation } from "convex/react";
+import { useRouter } from "@tanstack/react-router";
 import { api } from "convex/_generated/api";
 import { useState } from "react";
 import { BellIcon } from "@heroicons/react/24/outline";
@@ -28,23 +29,35 @@ export function NotificationBell() {
   );
 }
 
+// Derive the notification item type from the query's non-nullable return
+type NotificationList = NonNullable<ReturnType<typeof useQuery<typeof api.notifications.list>>>;
+type Notification = NotificationList[number];
+
+function notificationHref(n: Notification): string {
+  if (n.type === "follow") return `/chef/${n.actor?.username ?? ""}`;
+  return n.recipe ? `/recipe/${n.recipe.slug}` : "/";
+}
+
+function notificationMessage(n: Notification): string {
+  switch (n.type) {
+    case "like":    return `liked your recipe "${n.recipe?.title}"`;
+    case "comment": return `commented on "${n.recipe?.title}"`;
+    case "follow":  return "started following you";
+    case "fork":    return `forked your recipe "${n.recipe?.title}"`;
+    default:        return "";
+  }
+}
+
 function NotificationDropdown({ onClose }: { onClose: () => void }) {
   const notifications = useQuery(api.notifications.list, { limit: 10 }) ?? [];
   const markAllRead = useMutation(api.notifications.markAllRead);
   const markRead = useMutation(api.notifications.markRead);
+  const router = useRouter();
 
-  const getMessage = (n: typeof notifications[0]) => {
-    switch (n.type) {
-      case "like": return `liked your recipe "${n.recipe?.title}"`;
-      case "comment": return `commented on "${n.recipe?.title}"`;
-      case "follow": return "started following you";
-      case "fork": return `forked your recipe "${n.recipe?.title}"`;
-    }
-  };
-
-  const getLink = (n: typeof notifications[0]) => {
-    if (n.type === "follow") return `/chef/${n.actor?.username}`;
-    return n.recipe ? `/recipe/${n.recipe.slug}` : "#";
+  const handleClick = async (n: Notification) => {
+    if (!n.read) await markRead({ id: n._id });
+    onClose();
+    await router.navigate({ href: notificationHref(n) });
   };
 
   return (
@@ -65,11 +78,10 @@ function NotificationDropdown({ onClose }: { onClose: () => void }) {
             <p className="p-6 text-center text-stone text-sm">No notifications</p>
           ) : (
             notifications.map((n) => (
-              <a
+              <button
                 key={n._id}
-                href={getLink(n)}
-                onClick={() => !n.read && markRead({ id: n._id })}
-                className={`block p-3 hover:bg-cream-dark/50 border-b border-cream-dark last:border-0 transition-colors ${!n.read ? "bg-sage/5" : ""}`}
+                onClick={() => handleClick(n)}
+                className={`w-full text-left block p-3 hover:bg-cream-dark/50 border-b border-cream-dark last:border-0 transition-colors ${!n.read ? "bg-sage/5" : ""}`}
               >
                 <div className="flex gap-3">
                   <div className="w-8 h-8 rounded-full bg-sage/15 overflow-hidden shrink-0">
@@ -77,14 +89,14 @@ function NotificationDropdown({ onClose }: { onClose: () => void }) {
                       <img src={n.actor.image} className="w-full h-full object-cover" alt="" />
                     ) : (
                       <div className="w-full h-full flex items-center justify-center text-xs font-medium text-sage">
-                        {n.actor?.name?.[0] || "?"}
+                        {n.actor?.name?.[0] ?? "?"}
                       </div>
                     )}
                   </div>
                   <div className="flex-1 min-w-0">
                     <p className="text-sm text-charcoal-light">
-                      <span className="font-medium text-charcoal">{n.actor?.name || "Someone"}</span>{" "}
-                      {getMessage(n)}
+                      <span className="font-medium text-charcoal">{n.actor?.name ?? "Someone"}</span>{" "}
+                      {notificationMessage(n)}
                     </p>
                     <p className="text-xs text-stone mt-0.5">
                       {new Date(n._creationTime).toLocaleDateString()}
@@ -92,7 +104,7 @@ function NotificationDropdown({ onClose }: { onClose: () => void }) {
                   </div>
                   {!n.read && <div className="w-2 h-2 rounded-full bg-sage mt-2 shrink-0" />}
                 </div>
-              </a>
+              </button>
             ))
           )}
         </div>

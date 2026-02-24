@@ -1,13 +1,11 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
-import { convexQuery } from "@convex-dev/react-query";
-import { useSuspenseQuery } from "@tanstack/react-query";
-import { usePaginatedQuery } from "convex/react";
+import { useQuery, usePaginatedQuery } from "convex/react";
 import { z } from "zod";
 import { useState } from "react";
 import { api } from "convex/_generated/api";
 import { PageLayout, HomeLink } from "@/components/ui/Layout";
 import { RecipeCard } from "@/components/ui/RecipeCard";
-import { TrendingRecipes } from "@/components/recipe/Discovery";
+import { TrendingRecipes } from "@/components/recipe/widgets";
 import { Select } from "@/components/ui/Select";
 import { MagnifyingGlassIcon } from "@heroicons/react/24/outline";
 
@@ -45,17 +43,20 @@ function HomePage() {
     });
   };
 
-  // For search, use TanStack Query with Convex
-  const searchQuery = useSuspenseQuery(convexQuery(api.recipes.list, { search: q || undefined, category: category || undefined, limit: 50 }));
-  
-  // For browsing, use Convex's native pagination (works on client)
+  // For search, use a plain Convex query (undefined while loading, then resolves)
+  const searchResults = useQuery(
+    api.recipes.list,
+    hasSearch ? { search: q, category: category || undefined, limit: 50 } : "skip"
+  );
+
+  // For browsing, use Convex's native pagination
   const paginatedQuery = usePaginatedQuery(
     api.recipes.listPaginated,
     { category: category || undefined },
     { initialNumItems: 20 }
   );
 
-  const recipes = hasSearch ? searchQuery.data : paginatedQuery.results;
+  const recipes = hasSearch ? (searchResults ?? []) : paginatedQuery.results;
   const hasMore = !hasSearch && paginatedQuery.status === "CanLoadMore";
   const loadMore = () => paginatedQuery.loadMore(20);
 

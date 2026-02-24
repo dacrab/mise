@@ -17,6 +17,7 @@ export function Collections() {
   const [selectedId, setSelectedId] = useState<Id<"collections"> | null>(null);
   const [newName, setNewName] = useState("");
   const [showCreate, setShowCreate] = useState(false);
+  const [pendingDeleteId, setPendingDeleteId] = useState<Id<"collections"> | null>(null);
 
   const bookmarks = useQuery(
     api.collections.getBookmarks,
@@ -37,7 +38,13 @@ export function Collections() {
   };
 
   const handleDelete = async (id: Id<"collections">) => {
-    if (!confirm("Delete this collection? Bookmarks will be moved to Unsorted.")) return;
+    if (pendingDeleteId !== id) {
+      setPendingDeleteId(id);
+      toast("Tap delete again to confirm", "info");
+      setTimeout(() => setPendingDeleteId(null), 3000);
+      return;
+    }
+    setPendingDeleteId(null);
     try {
       await removeCollection({ id });
       if (selectedId === id) setSelectedId(null);

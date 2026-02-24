@@ -21,10 +21,17 @@ export function CommentSection({ recipeId, isLoggedIn }: Props) {
     (localStore, { recipeId, content }) => {
       const current = localStore.getQuery(api.social.getComments, { recipeId });
       if (current) {
-        localStore.setQuery(api.social.getComments, { recipeId }, [
-          { _id: `temp-${Date.now()}` as Id<"comments">, _creationTime: Date.now(), content, userId: "temp" as Id<"users">, recipeId, user: { name: "You", image: undefined } },
-          ...current,
-        ]);
+        // Optimistic comment must match the shape returned by getComments exactly:
+        // { _id, _creationTime, content, userId, recipeId, user: { name, image } | null }
+        const optimistic = {
+          _id: `temp-${Date.now()}` as Id<"comments">,
+          _creationTime: Date.now(),
+          content,
+          userId: "temp" as Id<"users">,
+          recipeId,
+          user: { name: "You", image: undefined as string | undefined },
+        };
+        localStore.setQuery(api.social.getComments, { recipeId }, [optimistic, ...current]);
       }
     }
   );

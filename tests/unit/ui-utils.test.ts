@@ -1,91 +1,46 @@
 import { describe, it, expect } from "vitest";
+import { formatTime, calculatePasswordStrength, getErrorMessage } from "@/lib/recipe";
 
-// Timer formatting logic from CookingTimers
-function formatTime(seconds: number): string {
-  const m = Math.floor(seconds / 60);
-  const s = seconds % 60;
-  return `${m}:${s.toString().padStart(2, "0")}`;
-}
-
-// Password strength calculation
-function calculatePasswordStrength(password: string): number {
-  if (password.length < 6) return 0;
-  let strength = 1;
-  if (password.length >= 8) strength++;
-  if (/[A-Z]/.test(password) && /[a-z]/.test(password)) strength++;
-  if (/\d/.test(password) && /[^a-zA-Z0-9]/.test(password)) strength++;
-  return Math.min(strength, 3);
-}
-
-// Error message mapping
-const ERROR_MESSAGES: Record<string, string> = {
-  InvalidAccountId: "No account found with this email. Please sign up first.",
-  InvalidSecret: "Incorrect password. Please try again.",
-  TooManyFailedAttempts: "Too many failed attempts. Please try again later.",
-  AccountAlreadyExists: "An account with this email already exists. Please sign in.",
-  default: "An error occurred",
-};
-
-function getErrorMessage(error: string): string {
-  for (const [key, value] of Object.entries(ERROR_MESSAGES)) {
-    if (error.includes(key)) return value;
-  }
-  return ERROR_MESSAGES["default"] ?? "An error occurred";
-}
-
-describe("UI Utilities", () => {
-  describe("formatTime", () => {
-    it("formats seconds to mm:ss", () => {
-      expect(formatTime(0)).toBe("0:00");
-      expect(formatTime(30)).toBe("0:30");
-      expect(formatTime(60)).toBe("1:00");
-      expect(formatTime(90)).toBe("1:30");
-      expect(formatTime(3600)).toBe("60:00");
-    });
-
-    it("pads single digit seconds", () => {
-      expect(formatTime(65)).toBe("1:05");
-      expect(formatTime(601)).toBe("10:01");
-    });
+describe("formatTime", () => {
+  it("formats 0 seconds", () => {
+    expect(formatTime(0)).toBe("0:00");
   });
-
-  describe("calculatePasswordStrength", () => {
-    it("returns 0 for short passwords", () => {
-      expect(calculatePasswordStrength("abc")).toBe(0);
-      expect(calculatePasswordStrength("12345")).toBe(0);
-    });
-
-    it("returns 1 for basic 6+ char passwords", () => {
-      expect(calculatePasswordStrength("abcdef")).toBe(1);
-      expect(calculatePasswordStrength("123456")).toBe(1);
-    });
-
-    it("returns 2 for 8+ char passwords", () => {
-      expect(calculatePasswordStrength("abcdefgh")).toBe(2);
-      expect(calculatePasswordStrength("12345678")).toBe(2);
-    });
-
-    it("returns 3 for strong passwords with mixed case and special chars", () => {
-      expect(calculatePasswordStrength("Password1!")).toBe(3);
-      expect(calculatePasswordStrength("MyP@ssw0rd")).toBe(3);
-    });
+  it("formats 65 seconds", () => {
+    expect(formatTime(65)).toBe("1:05");
   });
+  it("formats exactly 1 minute", () => {
+    expect(formatTime(60)).toBe("1:00");
+  });
+  it("formats 3600 seconds (1 hour)", () => {
+    expect(formatTime(3600)).toBe("60:00");
+  });
+});
 
-  describe("getErrorMessage", () => {
-    it("maps known error codes", () => {
-      expect(getErrorMessage("InvalidAccountId")).toBe("No account found with this email. Please sign up first.");
-      expect(getErrorMessage("InvalidSecret")).toBe("Incorrect password. Please try again.");
-      expect(getErrorMessage("AccountAlreadyExists")).toBe("An account with this email already exists. Please sign in.");
-    });
+describe("calculatePasswordStrength", () => {
+  it("returns 0 for empty string", () => {
+    expect(calculatePasswordStrength("")).toBe(0);
+  });
+  it("returns 1 for 8-char lowercase-only password", () => {
+    expect(calculatePasswordStrength("password")).toBe(1);
+  });
+  it("returns higher score for complex password", () => {
+    expect(calculatePasswordStrength("P@ssw0rd!Extra")).toBe(4);
+  });
+  it("caps at 4", () => {
+    expect(calculatePasswordStrength("A1!bcdefghijklmno")).toBe(4);
+  });
+});
 
-    it("returns default for unknown errors", () => {
-      expect(getErrorMessage("SomeRandomError")).toBe("An error occurred");
-    });
-
-    it("handles error messages containing codes", () => {
-      expect(getErrorMessage("Error: InvalidAccountId - user not found")).toBe(
-        "No account found with this email. Please sign up first."
-      );
-    });
+describe("getErrorMessage", () => {
+  it("extracts message from Error instance", () => {
+    expect(getErrorMessage(new Error("oops"))).toBe("oops");
+  });
+  it("returns string errors directly", () => {
+    expect(getErrorMessage("bad input")).toBe("bad input");
+  });
+  it("returns fallback for unknown error types", () => {
+    expect(getErrorMessage(null)).toBe("Something went wrong");
+    expect(getErrorMessage(42)).toBe("Something went wrong");
+    expect(getErrorMessage({})).toBe("Something went wrong");
   });
 });

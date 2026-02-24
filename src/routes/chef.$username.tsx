@@ -5,10 +5,27 @@ import { useQuery } from "convex/react";
 import { api } from "convex/_generated/api";
 import { PageLayout } from "@/components/ui/Layout";
 import { RecipeCard } from "@/components/ui/RecipeCard";
-import { FollowButton, FollowStats } from "@/components/social/FollowButton";
+import { FollowButton, FollowStats } from "@/components/social";
 
 export const Route = createFileRoute("/chef/$username")({
+  // Pre-fetch chef profile so the page renders immediately on navigation
+  // and bots get fully-populated HTML for SEO.
+  loader: ({ params, context: { queryClient } }) =>
+    queryClient.ensureQueryData(
+      convexQuery(api.users.getByUsername, { username: params.username })
+    ),
   component: ChefPage,
+  head: ({ loaderData }) => {
+    const chef = loaderData as { name?: string; bio?: string } | null | undefined;
+    return {
+      meta: [
+        { title: chef?.name ? `${chef.name}'s Kitchen | Mise` : "Chef | Mise" },
+        { name: "description", content: chef?.bio || `Recipes by ${chef?.name ?? "this chef"} on Mise` },
+        { property: "og:title", content: chef?.name ? `${chef.name}'s Kitchen` : "Chef" },
+        { property: "og:type", content: "profile" },
+      ],
+    };
+  },
 });
 
 function ChefPage() {

@@ -1,21 +1,20 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
-import { Footer } from "@/components/layout/Footer";
+import { createFileRoute } from "@tanstack/react-router";
+import { SimpleLayout } from "@/components/ui/Layout";
 
 export const Route = createFileRoute("/about")({
+  head: () => ({
+    meta: [
+      { title: "About | Mise" },
+      { name: "description", content: "Mise — a place for home cooks to share recipes." },
+    ],
+  }),
   component: AboutPage,
 });
 
 function AboutPage() {
   return (
-    <>
-      <header className="fixed top-0 left-0 right-0 z-50 glass border-b border-cream-dark/50">
-        <div className="wrapper h-16 flex items-center">
-          <Link to="/" className="text-sm text-stone hover:text-charcoal transition-colors">← Back</Link>
-        </div>
-      </header>
-
-      <main className="pt-20 pb-24">
-        <article className="wrapper max-w-2xl py-12 md:py-16">
+    <SimpleLayout>
+      <article className="wrapper max-w-2xl py-12 md:py-16">
           <p className="font-hand text-xl text-sage mb-3">our story</p>
           <h1 className="heading-1 text-3xl md:text-4xl mb-6">A place for home cooks</h1>
           <p className="body-large mb-12">
@@ -42,9 +41,7 @@ function AboutPage() {
               Just good food, shared with intention.
             </p>
           </div>
-        </article>
-      </main>
-      <Footer />
-    </>
+      </article>
+    </SimpleLayout>
   );
 }
