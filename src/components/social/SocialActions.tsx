@@ -1,8 +1,56 @@
-import { useState } from "react";
+import { useState, useCallback, useRef } from "react";
 import { useQuery, useMutation } from "convex/react";
 import { useRouter } from "@tanstack/react-router";
 import { useToast } from "@/components/ui/toast";
-import { useAsyncAction } from "@/hooks/useAsyncAction";
+
+type AsyncFunction = (...args: never[]) => Promise<unknown>;
+
+function useAsyncAction<T extends AsyncFunction>(
+  action: T,
+  options?: {
+    onSuccess?: (result: Awaited<ReturnType<T>>) => void;
+    onError?: (error: Error) => void;
+    successMessage?: string;
+    errorMessage?: string;
+  }
+) {
+  const [isPending, setIsPending] = useState(false);
+  const { toast } = useToast();
+
+  // Keep latest action + options in a ref so the execute callback never
+  // needs to be recreated when they change, avoiding infinite re-render loops
+  // that would occur if `action` (a new function reference each render) were
+  // listed as a dependency of useCallback.
+  const actionRef = useRef(action);
+  actionRef.current = action;
+  const optionsRef = useRef(options);
+  optionsRef.current = options;
+
+  const execute = useCallback(
+    async (...args: Parameters<T>): Promise<Awaited<ReturnType<T>> | undefined> => {
+      if (isPending) return undefined;
+      setIsPending(true);
+      try {
+        const result = await (actionRef.current as (...args: Parameters<T>) => Promise<unknown>)(...args);
+        const opts = optionsRef.current;
+        if (opts?.successMessage) toast(opts.successMessage, "success");
+        opts?.onSuccess?.(result as Awaited<ReturnType<T>>);
+        return result as Awaited<ReturnType<T>>;
+      } catch (e) {
+        const error = e instanceof Error ? e : new Error("An error occurred");
+        const opts = optionsRef.current;
+        toast(opts?.errorMessage || error.message, "error");
+        opts?.onError?.(error);
+        return undefined;
+      } finally {
+        setIsPending(false);
+      }
+    },
+    [isPending, toast] // intentionally omit action/options — they live in refs
+  );
+
+  return { execute, isPending };
+}
 
 interface ActionButtonProps {
   onClick: () => void;
@@ -29,8 +77,6 @@ import { HeartIcon, BookmarkIcon } from "@heroicons/react/24/outline";
 import { Spinner } from "@/components/ui/Spinner";
 import { HeartIcon as HeartSolidIcon, BookmarkIcon as BookmarkSolidIcon, StarIcon as StarSolidIcon } from "@heroicons/react/24/solid";
 import { StarIcon } from "@heroicons/react/24/outline";
-
-// ─── FollowButton ─────────────────────────────────────────────────────────────
 
 export function FollowButton({ userId }: { userId: Id<"users"> }) {
   const isFollowing = useQuery(api.social.isFollowing, { userId });
@@ -72,8 +118,6 @@ export function FollowStats({ userId }: { userId: Id<"users"> }) {
   );
 }
 
-// ─── ForkButton ───────────────────────────────────────────────────────────────
-
 // Simple fork/branch SVG icon (no heroicons equivalent)
 function ForkIcon({ className }: { className?: string }) {
   return (
@@ -114,8 +158,6 @@ export function ForkButton({ recipeId, recipeTitle }: { recipeId: Id<"recipes">;
   );
 }
 
-// ─── StarRating ───────────────────────────────────────────────────────────────
-
 export function StarRating({ recipeId }: { recipeId: Id<"recipes"> }) {
   const stats = useQuery(api.social.ratingStats, { recipeId }) ?? { average: 0, count: 0, userRating: null };
   const rate = useMutation(api.social.rateRecipe);
@@ -137,8 +179,6 @@ export function StarRating({ recipeId }: { recipeId: Id<"recipes"> }) {
     </div>
   );
 }
-
-// ─── SocialActions ────────────────────────────────────────────────────────────
 
 export function SocialActions({ recipeId, slug }: { recipeId: Id<"recipes">; slug: string }) {
   const recipe = useQuery(api.recipes.getBySlug, { slug });

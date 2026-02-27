@@ -17,8 +17,6 @@ function GoogleIcon() {
 import { useToast } from "@/components/ui/toast";
 import { ArrowLeftIcon } from "@heroicons/react/24/outline";
 
-// ─── Shared ──────────────────────────────────────────────────────────────────
-
 function GoogleSignInButton() {
   const { signIn } = useAuthActions();
   const { toast } = useToast();
@@ -54,8 +52,6 @@ function authError(map: Record<string, string>, error: unknown): string {
   }
   return map["default"] ?? "An error occurred";
 }
-
-// ─── LoginForm ────────────────────────────────────────────────────────────────
 
 const LOGIN_ERRORS: Record<string, string> = {
   InvalidAccountId: "No account found with this email. Please sign up first.",
@@ -104,8 +100,6 @@ export function LoginForm() {
     </form>
   );
 }
-
-// ─── SignupForm ───────────────────────────────────────────────────────────────
 
 const STRENGTH_COLORS = ["bg-stone-light", "bg-terracotta", "bg-honey", "bg-sage"];
 const STRENGTH_LABELS = ["Too short", "Weak", "Good", "Strong"];
@@ -166,8 +160,6 @@ export function SignupForm() {
     </form>
   );
 }
-
-// ─── ForgotPasswordForm ───────────────────────────────────────────────────────
 
 export function ForgotPasswordForm() {
   const { signIn } = useAuthActions();

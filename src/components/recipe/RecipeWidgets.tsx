@@ -6,8 +6,6 @@ import type { Id } from "convex/_generated/dataModel";
 import { RecipeCard } from "@/components/ui/RecipeCard";
 import { PlayIcon, PauseIcon, ArrowPathIcon, XMarkIcon } from "@heroicons/react/24/outline";
 
-// ─── CookingNow ───────────────────────────────────────────────────────────────
-
 export function CookingNow({ recipeId }: { recipeId: Id<"recipes"> }) {
   const cooking = useQuery(api.presence.getCooking, { recipeId });
   const heartbeatMutation = useMutation(api.presence.heartbeat);
@@ -40,8 +38,6 @@ export function CookingNow({ recipeId }: { recipeId: Id<"recipes"> }) {
     </div>
   );
 }
-
-// ─── CookingTimers ────────────────────────────────────────────────────────────
 
 interface Timer { id: string; label: string; duration: number; remaining: number; running: boolean; }
 
@@ -102,8 +98,6 @@ export function CookingTimers() {
     </div>
   );
 }
-
-// ─── Discovery ────────────────────────────────────────────────────────────────
 
 export function TrendingRecipes() {
   const recipes = useQuery(api.discovery.trending, { limit: 6 }) ?? [];

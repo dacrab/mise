@@ -89,8 +89,6 @@ export const addComment = mutation({
   },
 });
 
-// ─── Follows ──────────────────────────────────────────────────────────────────
-
 export const toggleFollow = mutation({
   args: { userId: v.id("users") },
   handler: async (ctx, { userId: targetId }) => {
@@ -123,8 +121,6 @@ export const followCounts = query({
     return { followers: followers.length, following: following.length };
   },
 });
-
-// ─── Ratings ──────────────────────────────────────────────────────────────────
 
 export const updateComment = mutation({
   args: { id: v.id("comments"), content: v.string() },

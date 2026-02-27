@@ -250,8 +250,6 @@ export const publishScheduled = internalMutation({
   },
 });
 
-// ─── Analytics (internal) ─────────────────────────────────────────────────────
-
 import { internalMutation as internalMutationAnalytics } from "./_generated/server";
 
 export const cleanupOldViews = internalMutationAnalytics({
