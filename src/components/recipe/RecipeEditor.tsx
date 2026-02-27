@@ -6,6 +6,8 @@ import { api } from "convex/_generated/api";
 import type { Id } from "convex/_generated/dataModel";
 import { useToast } from "@/components/ui/toast";
 import { Select } from "@/components/ui/Select";
+import { ProgressBar } from "@/components/ui/ProgressBar";
+import { EditableList } from "@/components/recipe/EditableList";
 import { RecipeImporter } from "@/components/recipe/RecipeImporter";
 
 const DIFFICULTIES = ["Easy", "Medium", "Hard", "Expert"] as const;
@@ -32,11 +34,6 @@ interface InitialData {
 interface Props {
   initialData?: InitialData;
   isEditing?: boolean;
-}
-
-// Replace item at index in an array, returning a new array
-function setAt<T>(arr: T[], i: number, val: T): T[] {
-  return arr.map((x, j) => (j === i ? val : x));
 }
 
 export function RecipeEditor({ initialData, isEditing }: Props) {
@@ -257,28 +254,13 @@ export function RecipeEditor({ initialData, isEditing }: Props) {
           {/* Ingredients */}
           <section className="card p-6 space-y-4">
             <h2 className="font-serif text-lg font-medium">Ingredients</h2>
-            {ingredients.map((ing, i) => (
-              <div key={i} className="flex gap-2">
-                <input type="text" className="input-field" value={ing} placeholder="e.g. 2 cups flour" onChange={(e) => setIngredients(setAt(ingredients, i, e.target.value))} aria-label={`Ingredient ${i + 1}`} />
-                <button onClick={() => setIngredients(ingredients.filter((_, j) => j !== i))} className="btn-ghost px-3 text-stone hover:text-terracotta" aria-label={`Remove ingredient ${i + 1}`}>×</button>
-              </div>
-            ))}
-            <button onClick={() => setIngredients([...ingredients, ""])} className="text-sm font-medium text-sage hover:text-sage-light">+ Add ingredient</button>
+            <EditableList items={ingredients} onChange={setIngredients} placeholder="e.g. 2 cups flour" addLabel="+ Add ingredient" ariaLabel={(i) => `Ingredient ${i}`} />
           </section>
 
           {/* Steps */}
           <section className="card p-6 space-y-4">
             <h2 className="font-serif text-lg font-medium">Instructions</h2>
-            {steps.map((step, i) => (
-              <div key={i} className="flex gap-3">
-                <span className="w-7 h-7 rounded-full bg-charcoal text-cream text-sm font-medium flex items-center justify-center shrink-0 mt-2">{i + 1}</span>
-                <div className="flex-1">
-                  <textarea className="textarea-field h-20" value={step} placeholder="Describe this step…" onChange={(e) => setSteps(setAt(steps, i, e.target.value))} aria-label={`Step ${i + 1}`} />
-                  <button onClick={() => setSteps(steps.filter((_, j) => j !== i))} className="text-xs text-stone hover:text-terracotta mt-1" aria-label={`Remove step ${i + 1}`}>Remove</button>
-                </div>
-              </div>
-            ))}
-            <button onClick={() => setSteps([...steps, ""])} className="text-sm font-medium text-sage hover:text-sage-light">+ Add step</button>
+            <EditableList items={steps} onChange={setSteps} placeholder="Describe this step…" addLabel="+ Add step" ariaLabel={(i) => `Step ${i}`} numbered />
           </section>
         </div>
 
@@ -302,21 +284,7 @@ export function RecipeEditor({ initialData, isEditing }: Props) {
                 </label>
               )}
             </div>
-            {uploading && (
-        <div className="space-y-1.5">
-          <div className="h-1.5 bg-cream-dark rounded-full overflow-hidden">
-            <div
-              className="h-full bg-sage rounded-full transition-all duration-200"
-              style={{ width: `${uploadProgress}%` }}
-              role="progressbar"
-              aria-valuenow={uploadProgress}
-              aria-valuemin={0}
-              aria-valuemax={100}
-            />
-          </div>
-          <p className="text-xs text-sage text-center">{uploadProgress}%</p>
-        </div>
-      )}
+            {uploading && <ProgressBar value={uploadProgress} label="Uploading" />}
           </div>
         </aside>
       </div>

@@ -7,8 +7,9 @@ import type { Id } from "convex/_generated/dataModel";
 import { useToast } from "@/components/ui/toast";
 import { Collections } from "@/components/dashboard/Collections";
 import { BookmarkIcon, PhotoIcon } from "@heroicons/react/24/outline";
+import { EmptyState } from "@/components/ui/EmptyState";
 
-export function Dashboard() {
+export function DashboardView() {
   const { toast } = useToast();
   const user = useQuery(api.users.currentUser);
   const myRecipes = useQuery(api.recipes.myRecipes);
@@ -107,14 +108,12 @@ export function Dashboard() {
       {tab === "collections" ? (
         <Collections />
       ) : recipes !== undefined && recipes.length === 0 ? (
-        <div className="card p-12 text-center">
-          <div className="w-14 h-14 bg-cream-dark rounded-full flex items-center justify-center mx-auto mb-4">
-            <BookmarkIcon className="w-6 h-6 text-stone" />
-          </div>
-          <h2 className="font-serif text-xl font-medium mb-2">Nothing here yet</h2>
-          <p className="text-stone text-sm mb-6">{tab === "saved" ? "Recipes you bookmark will appear here." : "Start by creating your first recipe."}</p>
-          {tab !== "saved" && <Link to="/dashboard/create" className="btn-primary text-sm">Create recipe</Link>}
-        </div>
+        <EmptyState
+          icon={<BookmarkIcon className="w-6 h-6 text-stone" />}
+          title="Nothing here yet"
+          description={tab === "saved" ? "Recipes you bookmark will appear here." : "Start by creating your first recipe."}
+          action={tab !== "saved" ? <Link to="/dashboard/create" className="btn-primary text-sm">Create recipe</Link> : undefined}
+        />
       ) : (
         <div className="space-y-3">
           {(recipes ?? []).map((r) => (

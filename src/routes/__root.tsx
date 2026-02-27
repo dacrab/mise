@@ -1,7 +1,7 @@
 /// <reference types="vite/client" />
 import type { QueryClient } from "@tanstack/react-query";
 import { createRootRouteWithContext, Outlet, HeadContent, Scripts, useRouterState } from "@tanstack/react-router";
-import { ErrorPage } from "@/components/layout/PageLayout";
+import { ErrorPage } from "@/components/layout";
 import appCss from "../styles.css?url";
 
 function RootComponent() {

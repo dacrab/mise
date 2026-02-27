@@ -3,7 +3,7 @@ import { convexQuery } from "@convex-dev/react-query";
 import { useSuspenseQuery } from "@tanstack/react-query";
 import { useQuery } from "convex/react";
 import { api } from "convex/_generated/api";
-import { PageLayout } from "@/components/layout/PageLayout";
+import { PageLayout } from "@/components/layout";
 import { SocialActions, ForkButton, StarRating } from "@/components/social/SocialActions";
 import { CommentSection } from "@/components/social/CommentSection";
 import { CookingNow, CookingTimers } from "@/components/recipe/RecipeWidgets";

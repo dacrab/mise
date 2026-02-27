@@ -4,7 +4,7 @@ import { z } from "zod";
 import { useState } from "react";
 import { api } from "convex/_generated/api";
 import { Spinner } from "@/components/ui/Spinner";
-import { PageLayout } from "@/components/layout/PageLayout"; import { HomeLink } from "@/components/layout/HomeLink";
+import { PageLayout, HomeLink } from "@/components/layout";
 import { RecipeCard } from "@/components/ui/RecipeCard";
 import { TrendingRecipes } from "@/components/recipe/RecipeWidgets";
 import { Select } from "@/components/ui/Select";

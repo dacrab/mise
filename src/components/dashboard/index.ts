@@ -1,2 +1,2 @@
-export { Dashboard } from "./DashboardView";
+export { DashboardView } from "./DashboardView";
 export { Collections } from "./Collections";

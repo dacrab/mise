@@ -4,6 +4,7 @@ import { api } from "convex/_generated/api";
 import type { Id } from "convex/_generated/dataModel";
 import { useState, useEffect, useRef } from "react";
 import { useFileUpload } from "@/hooks";
+import { ProgressBar } from "@/components/ui/ProgressBar";
 import { useToast } from "@/components/ui/toast";
 import { UserCircleIcon, EnvelopeIcon, CalendarIcon, CameraIcon } from "@heroicons/react/24/outline";
 
@@ -142,19 +143,7 @@ function Settings() {
               <button type="button" onClick={() => fileInputRef.current?.click()} disabled={uploading} className="text-sm text-sage hover:text-sage-dark transition-colors">
                 {uploading ? `Uploading… ${uploadProgress}%` : "Change photo"}
               </button>
-              {uploading && (
-                <div className="mt-2 h-1.5 w-36 bg-cream-dark rounded-full overflow-hidden">
-                  <div
-                    className="h-full bg-sage rounded-full transition-all duration-200"
-                    style={{ width: `${uploadProgress}%` }}
-                    role="progressbar"
-                    aria-valuenow={uploadProgress}
-                    aria-valuemin={0}
-                    aria-valuemax={100}
-                    aria-label="Upload progress"
-                  />
-                </div>
-              )}
+              {uploading && <ProgressBar value={uploadProgress} label="Uploading" className="mt-2 w-36" />}
             </div>
           </div>
 
