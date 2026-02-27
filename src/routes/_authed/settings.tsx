@@ -3,6 +3,7 @@ import { useQuery, useMutation } from "convex/react";
 import { api } from "convex/_generated/api";
 import type { Id } from "convex/_generated/dataModel";
 import { useState, useEffect, useRef } from "react";
+import { useFileUpload } from "@/hooks";
 import { useToast } from "@/components/ui/toast";
 import { UserCircleIcon, EnvelopeIcon, CalendarIcon, CameraIcon } from "@heroicons/react/24/outline";
 
@@ -15,6 +16,18 @@ function Settings() {
   const user = useQuery(api.users.currentUser);
   const updateProfile = useMutation(api.users.updateProfile);
   const generateUploadUrl = useMutation(api.users.generateUploadUrl);
+  const { upload, uploading, progress: uploadProgress } = useFileUpload(
+    () => generateUploadUrl(),
+    {
+      onSuccess: (storageId, preview) => {
+        setNewProfileImage(storageId as Id<"_storage">);
+        if (previewUrl) URL.revokeObjectURL(previewUrl);
+        setPreviewUrl(preview);
+        toast("Photo uploaded!", "success");
+      },
+      onError: () => toast("Could not upload image", "error"),
+    }
+  );
   const { toast } = useToast();
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -22,7 +35,6 @@ function Settings() {
   const [username, setUsername] = useState("");
   const [bio, setBio] = useState("");
   const [saving, setSaving] = useState(false);
-  const [uploading, setUploading] = useState(false);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [newProfileImage, setNewProfileImage] = useState<Id<"_storage"> | null>(null);
 
@@ -62,19 +74,7 @@ function Settings() {
     if (!file.type.startsWith("image/")) { toast("Please select an image file", "error"); return; }
     if (file.size > 5 * 1024 * 1024) { toast("Image must be under 5MB", "error"); return; }
 
-    setUploading(true);
-    try {
-      const uploadUrl = await generateUploadUrl();
-      const { storageId } = await (await fetch(uploadUrl, { method: "POST", headers: { "Content-Type": file.type }, body: file })).json();
-      setNewProfileImage(storageId);
-      if (previewUrl) URL.revokeObjectURL(previewUrl);
-      setPreviewUrl(URL.createObjectURL(file));
-      toast("Image uploaded", "success");
-    } catch {
-      toast("Could not upload image", "error");
-    } finally {
-      setUploading(false);
-    }
+    await upload(file);
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -111,11 +111,27 @@ function Settings() {
             Profile
           </h2>
           <div className="flex items-center gap-5 mb-6">
-            <div className="relative w-20 h-20 rounded-full overflow-hidden bg-cream-dark shrink-0">
+            <div className="relative w-20 h-20 rounded-full overflow-hidden bg-cream-dark shrink-0 group/avatar">
               {avatar
                 ? <img src={avatar} alt="Profile" className="w-full h-full object-cover" />
                 : <div className="w-full h-full flex items-center justify-center text-2xl font-medium text-sage">{(name || "?")[0]}</div>
               }
+              {uploading && (
+                <div className="absolute inset-0 bg-charcoal/60 flex items-center justify-center">
+                  <svg className="w-10 h-10" viewBox="0 0 36 36" aria-hidden="true">
+                    <circle cx="18" cy="18" r="15" fill="none" stroke="white" strokeOpacity="0.3" strokeWidth="3" />
+                    <circle
+                      cx="18" cy="18" r="15" fill="none" stroke="white" strokeWidth="3"
+                      strokeDasharray={`${2 * Math.PI * 15}`}
+                      strokeDashoffset={`${2 * Math.PI * 15 * (1 - uploadProgress / 100)}`}
+                      strokeLinecap="round"
+                      transform="rotate(-90 18 18)"
+                      className="transition-[stroke-dashoffset] duration-200"
+                    />
+                  </svg>
+                  <span className="absolute text-white text-[11px] font-bold">{uploadProgress}%</span>
+                </div>
+              )}
               <label className="absolute inset-0 bg-charcoal/50 opacity-0 hover:opacity-100 transition-opacity flex items-center justify-center cursor-pointer">
                 <CameraIcon className="w-5 h-5 text-white" />
                 <input ref={fileInputRef} type="file" accept="image/*" onChange={handleImageUpload} className="hidden" aria-label="Upload profile photo" />
@@ -123,9 +139,22 @@ function Settings() {
             </div>
             <div>
               <p className="font-medium text-charcoal">{name || "Anonymous"}</p>
-              <button type="button" onClick={() => fileInputRef.current?.click()} disabled={uploading} className="text-sm text-sage hover:text-sage-dark">
-                {uploading ? "Uploading…" : "Change photo"}
+              <button type="button" onClick={() => fileInputRef.current?.click()} disabled={uploading} className="text-sm text-sage hover:text-sage-dark transition-colors">
+                {uploading ? `Uploading… ${uploadProgress}%` : "Change photo"}
               </button>
+              {uploading && (
+                <div className="mt-2 h-1.5 w-36 bg-cream-dark rounded-full overflow-hidden">
+                  <div
+                    className="h-full bg-sage rounded-full transition-all duration-200"
+                    style={{ width: `${uploadProgress}%` }}
+                    role="progressbar"
+                    aria-valuenow={uploadProgress}
+                    aria-valuemin={0}
+                    aria-valuemax={100}
+                    aria-label="Upload progress"
+                  />
+                </div>
+              )}
             </div>
           </div>
 

@@ -3,16 +3,17 @@ import { convexQuery } from "@convex-dev/react-query";
 import { useSuspenseQuery } from "@tanstack/react-query";
 import { useQuery } from "convex/react";
 import { api } from "convex/_generated/api";
-import { PageLayout } from "@/components/ui/Layout";
-import { SocialActions } from "@/components/social";
+import { PageLayout } from "@/components/layout/PageLayout";
+import { SocialActions, ForkButton, StarRating } from "@/components/social/SocialActions";
 import { CommentSection } from "@/components/social/CommentSection";
-import { CookingNow } from "@/components/recipe/widgets";
-import { CookingTimers } from "@/components/recipe/widgets";
+import { CookingNow, CookingTimers } from "@/components/recipe/RecipeWidgets";
 import { IngredientScaler } from "@/components/recipe/IngredientScaler";
-import { ForkButton } from "@/components/social";
-import { StarRating } from "@/components/social";
-import { PrinterIcon, ShareIcon } from "@heroicons/react/24/outline";
+import { RecipeMeta } from "@/components/recipe/RecipeMeta";
+import { RelatedRecipes } from "@/components/recipe/RelatedRecipes";
+import { AddToCollectionButton } from "@/components/recipe/AddToCollection";
+import { PrinterIcon } from "@heroicons/react/24/outline";
 import { PlayIcon as PlayIconSolid } from "@heroicons/react/24/solid";
+import { ShareButton } from "@/components/recipe/ShareButton";
 
 export const Route = createFileRoute("/recipe/$slug")({
   // Loader pre-fetches recipe data into the QueryClient cache before render.
@@ -38,25 +39,6 @@ export const Route = createFileRoute("/recipe/$slug")({
   },
 });
 
-function ShareButton({ title }: { title: string }) {
-  const handleShare = async () => {
-    const url = window.location.href;
-    if (navigator.share) {
-      await navigator.share({ title, url });
-    } else {
-      await navigator.clipboard.writeText(url);
-      // No alert — clipboard write is silent, which is better UX
-    }
-  };
-
-  return (
-    <button onClick={handleShare} className="flex items-center gap-1.5 text-sm text-stone hover:text-sage">
-      <ShareIcon className="w-4 h-4" />
-      Share
-    </button>
-  );
-}
-
 function RecipePage() {
   const { slug } = Route.useParams();
   const { data: recipe } = useSuspenseQuery(convexQuery(api.recipes.getBySlug, { slug }));
@@ -74,6 +56,9 @@ function RecipePage() {
           </div>
           <h1 className="heading-1 text-3xl sm:text-4xl md:text-5xl mb-4">{recipe.title}</h1>
           {recipe.description && <p className="body-large max-w-2xl">{recipe.description}</p>}
+
+          <RecipeMeta prepTime={recipe.prepTime} cookTime={recipe.cookTime} servings={recipe.servings} difficulty={recipe.difficulty} />
+
           <div className="flex flex-wrap items-center gap-4 mt-8 pt-6 border-t border-cream-dark">
             <Link to="/chef/$username" params={{ username: recipe.author?.username || recipe.author?.name || "unknown" }} className="flex items-center gap-3 group">
               {recipe.author?.image ? (
@@ -128,8 +113,9 @@ function RecipePage() {
             <div className="mt-12 pt-8 border-t border-cream-dark">
               <div className="flex items-center justify-between mb-6">
                 <SocialActions recipeId={recipe._id} slug={slug} />
-                <div className="flex items-center gap-2">
+                <div className="flex items-center gap-2 flex-wrap">
                   <ShareButton title={recipe.title} />
+                  <AddToCollectionButton recipeId={recipe._id} />
                   {user && <ForkButton recipeId={recipe._id} recipeTitle={recipe.title} />}
                   <Link to="/recipe/$slug/print" params={{ slug }} className="flex items-center gap-1.5 text-sm text-stone hover:text-sage">
                     <PrinterIcon className="w-4 h-4" />
@@ -143,11 +129,12 @@ function RecipePage() {
               </div>
             </div>
             <div className="mt-12">
-              <CommentSection recipeId={recipe._id} isLoggedIn={!!user} />
+              <CommentSection recipeId={recipe._id} />
             </div>
           </section>
         </div>
       </article>
+      <RelatedRecipes recipeId={recipe._id} />
     </PageLayout>
   );
 }

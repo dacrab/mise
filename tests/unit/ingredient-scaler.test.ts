@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { scaleIngredient, formatNumber } from "@/lib/recipe";
+import { scaleIngredient, formatNumber } from "@/lib/recipeUtils";
 
 describe("formatNumber", () => {
   it("returns whole numbers as strings", () => {

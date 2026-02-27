@@ -1,8 +1,14 @@
 import { Link } from "@tanstack/react-router";
-import { CakeIcon } from "@heroicons/react/24/outline";
+import { CakeIcon, BookmarkIcon } from "@heroicons/react/24/outline";
+import { BookmarkIcon as BookmarkSolidIcon } from "@heroicons/react/24/solid";
+import { useMutation, useQuery } from "convex/react";
+import { api } from "convex/_generated/api";
+import { useCallback, useState } from "react";
+import type { Id } from "convex/_generated/dataModel";
 
 interface RecipeCardProps {
   slug: string;
+  recipeId?: Id<"recipes">;
   title: string;
   description?: string | null;
   category: string;
@@ -12,8 +18,42 @@ interface RecipeCardProps {
   meta?: React.ReactNode;
 }
 
+function QuickBookmark({ recipeId }: { recipeId: Id<"recipes"> }) {
+  const currentUser = useQuery(api.users.currentUser);
+  const bookmarks = useQuery(api.recipes.myBookmarks);
+  const toggleBookmark = useMutation(api.social.toggleBookmark);
+  const [pending, setPending] = useState(false);
+
+  const isBookmarked = bookmarks?.some((r) => r !== null && r._id === recipeId) ?? false;
+
+  const handleClick = useCallback(async (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (!currentUser || pending) return;
+    setPending(true);
+    try { await toggleBookmark({ recipeId, collectionId: undefined }); }
+    finally { setPending(false); }
+  }, [currentUser, pending, recipeId, toggleBookmark]);
+
+  if (currentUser === null) return null;
+
+  return (
+    <button
+      onClick={handleClick}
+      disabled={pending}
+      aria-label={isBookmarked ? "Remove from saved" : "Save recipe"}
+      className={`p-2 rounded-full shadow-sm transition-all duration-200 backdrop-blur-sm ${isBookmarked ? "bg-charcoal/80 text-honey" : "bg-black/40 text-white hover:bg-charcoal/80"} disabled:opacity-50`}
+    >
+      {isBookmarked
+        ? <BookmarkSolidIcon className="w-4 h-4" />
+        : <BookmarkIcon className="w-4 h-4" />}
+    </button>
+  );
+}
+
 export function RecipeCard({
   slug,
+  recipeId,
   title,
   description,
   category,
@@ -24,26 +64,33 @@ export function RecipeCard({
 }: RecipeCardProps) {
   if (variant === "list") {
     return (
-      <Link
-        to="/recipe/$slug"
-        params={{ slug }}
-        className="group flex gap-4 p-3 -m-3 rounded-xl hover:bg-warm-white transition-colors"
-      >
-        <div className="w-24 h-24 rounded-lg overflow-hidden bg-cream-dark shrink-0">
-          {coverImageUrl ? (
-            <img src={coverImageUrl} alt={title} className="w-full h-full object-cover" />
-          ) : (
-            <RecipePlaceholder size={24} />
-          )}
-        </div>
-        <div className="flex-1 min-w-0 py-1">
-          <span className="text-[11px] text-stone uppercase tracking-wide">{category}</span>
-          <h3 className="font-serif text-base font-medium mt-0.5 mb-1 group-hover:text-sage transition-colors line-clamp-1">
-            {title}
-          </h3>
-          <p className="text-sm text-stone line-clamp-2">{description || "A delicious recipe."}</p>
-        </div>
-      </Link>
+      <div className="group flex gap-4 p-3 -m-3 rounded-xl hover:bg-warm-white transition-colors relative">
+        <Link
+          to="/recipe/$slug"
+          params={{ slug }}
+          className="flex gap-4 flex-1 min-w-0"
+        >
+          <div className="w-24 h-24 rounded-lg overflow-hidden bg-cream-dark shrink-0">
+            {coverImageUrl ? (
+              <img src={coverImageUrl} alt={title} className="w-full h-full object-cover" />
+            ) : (
+              <RecipePlaceholder size={24} />
+            )}
+          </div>
+          <div className="flex-1 min-w-0 py-1">
+            <span className="text-[11px] text-stone uppercase tracking-wide">{category}</span>
+            <h3 className="font-serif text-base font-medium mt-0.5 mb-1 group-hover:text-sage transition-colors line-clamp-1">
+              {title}
+            </h3>
+            <p className="text-sm text-stone line-clamp-2">{description || "A delicious recipe."}</p>
+          </div>
+        </Link>
+        {recipeId && (
+          <div className="flex items-center shrink-0 opacity-0 group-hover:opacity-100 focus-within:opacity-100 transition-opacity duration-200">
+            <QuickBookmark recipeId={recipeId} />
+          </div>
+        )}
+      </div>
     );
   }
 
@@ -81,11 +128,18 @@ export function RecipeCard({
           </div>
         )}
         <span className="absolute top-3 left-3 tag bg-warm-white/90 backdrop-blur-sm">{category}</span>
-        {badge && (
-          <div className="absolute top-3 right-3 w-7 h-7 rounded-full bg-charcoal text-cream flex items-center justify-center text-sm font-medium z-10">
-            {badge}
-          </div>
-        )}
+        <div className="absolute top-3 right-3 flex items-center gap-1.5">
+          {badge && (
+            <div className="w-7 h-7 rounded-full bg-charcoal text-cream flex items-center justify-center text-sm font-medium">
+              {badge}
+            </div>
+          )}
+          {recipeId && (
+            <div className="opacity-0 group-hover:opacity-100 focus-within:opacity-100 transition-opacity duration-200">
+              <QuickBookmark recipeId={recipeId} />
+            </div>
+          )}
+        </div>
       </div>
       <div className="p-5">
         <h3 className="font-serif text-lg font-medium group-hover:text-sage transition-colors line-clamp-1">{title}</h3>

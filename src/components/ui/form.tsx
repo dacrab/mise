@@ -1,7 +1,8 @@
 import { EyeIcon, EyeSlashIcon } from "@heroicons/react/24/outline";
 
-export function FormField({ label, type, value, onChange, placeholder, error, autoComplete }: {
+export function FormField({ label, id, type, value, onChange, placeholder, error, autoComplete }: {
   label: string;
+  id: string;
   type: string;
   value: string;
   onChange: (v: string) => void;
@@ -12,20 +13,22 @@ export function FormField({ label, type, value, onChange, placeholder, error, au
   let defaultAutoComplete = "name";
   if (type === "email") defaultAutoComplete = "email";
   else if (type === "password") defaultAutoComplete = "current-password";
+  const errorId = `${id}-error`;
   return (
     <div>
-      <label className="block text-sm font-medium text-charcoal-light mb-2">{label}</label>
+      <label htmlFor={id} className="block text-sm font-medium text-charcoal-light mb-2">{label}</label>
       <input
+        id={id}
         type={type}
         value={value}
         onChange={(e) => onChange(e.target.value)}
         className={`input-field ${error ? "border-terracotta" : ""}`}
         placeholder={placeholder}
         aria-invalid={!!error}
-        aria-describedby={error ? `${label}-error` : undefined}
+        aria-describedby={error ? errorId : undefined}
         autoComplete={autoComplete ?? defaultAutoComplete}
       />
-      {error && <p id={`${label}-error`} className="text-xs text-terracotta mt-1">{error}</p>}
+      {error && <p id={errorId} className="text-xs text-terracotta mt-1">{error}</p>}
     </div>
   );
 }

@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { formatTime, calculatePasswordStrength, getErrorMessage } from "@/lib/recipe";
+import { formatTime, calculatePasswordStrength, getErrorMessage } from "@/lib/recipeUtils";
 
 describe("formatTime", () => {
   it("formats 0 seconds", () => {

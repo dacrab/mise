@@ -66,6 +66,10 @@ function EditRecipePage() {
         coverImageUrl: recipe.coverImageUrl,
         videoUrl: recipe.videoUrl,
         status: recipe.status,
+        prepTime: recipe.prepTime,
+        cookTime: recipe.cookTime,
+        servings: recipe.servings,
+        difficulty: recipe.difficulty,
       }}
       isEditing
     />

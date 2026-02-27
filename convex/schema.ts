@@ -33,7 +33,7 @@ export default defineSchema({
     servings: v.optional(v.number()),
     prepTime: v.optional(v.number()),
     cookTime: v.optional(v.number()),
-    difficulty: v.optional(v.union(v.literal("easy"), v.literal("medium"), v.literal("hard"))),
+    difficulty: v.optional(v.string()),
   })
     .index("by_slug", ["slug"])
     .index("by_category", ["category"])

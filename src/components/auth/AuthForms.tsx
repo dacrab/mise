@@ -7,6 +7,41 @@ import { ArrowLeftIcon } from "@heroicons/react/24/outline";
 
 // ─── Shared ──────────────────────────────────────────────────────────────────
 
+function GoogleSignInButton() {
+  const { signIn } = useAuthActions();
+  const { toast } = useToast();
+  const [loading, setLoading] = useState(false);
+
+  const handleGoogleSignIn = async () => {
+    setLoading(true);
+    try {
+      await signIn("google");
+    } catch (err) {
+      toast(err instanceof Error ? err.message : "Could not sign in with Google", "error");
+      setLoading(false);
+    }
+  };
+
+  return (
+    <button
+      type="button"
+      onClick={() => void handleGoogleSignIn()}
+      disabled={loading}
+      className="btn-secondary w-full flex items-center justify-center gap-2 disabled:opacity-50"
+    >
+      {loading ? (
+        <svg className="w-4 h-4 animate-spin" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+          <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+          <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z" />
+        </svg>
+      ) : (
+        <GoogleIcon />
+      )}
+      {loading ? "Redirecting…" : "Continue with Google"}
+    </button>
+  );
+}
+
 function authError(map: Record<string, string>, error: unknown): string {
   const msg = error instanceof Error ? error.message : String(error);
   for (const [key, val] of Object.entries(map)) {
@@ -53,14 +88,14 @@ export function LoginForm() {
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
       {error && <FormError message={error} />}
-      <FormField label="Email" type="email" value={email} onChange={setEmail} placeholder="you@example.com" />
+      <FormField id="login-email" label="Email" type="email" value={email} onChange={setEmail} placeholder="you@example.com" />
       <PasswordField label="Password" value={password} onChange={setPassword} show={showPassword} onToggleShow={() => setShowPassword(!showPassword)} autoComplete="current-password" />
       <div className="text-right">
         <Link to="/forgot-password" className="text-sm text-sage hover:text-sage-light">Forgot password?</Link>
       </div>
       <button type="submit" disabled={loading} className="btn-primary w-full">{loading ? "Signing in…" : "Sign in"}</button>
       <Divider />
-      <button type="button" className="btn-secondary w-full" disabled><GoogleIcon /> Continue with Google (Coming Soon)</button>
+      <GoogleSignInButton />
     </form>
   );
 }
@@ -117,12 +152,12 @@ export function SignupForm() {
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
       {error && <FormError message={error} />}
-      <FormField label="Name" type="text" value={name} onChange={setName} placeholder="Your name" />
-      <FormField label="Email" type="email" value={email} onChange={setEmail} placeholder="you@example.com" />
+      <FormField id="signup-name" label="Name" type="text" value={name} onChange={setName} placeholder="Your name" autoComplete="name" />
+      <FormField id="signup-email" label="Email" type="email" value={email} onChange={setEmail} placeholder="you@example.com" />
       <PasswordField label="Password" value={password} onChange={setPassword} show={showPassword} onToggleShow={() => setShowPassword(!showPassword)} autoComplete="new-password" strengthMeter={{ strength, colors: STRENGTH_COLORS, labels: STRENGTH_LABELS }} />
       <button type="submit" disabled={loading} className="btn-primary w-full">{loading ? "Creating…" : "Sign up"}</button>
       <Divider />
-      <button type="button" className="btn-secondary w-full" disabled><GoogleIcon /> Continue with Google (Coming Soon)</button>
+      <GoogleSignInButton />
     </form>
   );
 }
@@ -181,8 +216,8 @@ export function ForgotPasswordForm() {
         <h1 className="font-serif text-2xl font-medium mb-2">Enter reset code</h1>
         <p className="text-stone mb-6">We sent a code to {email}</p>
         <form onSubmit={handleResetPassword} className="space-y-4">
-          <FormField label="Reset code" type="text" value={code} onChange={setCode} placeholder="Enter code" />
-          <FormField label="New password" type="password" value={newPassword} onChange={setNewPassword} placeholder="At least 8 characters" />
+          <FormField id="reset-code" label="Reset code" type="text" value={code} onChange={setCode} placeholder="Enter code" autoComplete="one-time-code" />
+          <FormField id="reset-password" label="New password" type="password" value={newPassword} onChange={setNewPassword} placeholder="At least 8 characters" autoComplete="new-password" />
           {error && <FormError message={error} />}
           <button type="submit" disabled={loading} className="btn-primary w-full">{loading ? "Resetting…" : "Reset password"}</button>
         </form>
@@ -198,7 +233,7 @@ export function ForgotPasswordForm() {
       <h1 className="font-serif text-2xl font-medium mb-2">Forgot password?</h1>
       <p className="text-stone mb-6">Enter your email and we'll send you a reset code.</p>
       <form onSubmit={handleRequestReset} className="space-y-4">
-        <FormField label="Email" type="email" value={email} onChange={setEmail} placeholder="you@example.com" />
+        <FormField id="forgot-email" label="Email" type="email" value={email} onChange={setEmail} placeholder="you@example.com" />
         {error && <FormError message={error} />}
         <button type="submit" disabled={loading} className="btn-primary w-full">{loading ? "Sending…" : "Send reset code"}</button>
       </form>

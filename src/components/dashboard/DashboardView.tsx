@@ -5,7 +5,7 @@ import { Link, useSearch } from "@tanstack/react-router";
 import { api } from "convex/_generated/api";
 import type { Id } from "convex/_generated/dataModel";
 import { useToast } from "@/components/ui/toast";
-import { Collections } from "@/components/recipe/Collections";
+import { Collections } from "@/components/dashboard/Collections";
 import { BookmarkIcon, PhotoIcon } from "@heroicons/react/24/outline";
 
 export function Dashboard() {
@@ -23,7 +23,30 @@ export function Dashboard() {
   else recipes = myRecipes;
 
   if (!user || (tab !== "collections" && recipes === undefined)) {
-    return <div className="flex items-center justify-center min-h-[60vh] text-stone animate-pulse">Loading…</div>;
+    return (
+      <div className="wrapper py-8 animate-pulse">
+        <div className="py-8 md:py-12 border-b border-cream-dark mb-8">
+          <div className="h-6 w-32 bg-cream-dark rounded mb-3" />
+          <div className="h-9 w-64 bg-cream-dark rounded" />
+        </div>
+        <div className="flex gap-6 mb-8">
+          {["My Recipes", "Saved", "Collections"].map((l) => (
+            <div key={l} className="h-4 w-20 bg-cream-dark rounded" />
+          ))}
+        </div>
+        <div className="space-y-3">
+          {Array.from({ length: 4 }).map((_, i) => (
+            <div key={i} className="card flex items-center gap-4 p-4">
+              <div className="w-16 h-16 rounded-lg bg-cream-dark shrink-0" />
+              <div className="flex-1 space-y-2">
+                <div className="h-4 w-2/3 bg-cream-dark rounded" />
+                <div className="h-3 w-1/4 bg-cream-dark rounded" />
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+    );
   }
 
   const handleDelete = async (id: Id<"recipes">) => {
@@ -50,10 +73,20 @@ export function Dashboard() {
             <p className="font-hand text-xl text-sage mb-1">your kitchen</p>
             <h1 className="font-serif text-3xl md:text-4xl font-medium">Welcome back, {user.name?.split(" ")[0] || "Chef"}</h1>
           </div>
+          <div className="flex gap-6">
+            <div className="text-center">
+              <p className="font-serif text-2xl font-medium text-charcoal">{recipes?.length ?? "—"}</p>
+              <p className="text-xs text-stone mt-0.5">Recipes</p>
+            </div>
+            <div className="text-center">
+              <p className="font-serif text-2xl font-medium text-charcoal">{myBookmarks?.length ?? "—"}</p>
+              <p className="text-xs text-stone mt-0.5">Saved</p>
+            </div>
+          </div>
         </div>
       </div>
 
-      <nav className="flex gap-6 mb-8" role="tablist">
+      <nav className="flex gap-6 mb-8" aria-label="Dashboard sections">
         {[
           { id: "my-recipes", label: "My Recipes" },
           { id: "saved", label: "Saved" },
@@ -63,6 +96,7 @@ export function Dashboard() {
             key={t.id}
             to="/dashboard"
             search={{ tab: t.id }}
+            aria-current={tab === t.id ? "page" : undefined}
             className={`text-sm font-medium pb-2 border-b-2 ${tab === t.id ? "border-charcoal text-charcoal" : "border-transparent text-stone hover:text-charcoal-light"}`}
           >
             {t.label}

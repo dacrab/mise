@@ -1,4 +1,5 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
+import { useFileUpload } from "@/hooks";
 import { useMutation, useQuery } from "convex/react";
 import { Link, useNavigate } from "@tanstack/react-router";
 import { api } from "convex/_generated/api";
@@ -6,6 +7,8 @@ import type { Id } from "convex/_generated/dataModel";
 import { useToast } from "@/components/ui/toast";
 import { Select } from "@/components/ui/Select";
 import { RecipeImporter } from "@/components/recipe/RecipeImporter";
+
+const DIFFICULTIES = ["Easy", "Medium", "Hard", "Expert"] as const;
 
 const CATEGORIES = ["General", "Breakfast", "Lunch", "Dinner", "Dessert", "Vegan", "Quick & Easy", "Baking", "Italian", "Asian", "Mexican"];
 
@@ -20,6 +23,10 @@ interface InitialData {
   category?: string | null;
   videoUrl?: string | null;
   status?: "draft" | "published";
+  prepTime?: number | null;
+  cookTime?: number | null;
+  servings?: number | null;
+  difficulty?: string | null;
 }
 
 interface Props {
@@ -38,19 +45,78 @@ export function RecipeEditor({ initialData, isEditing }: Props) {
   const navigate = useNavigate();
 
   const [loading, setLoading] = useState(false);
-  const [uploading, setUploading] = useState(false);
+  const [lastSaved, setLastSaved] = useState<Date | null>(null);
   const [title, setTitle] = useState(initialData?.title ?? "");
   const [description, setDescription] = useState(initialData?.description ?? "");
   const [category, setCategory] = useState(initialData?.category ?? "General");
+  const [prepTime, setPrepTime] = useState<number | "">(initialData?.prepTime ?? "");
+  const [cookTime, setCookTime] = useState<number | "">(initialData?.cookTime ?? "");
+  const [servings, setServings] = useState<number | "">(initialData?.servings ?? "");
+  const [difficulty, setDifficulty] = useState(initialData?.difficulty ?? "");
   const [videoUrl, setVideoUrl] = useState(initialData?.videoUrl ?? "");
   const [coverImage, setCoverImage] = useState<Id<"_storage"> | null>(initialData?.coverImage ?? null);
   const [coverImageUrl, setCoverImageUrl] = useState(initialData?.coverImageUrl ?? "");
   const [ingredients, setIngredients] = useState<string[]>(initialData?.ingredients ?? [""]);
   const [steps, setSteps] = useState<string[]>(initialData?.steps ?? [""]);
 
+  // Unsaved changes tracking
+  const isDirty = useRef(false);
+  const isFirstRender = useRef(true);
+  useEffect(() => {
+    if (isFirstRender.current) { isFirstRender.current = false; return; }
+    isDirty.current = true;
+  }, [title, description, category, prepTime, cookTime, servings, difficulty, videoUrl, coverImage, ingredients, steps]);
+
+  // Warn on browser close/refresh when dirty
+  useEffect(() => {
+    const handler = (e: BeforeUnloadEvent) => { if (isDirty.current) e.preventDefault(); };
+    window.addEventListener("beforeunload", handler);
+    return () => window.removeEventListener("beforeunload", handler);
+  }, []);
+
   const generateUploadUrl = useMutation(api.recipes.generateUploadUrl);
   const createRecipe = useMutation(api.recipes.create);
   const updateRecipe = useMutation(api.recipes.update);
+  const { upload, uploading, progress: uploadProgress } = useFileUpload(
+    () => generateUploadUrl(),
+    {
+      onSuccess: (storageId, previewUrl) => {
+        if (coverImageUrl?.startsWith("blob:")) URL.revokeObjectURL(coverImageUrl);
+        setCoverImage(storageId as Id<"_storage">);
+        setCoverImageUrl(previewUrl);
+        toast("Image uploaded", "success");
+      },
+      onError: () => toast("Could not upload image", "error"),
+    }
+  );
+
+  // Auto-save draft every 30s when dirty and editing
+  useEffect(() => {
+    if (!isEditing || !initialData?.id) return;
+    const interval = setInterval(async () => {
+      if (!isDirty.current) return;
+      try {
+        await updateRecipe({
+          id: initialData.id!,
+          title: title.trim() || "Untitled",
+          description: description.trim() || undefined,
+          category: category || "General",
+          prepTime: prepTime !== "" ? Number(prepTime) : undefined,
+          cookTime: cookTime !== "" ? Number(cookTime) : undefined,
+          servings: servings !== "" ? Number(servings) : undefined,
+          difficulty: difficulty || undefined,
+          ingredients: ingredients.filter(Boolean),
+          steps: steps.filter(Boolean),
+          coverImage: coverImage ?? undefined,
+          videoUrl: videoUrl.trim() || undefined,
+          status: "draft",
+        });
+        isDirty.current = false;
+        setLastSaved(new Date());
+      } catch { /* silent auto-save fail */ }
+    }, 30_000);
+    return () => clearInterval(interval);
+  }, [isEditing, initialData?.id, title, description, category, prepTime, cookTime, servings, difficulty, ingredients, steps, coverImage, videoUrl, updateRecipe]);
 
   // Revoke blob URL on unmount
   useEffect(() => () => { if (coverImageUrl?.startsWith("blob:")) URL.revokeObjectURL(coverImageUrl); }, [coverImageUrl]);
@@ -67,19 +133,7 @@ export function RecipeEditor({ initialData, isEditing }: Props) {
   const handleUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
-    setUploading(true);
-    try {
-      const url = await generateUploadUrl();
-      const { storageId } = await (await fetch(url, { method: "POST", headers: { "Content-Type": file.type }, body: file })).json();
-      if (coverImageUrl?.startsWith("blob:")) URL.revokeObjectURL(coverImageUrl);
-      setCoverImage(storageId);
-      setCoverImageUrl(URL.createObjectURL(file));
-      toast("Image uploaded", "success");
-    } catch {
-      toast("Could not upload image", "error");
-    } finally {
-      setUploading(false);
-    }
+    await upload(file);
   };
 
   const handleSubmit = async (status: "draft" | "published") => {
@@ -97,6 +151,10 @@ export function RecipeEditor({ initialData, isEditing }: Props) {
         title: trimmedTitle,
         description: description.trim() || undefined,
         category: category || "General",
+        prepTime: prepTime !== "" ? Number(prepTime) : undefined,
+        cookTime: cookTime !== "" ? Number(cookTime) : undefined,
+        servings: servings !== "" ? Number(servings) : undefined,
+        difficulty: difficulty || undefined,
         ingredients: validIngredients,
         steps: validSteps,
         coverImage: coverImage ?? undefined,
@@ -106,9 +164,11 @@ export function RecipeEditor({ initialData, isEditing }: Props) {
 
       if (isEditing && initialData?.id) {
         await updateRecipe({ id: initialData.id, ...payload });
+        isDirty.current = false;
         toast("Recipe updated!", "success");
       } else {
         await createRecipe(payload);
+        isDirty.current = false;
         toast(status === "published" ? "Recipe published!" : "Draft saved!", "success");
       }
       void navigate({ to: "/dashboard" });
@@ -123,20 +183,29 @@ export function RecipeEditor({ initialData, isEditing }: Props) {
     <div className="wrapper max-w-4xl py-8">
       <div className="flex items-center justify-between mb-8">
         <h1 className="font-serif text-2xl font-medium">{isEditing ? "Edit recipe" : "New recipe"}</h1>
-        <div className="flex flex-wrap gap-3">
+        <div className="flex flex-wrap items-center gap-3">
+          {lastSaved && (
+            <span className="text-xs text-stone hidden sm:inline">
+              Auto-saved {lastSaved.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
+            </span>
+          )}
           <Link to="/dashboard" className="btn-ghost text-sm">Cancel</Link>
-          <button onClick={() => handleSubmit("draft")} disabled={loading} className="btn-secondary text-sm">{loading ? "Saving…" : "Save draft"}</button>
-          <button onClick={() => handleSubmit("published")} disabled={loading} className="btn-primary text-sm">{loading ? "Saving…" : (isEditing ? "Update" : "Publish")}</button>
+          <button onClick={() => void handleSubmit("draft")} disabled={loading} className="btn-secondary text-sm">{loading ? "Saving…" : "Save draft"}</button>
+          <button onClick={() => void handleSubmit("published")} disabled={loading} className="btn-primary text-sm">{loading ? "Saving…" : (isEditing ? "Update" : "Publish")}</button>
         </div>
       </div>
 
       {!isEditing && (
         <div className="mb-8">
           <RecipeImporter onImport={(imported) => {
-            setTitle(imported.title);
-            setDescription(imported.description);
-            setIngredients(imported.ingredients.length > 0 ? imported.ingredients : [""]);
-            setSteps(imported.steps.length > 0 ? imported.steps : [""]);
+            if (imported.title) setTitle(imported.title);
+            if (imported.description) setDescription(imported.description);
+            if (imported.ingredients.length > 0) setIngredients(imported.ingredients);
+            if (imported.steps.length > 0) setSteps(imported.steps);
+            if (imported.imageUrl) setCoverImageUrl(imported.imageUrl);
+            if (imported.prepTime) setPrepTime(imported.prepTime);
+            if (imported.cookTime) setCookTime(imported.cookTime);
+            if (imported.servings) setServings(imported.servings);
             toast("Recipe imported! Review and edit before publishing.", "success");
           }} />
         </div>
@@ -153,13 +222,31 @@ export function RecipeEditor({ initialData, isEditing }: Props) {
             </div>
             <div className="grid sm:grid-cols-2 gap-4">
               <div>
-                <label className="block text-sm font-medium text-charcoal-light mb-2">Category</label>
-                <Select value={category} onChange={setCategory} options={CATEGORIES.map((c) => ({ label: c, value: c }))} className="w-full" />
+                <label htmlFor="recipe-category" className="block text-sm font-medium text-charcoal-light mb-2">Category</label>
+                <Select id="recipe-category" value={category} onChange={setCategory} options={CATEGORIES.map((c) => ({ label: c, value: c }))} className="w-full" />
               </div>
               <div>
-                <label htmlFor="recipe-video" className="block text-sm font-medium text-charcoal-light mb-2">Video URL <span className="text-stone">(optional)</span></label>
-                <input id="recipe-video" type="url" className="input-field" value={videoUrl} onChange={(e) => setVideoUrl(e.target.value)} placeholder="YouTube or TikTok" />
+                <label htmlFor="recipe-difficulty" className="block text-sm font-medium text-charcoal-light mb-2">Difficulty <span className="text-stone">(optional)</span></label>
+                <Select id="recipe-difficulty" value={difficulty} onChange={setDifficulty} options={[{ label: "Select…", value: "" }, ...DIFFICULTIES.map((d) => ({ label: d, value: d }))]} className="w-full" />
               </div>
+            </div>
+            <div className="grid sm:grid-cols-3 gap-4">
+              <div>
+                <label htmlFor="recipe-prep-time" className="block text-sm font-medium text-charcoal-light mb-2">Prep time <span className="text-stone">(min)</span></label>
+                <input id="recipe-prep-time" type="number" min={0} max={1440} className="input-field" value={prepTime} onChange={(e) => setPrepTime(e.target.value === "" ? "" : Number(e.target.value))} placeholder="15" />
+              </div>
+              <div>
+                <label htmlFor="recipe-cook-time" className="block text-sm font-medium text-charcoal-light mb-2">Cook time <span className="text-stone">(min)</span></label>
+                <input id="recipe-cook-time" type="number" min={0} max={1440} className="input-field" value={cookTime} onChange={(e) => setCookTime(e.target.value === "" ? "" : Number(e.target.value))} placeholder="30" />
+              </div>
+              <div>
+                <label htmlFor="recipe-servings" className="block text-sm font-medium text-charcoal-light mb-2">Servings</label>
+                <input id="recipe-servings" type="number" min={1} max={100} className="input-field" value={servings} onChange={(e) => setServings(e.target.value === "" ? "" : Number(e.target.value))} placeholder="4" />
+              </div>
+            </div>
+            <div>
+              <label htmlFor="recipe-video" className="block text-sm font-medium text-charcoal-light mb-2">Video URL <span className="text-stone">(optional)</span></label>
+              <input id="recipe-video" type="url" className="input-field" value={videoUrl} onChange={(e) => setVideoUrl(e.target.value)} placeholder="YouTube or TikTok" />
             </div>
             <div>
               <label htmlFor="recipe-description" className="block text-sm font-medium text-charcoal-light mb-2">Description</label>
@@ -215,7 +302,21 @@ export function RecipeEditor({ initialData, isEditing }: Props) {
                 </label>
               )}
             </div>
-            {uploading && <p className="text-xs text-sage text-center animate-pulse">Uploading…</p>}
+            {uploading && (
+        <div className="space-y-1.5">
+          <div className="h-1.5 bg-cream-dark rounded-full overflow-hidden">
+            <div
+              className="h-full bg-sage rounded-full transition-all duration-200"
+              style={{ width: `${uploadProgress}%` }}
+              role="progressbar"
+              aria-valuenow={uploadProgress}
+              aria-valuemin={0}
+              aria-valuemax={100}
+            />
+          </div>
+          <p className="text-xs text-sage text-center">{uploadProgress}%</p>
+        </div>
+      )}
           </div>
         </aside>
       </div>

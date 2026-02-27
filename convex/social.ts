@@ -126,6 +126,28 @@ export const followCounts = query({
 
 // ─── Ratings ──────────────────────────────────────────────────────────────────
 
+export const updateComment = mutation({
+  args: { id: v.id("comments"), content: v.string() },
+  handler: async (ctx, { id, content }) => {
+    const userId = await requireAuth(ctx);
+    const comment = await ctx.db.get(id);
+    if (!comment || comment.userId !== userId) throw new Error("Not found");
+    const trimmed = content.trim();
+    if (!trimmed) throw new Error("Comment cannot be empty");
+    await ctx.db.patch(id, { content: trimmed });
+  },
+});
+
+export const deleteComment = mutation({
+  args: { id: v.id("comments") },
+  handler: async (ctx, { id }) => {
+    const userId = await requireAuth(ctx);
+    const comment = await ctx.db.get(id);
+    if (!comment || comment.userId !== userId) throw new Error("Not found");
+    await ctx.db.delete(id);
+  },
+});
+
 export const rateRecipe = mutation({
   args: { recipeId: v.id("recipes"), value: v.number() },
   handler: async (ctx, { recipeId, value }) => {

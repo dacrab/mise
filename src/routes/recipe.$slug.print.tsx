@@ -11,9 +11,18 @@ function PrintRecipe() {
   const { slug } = Route.useParams();
   const recipe = useQuery(api.recipes.getBySlug, { slug });
 
-  // Still loading
   if (recipe === undefined) {
-    return <div className="flex items-center justify-center min-h-screen text-stone animate-pulse">Loading…</div>;
+    return (
+      <div className="max-w-2xl mx-auto p-8 animate-pulse">
+        <div className="h-8 w-3/4 bg-gray-200 rounded mb-3" />
+        <div className="h-4 w-full bg-gray-200 rounded mb-2" />
+        <div className="h-4 w-1/2 bg-gray-200 rounded mb-8" />
+        <div className="h-6 w-32 bg-gray-200 rounded mb-4" />
+        {Array.from({ length: 6 }).map((_, i) => <div key={i} className="h-4 bg-gray-200 rounded mb-2" />)}
+        <div className="h-6 w-32 bg-gray-200 rounded mt-8 mb-4" />
+        {Array.from({ length: 4 }).map((_, i) => <div key={i} className="h-4 bg-gray-200 rounded mb-3" />)}
+      </div>
+    );
   }
 
   if (!recipe) throw notFound();
@@ -26,9 +35,11 @@ function PrintRecipe() {
         <h1 className="text-3xl font-bold mb-2">{recipe.title}</h1>
         {recipe.description && <p className="text-stone">{recipe.description}</p>}
         <div className="flex gap-6 mt-4 text-sm text-stone">
-          {recipe.prepTime && <span>Prep: {recipe.prepTime}min</span>}
-          {recipe.cookTime && <span>Cook: {recipe.cookTime}min</span>}
+          {recipe.prepTime && <span>Prep: {recipe.prepTime} min</span>}
+          {recipe.cookTime && <span>Cook: {recipe.cookTime} min</span>}
+          {recipe.prepTime && recipe.cookTime && <span>Total: {recipe.prepTime + recipe.cookTime} min</span>}
           {recipe.servings && <span>Serves: {recipe.servings}</span>}
+          {recipe.difficulty && <span>Difficulty: {recipe.difficulty}</span>}
         </div>
       </header>
 

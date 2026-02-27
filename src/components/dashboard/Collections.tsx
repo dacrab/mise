@@ -91,7 +91,9 @@ export function Collections() {
 
         {showCreate ? (
           <form onSubmit={handleCreate} className="flex gap-2">
+            <label htmlFor="new-collection-name" className="sr-only">Collection name</label>
             <input
+              id="new-collection-name"
               type="text"
               value={newName}
               onChange={(e) => setNewName(e.target.value)}

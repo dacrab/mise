@@ -1,6 +1,6 @@
 
 import { useState, useMemo } from "react";
-import { scaleIngredient } from "@/lib/recipe";
+import { scaleIngredient } from "@/lib/recipeUtils";
 
 interface Props {
   ingredients: string[];
@@ -15,7 +15,7 @@ export function IngredientScaler({ ingredients, defaultServings = 4 }: Props) {
   return (
     <div>
       <div className="flex items-center gap-3 mb-4">
-        <span className="text-sm font-medium text-charcoal-light">Servings:</span>
+        <label htmlFor="servings-input" className="text-sm font-medium text-charcoal-light">Servings:</label>
         <button
           onClick={() => setServings(Math.max(1, servings - 1))}
           className="w-8 h-8 rounded-lg bg-cream-dark hover:bg-stone-light/50 flex items-center justify-center text-charcoal transition-colors"
@@ -23,7 +23,19 @@ export function IngredientScaler({ ingredients, defaultServings = 4 }: Props) {
         >
           −
         </button>
-        <span className="w-8 text-center font-medium text-charcoal">{servings}</span>
+        <input
+          id="servings-input"
+          type="number"
+          min={1}
+          max={100}
+          value={servings}
+          onChange={(e) => {
+            const v = parseInt(e.target.value, 10);
+            if (!isNaN(v) && v >= 1 && v <= 100) setServings(v);
+          }}
+          className="w-12 text-center font-medium text-charcoal bg-transparent border-b border-stone-light focus:outline-none focus:border-sage"
+          aria-label="Number of servings"
+        />
         <button
           onClick={() => setServings(servings + 1)}
           className="w-8 h-8 rounded-lg bg-cream-dark hover:bg-stone-light/50 flex items-center justify-center text-charcoal transition-colors"

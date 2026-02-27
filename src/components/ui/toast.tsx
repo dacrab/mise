@@ -49,7 +49,9 @@ export function ToastProvider({ children }: { children: ReactNode }) {
             }`}
           >
             <span>{t.message}</span>
-            <button onClick={() => dismiss(t.id)} className="opacity-70 hover:opacity-100" aria-label="Dismiss">×</button>
+            <button onClick={() => dismiss(t.id)} className="opacity-70 hover:opacity-100 ml-1" aria-label="Dismiss notification">
+              <span aria-hidden="true">×</span>
+            </button>
           </div>
         ))}
       </div>

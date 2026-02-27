@@ -3,14 +3,18 @@ import { useQuery, usePaginatedQuery } from "convex/react";
 import { z } from "zod";
 import { useState } from "react";
 import { api } from "convex/_generated/api";
-import { PageLayout, HomeLink } from "@/components/ui/Layout";
+import { PageLayout } from "@/components/layout/PageLayout"; import { HomeLink } from "@/components/layout/HomeLink";
 import { RecipeCard } from "@/components/ui/RecipeCard";
-import { TrendingRecipes } from "@/components/recipe/widgets";
+import { TrendingRecipes } from "@/components/recipe/RecipeWidgets";
 import { Select } from "@/components/ui/Select";
 import { MagnifyingGlassIcon } from "@heroicons/react/24/outline";
 
 const CATEGORIES = ["Breakfast", "Lunch", "Dinner", "Dessert", "Vegan", "Quick & Easy", "Baking", "Italian", "Asian", "Mexican"];
 const searchSchema = z.object({ q: z.string().optional(), category: z.string().optional() });
+const CATEGORY_ICONS: Record<string, string> = {
+  Breakfast: "☀️", Lunch: "🥗", Dinner: "🍽️", Dessert: "🍰",
+  Vegan: "🌱", "Quick & Easy": "⚡", Baking: "🥐", Italian: "🍝", Asian: "🍜", Mexican: "🌮",
+};
 
 export const Route = createFileRoute("/")({
   validateSearch: searchSchema.parse,
@@ -32,6 +36,7 @@ function HomePage() {
   const navigate = useNavigate();
   const hasSearch = !!q;
   const [selectedCategory, setSelectedCategory] = useState(category || "");
+  const [isLoadingMore, setIsLoadingMore] = useState(false);
 
   const handleSearch = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -58,7 +63,12 @@ function HomePage() {
 
   const recipes = hasSearch ? (searchResults ?? []) : paginatedQuery.results;
   const hasMore = !hasSearch && paginatedQuery.status === "CanLoadMore";
-  const loadMore = () => paginatedQuery.loadMore(20);
+  const loadMore = () => {
+    setIsLoadingMore(true);
+    paginatedQuery.loadMore(20);
+    // Reset after a short delay — Convex doesn't expose a loading state here
+    setTimeout(() => setIsLoadingMore(false), 1500);
+  };
 
   const hasFilters = q || category;
   const featured = !hasFilters && recipes.length > 0 ? recipes[0] : undefined;
@@ -80,12 +90,34 @@ function HomePage() {
             </div>
           </div>
           {featured ? (
-            <RecipeCard slug={featured.slug} title={featured.title} coverImageUrl={featured.coverImageUrl} category={featured.category} variant="featured" badge="Featured" />
+            <RecipeCard recipeId={featured._id} slug={featured.slug} title={featured.title} coverImageUrl={featured.coverImageUrl} category={featured.category} variant="featured" badge="Featured" />
           ) : (
             <div className="hidden lg:flex aspect-[4/3] rounded-2xl bg-gradient-to-br from-sage/10 to-cream-dark items-center justify-center">
               <p className="font-hand text-3xl text-sage/40 rotate-[-5deg]">your recipe here</p>
             </div>
           )}
+        </div>
+      </section>
+
+      {/* Category quick-filter pills */}
+      <section className="wrapper -mt-4 mb-6">
+        <div className="flex gap-2 overflow-x-auto pb-2 scrollbar-none">
+          <button
+            onClick={() => navigate({ to: "/", search: { q: q || undefined, category: undefined } })}
+            className={`shrink-0 px-4 py-2 rounded-full text-sm font-medium transition-colors ${!category ? "bg-charcoal text-cream" : "bg-cream-dark text-stone hover:text-charcoal"}`}
+          >
+            All
+          </button>
+          {CATEGORIES.map((c) => (
+            <button
+              key={c}
+              onClick={() => navigate({ to: "/", search: { q: q || undefined, category: c === category ? undefined : c } })}
+              className={`shrink-0 flex items-center gap-1.5 px-4 py-2 rounded-full text-sm font-medium transition-colors ${category === c ? "bg-charcoal text-cream" : "bg-cream-dark text-stone hover:text-charcoal"}`}
+            >
+              <span>{CATEGORY_ICONS[c]}</span>
+              {c}
+            </button>
+          ))}
         </div>
       </section>
 
@@ -118,19 +150,51 @@ function HomePage() {
           <h2 className="font-serif text-xl font-medium">{hasFilters ? "Results" : "Latest recipes"}</h2>
           <span className="text-sm text-stone">{recipes.length} loaded</span>
         </div>
-        {grid.length > 0 ? (
+        {hasSearch && searchResults === undefined ? (
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
+            {Array.from({ length: 6 }).map((_, i) => (
+              <div key={i} className="card overflow-hidden animate-pulse">
+                <div className="w-full aspect-[4/3] bg-cream-dark" />
+                <div className="p-4 space-y-2">
+                  <div className="h-4 bg-cream-dark rounded w-3/4" />
+                  <div className="h-3 bg-cream-dark rounded w-1/2" />
+                </div>
+              </div>
+            ))}
+          </div>
+        ) : grid.length > 0 ? (
           <>
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
               {grid.map((r) => (
-                <RecipeCard key={r._id} slug={r.slug} title={r.title} description={r.description} category={r.category} coverImageUrl={r.coverImageUrl} variant="list" />
+                <RecipeCard key={r._id} recipeId={r._id} slug={r.slug} title={r.title} description={r.description} category={r.category} coverImageUrl={r.coverImageUrl} />
               ))}
             </div>
             {hasMore && (
               <div className="py-8 text-center">
-                <button onClick={loadMore} className="btn-ghost">Load more</button>
+                <button
+                  onClick={loadMore}
+                  disabled={isLoadingMore}
+                  className="btn-ghost disabled:opacity-50"
+                >
+                  {isLoadingMore ? (
+                    <span className="flex items-center gap-2">
+                      <svg className="w-4 h-4 animate-spin" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z" />
+                      </svg>
+                      Loading…
+                    </span>
+                  ) : "Load more"}
+                </button>
               </div>
             )}
           </>
+        ) : hasSearch ? (
+          <div className="py-20 text-center">
+            <p className="font-serif text-2xl font-medium text-charcoal mb-2">No recipes found</p>
+            <p className="text-stone mb-6">Try different keywords or browse all recipes below.</p>
+            <Link to="/" className="btn-ghost">Clear search</Link>
+          </div>
         ) : (
           <div className="py-16 text-center">
             <p className="text-stone mb-4">No recipes yet.</p>

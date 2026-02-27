@@ -3,9 +3,42 @@ import { convexQuery } from "@convex-dev/react-query";
 import { useSuspenseQuery } from "@tanstack/react-query";
 import { useQuery } from "convex/react";
 import { api } from "convex/_generated/api";
-import { PageLayout } from "@/components/ui/Layout";
+import { PageLayout } from "@/components/layout/PageLayout";
 import { RecipeCard } from "@/components/ui/RecipeCard";
-import { FollowButton, FollowStats } from "@/components/social";
+import { FollowButton, FollowStats } from "@/components/social/SocialActions";
+
+function ChefSkeleton() {
+  return (
+    <PageLayout>
+      <div className="wrapper py-8 md:py-16 animate-pulse">
+        <div className="flex flex-col sm:flex-row items-center sm:items-start gap-6 mb-10 pb-10 border-b border-cream-dark">
+          <div className="w-24 h-24 rounded-full bg-cream-dark shrink-0" />
+          <div className="flex-1 space-y-3 text-center sm:text-left">
+            <div className="h-7 w-48 bg-cream-dark rounded mx-auto sm:mx-0" />
+            <div className="h-4 w-24 bg-cream-dark rounded mx-auto sm:mx-0" />
+            <div className="h-4 w-full max-w-sm bg-cream-dark rounded mx-auto sm:mx-0" />
+            <div className="h-4 w-3/4 max-w-xs bg-cream-dark rounded mx-auto sm:mx-0" />
+            <div className="flex gap-4 justify-center sm:justify-start pt-2">
+              <div className="h-4 w-24 bg-cream-dark rounded" />
+              <div className="h-4 w-24 bg-cream-dark rounded" />
+            </div>
+          </div>
+        </div>
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
+          {Array.from({ length: 6 }).map((_, i) => (
+            <div key={i} className="card overflow-hidden">
+              <div className="w-full aspect-[4/3] bg-cream-dark" />
+              <div className="p-4 space-y-2">
+                <div className="h-4 w-3/4 bg-cream-dark rounded" />
+                <div className="h-3 w-1/2 bg-cream-dark rounded" />
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+    </PageLayout>
+  );
+}
 
 export const Route = createFileRoute("/chef/$username")({
   // Pre-fetch chef profile so the page renders immediately on navigation
@@ -14,6 +47,7 @@ export const Route = createFileRoute("/chef/$username")({
     queryClient.ensureQueryData(
       convexQuery(api.users.getByUsername, { username: params.username })
     ),
+  pendingComponent: ChefSkeleton,
   component: ChefPage,
   head: ({ loaderData }) => {
     const chef = loaderData as { name?: string; bio?: string } | null | undefined;
@@ -74,6 +108,7 @@ function ChefPage() {
               {recipes.map((r) => (
                 <RecipeCard
                   key={r._id}
+                  recipeId={r._id}
                   slug={r.slug}
                   title={r.title}
                   description={r.description}

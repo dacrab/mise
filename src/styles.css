@@ -18,6 +18,7 @@
   --color-honey: #D4A853;
   --color-stone: #9C9488;
   --color-stone-light: #C4BEB4;
+  --color-sage-dark: #6B7A5E;
 
   --shadow-soft: 0 2px 8px rgba(45, 42, 38, 0.06);
   --shadow-card: 0 4px 20px rgba(45, 42, 38, 0.08);
@@ -104,6 +105,24 @@
 .form-group:has(:invalid:not(:placeholder-shown)) { @apply ring-2 ring-terracotta/30; }
 .card:has(img:hover) { @apply shadow-hover; }
 
+/* Recipe card grid variant */
+@utility recipe-card {
+  @apply card-hover block overflow-hidden rounded-xl;
+}
+
+@utility recipe-card-image {
+  @apply w-full aspect-[4/3] object-cover transition-transform duration-500;
+}
+
+/* Typography utilities */
+@utility heading-1 {
+  @apply font-serif font-medium tracking-tight text-charcoal leading-tight;
+}
+
+@utility body-large {
+  @apply text-lg text-charcoal-light leading-relaxed;
+}
+
 /* Container query responsive recipe card */
 @container (min-width: 300px) {
   .recipe-card-responsive {
@@ -161,3 +180,8 @@
   from { opacity: 0; transform: translateX(-10px); }
   to { opacity: 1; transform: translateX(0); }
 }
+
+/* Utility for JS-triggered animations */
+@utility animate-fade-in { animation: fadeIn 0.5s ease-out both; }
+@utility animate-scale-in { animation: scaleIn 0.2s ease-out both; }
+@utility animate-slide-up { animation: slideUp 0.3s ease-out both; }

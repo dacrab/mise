@@ -39,18 +39,21 @@ export function RecipeImporter({ onImport }: { onImport: (recipe: ImportedRecipe
     <div className="p-4 bg-cream rounded-lg border border-cream-dark">
       <h3 className="font-medium mb-2">Import from URL</h3>
       <div className="flex gap-2">
+        <label htmlFor="import-url" className="sr-only">Recipe URL</label>
         <input
+          id="import-url"
           type="url"
           value={url}
           onChange={(e) => setUrl(e.target.value)}
+          onKeyDown={(e) => e.key === "Enter" && handleImport()}
           placeholder="https://example.com/recipe..."
-          className="flex-1 px-3 py-2 rounded border border-cream-dark text-sm"
+          className="input-field flex-1 py-2 text-sm"
         />
         <button onClick={handleImport} disabled={loading || !url.trim()} className="btn-secondary text-sm">
-          {loading ? "Importing..." : "Import"}
+          {loading ? "Importing…" : "Import"}
         </button>
       </div>
-      {error && <p className="text-red-600 text-sm mt-2">{error}</p>}
+      {error && <p className="text-sm text-terracotta mt-2">{error}</p>}
       <p className="text-xs text-stone mt-2">Works with most recipe sites (AllRecipes, Food Network, etc.)</p>
     </div>
   );

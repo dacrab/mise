@@ -1,114 +1,188 @@
-
 import { useQuery, useMutation } from "convex/react";
 import { useRouter } from "@tanstack/react-router";
 import { api } from "convex/_generated/api";
-import { useState } from "react";
-import { BellIcon } from "@heroicons/react/24/outline";
+import { useState, useEffect, useRef } from "react";
+import { BellIcon, CheckIcon } from "@heroicons/react/24/outline";
+import { BellAlertIcon } from "@heroicons/react/24/solid";
+import type { Id } from "convex/_generated/dataModel";
+
+type Notification = {
+  _id: Id<"notifications">;
+  _creationTime: number;
+  type: "like" | "comment" | "follow" | "fork";
+  read: boolean;
+  actor: { name?: string | null; image?: string | null; username?: string | null } | null;
+  recipe: { title: string; slug: string } | null;
+};
+
+function notificationMessage(n: Notification): string {
+  const actor = n.actor?.name ?? "Someone";
+  switch (n.type) {
+    case "like": return `${actor} liked your recipe${n.recipe ? ` "${n.recipe.title}"` : ""}`;
+    case "comment": return `${actor} commented on${n.recipe ? ` "${n.recipe.title}"` : " your recipe"}`;
+    case "follow": return `${actor} started following you`;
+    case "fork": return `${actor} forked your recipe${n.recipe ? ` "${n.recipe.title}"` : ""}`;
+    default: return `${actor} interacted with your content`;
+  }
+}
+
+function timeAgo(ms: number): string {
+  const diff = Date.now() - ms;
+  const mins = Math.floor(diff / 60000);
+  if (mins < 1) return "just now";
+  if (mins < 60) return `${mins}m ago`;
+  const hrs = Math.floor(mins / 60);
+  if (hrs < 24) return `${hrs}h ago`;
+  const days = Math.floor(hrs / 24);
+  if (days < 7) return `${days}d ago`;
+  return new Date(ms).toLocaleDateString();
+}
 
 export function NotificationBell() {
   const count = useQuery(api.notifications.unreadCount) ?? 0;
+  const notifications = useQuery(api.notifications.list, { limit: 15 });
+  const markRead = useMutation(api.notifications.markRead);
+  const markAllRead = useMutation(api.notifications.markAllRead);
   const [open, setOpen] = useState(false);
+  const [markingAll, setMarkingAll] = useState(false);
+  const containerRef = useRef<HTMLDivElement>(null);
+  const router = useRouter();
+
+  // Close on outside click
+  useEffect(() => {
+    if (!open) return;
+    const handler = (e: MouseEvent) => {
+      if (containerRef.current && !containerRef.current.contains(e.target as Node)) {
+        setOpen(false);
+      }
+    };
+    document.addEventListener("mousedown", handler);
+    return () => document.removeEventListener("mousedown", handler);
+  }, [open]);
+
+  // Close on Escape
+  useEffect(() => {
+    if (!open) return;
+    const handler = (e: KeyboardEvent) => { if (e.key === "Escape") setOpen(false); };
+    document.addEventListener("keydown", handler);
+    return () => document.removeEventListener("keydown", handler);
+  }, [open]);
+
+  const handleNotificationClick = async (n: Notification) => {
+    setOpen(false);
+    // Mark as read
+    if (!n.read) {
+      await markRead({ id: n._id });
+    }
+    // Navigate to relevant page
+    if (n.type === "follow" && n.actor?.username) {
+      void router.navigate({ to: "/chef/$username", params: { username: n.actor.username } });
+    } else if (n.recipe?.slug) {
+      void router.navigate({ to: "/recipe/$slug", params: { slug: n.recipe.slug } });
+    }
+  };
+
+  const handleMarkAllRead = async () => {
+    setMarkingAll(true);
+    try { await markAllRead(); }
+    finally { setMarkingAll(false); }
+  };
 
   return (
-    <div className="relative">
+    <div className="relative" ref={containerRef}>
       <button
-        onClick={() => setOpen(!open)}
+        onClick={() => setOpen((o) => !o)}
         className="relative p-2 hover:bg-cream-dark rounded-lg transition-colors"
-        aria-label="Notifications"
+        aria-label={`Notifications${count > 0 ? ` (${count} unread)` : ""}`}
+        aria-expanded={open}
+        aria-haspopup="true"
       >
-        <BellIcon className="w-5 h-5" />
+        {count > 0 ? (
+          <BellAlertIcon className="w-5 h-5 text-terracotta" />
+        ) : (
+          <BellIcon className="w-5 h-5" />
+        )}
         {count > 0 && (
-          <span className="absolute -top-0.5 -right-0.5 bg-terracotta text-warm-white text-[10px] w-4 h-4 rounded-full flex items-center justify-center font-medium">
+          <span className="absolute -top-0.5 -right-0.5 w-4 h-4 bg-terracotta text-white text-[10px] font-bold rounded-full flex items-center justify-center leading-none">
             {count > 9 ? "9+" : count}
           </span>
         )}
       </button>
 
-      {open && <NotificationDropdown onClose={() => setOpen(false)} />}
-    </div>
-  );
-}
-
-// Derive the notification item type from the query's non-nullable return
-type NotificationList = NonNullable<ReturnType<typeof useQuery<typeof api.notifications.list>>>;
-type Notification = NotificationList[number];
-
-function notificationHref(n: Notification): string {
-  if (n.type === "follow") return `/chef/${n.actor?.username ?? ""}`;
-  return n.recipe ? `/recipe/${n.recipe.slug}` : "/";
-}
-
-function notificationMessage(n: Notification): string {
-  switch (n.type) {
-    case "like":    return `liked your recipe "${n.recipe?.title}"`;
-    case "comment": return `commented on "${n.recipe?.title}"`;
-    case "follow":  return "started following you";
-    case "fork":    return `forked your recipe "${n.recipe?.title}"`;
-    default:        return "";
-  }
-}
-
-function NotificationDropdown({ onClose }: { onClose: () => void }) {
-  const notifications = useQuery(api.notifications.list, { limit: 10 }) ?? [];
-  const markAllRead = useMutation(api.notifications.markAllRead);
-  const markRead = useMutation(api.notifications.markRead);
-  const router = useRouter();
-
-  const handleClick = async (n: Notification) => {
-    if (!n.read) await markRead({ id: n._id });
-    onClose();
-    await router.navigate({ href: notificationHref(n) });
-  };
-
-  return (
-    <>
-      <div className="fixed inset-0 z-40" onClick={onClose} />
-      <div className="absolute right-0 top-full mt-2 w-80 card shadow-card z-50 overflow-hidden">
-        <div className="p-3 border-b border-cream-dark flex items-center justify-between">
-          <span className="text-sm font-medium">Notifications</span>
-          {notifications.some((n) => !n.read) && (
-            <button onClick={() => markAllRead()} className="text-xs text-sage hover:text-sage-light">
-              Mark all read
-            </button>
-          )}
-        </div>
-
-        <div className="max-h-80 overflow-y-auto">
-          {notifications.length === 0 ? (
-            <p className="p-6 text-center text-stone text-sm">No notifications</p>
-          ) : (
-            notifications.map((n) => (
+      {open && (
+        <div
+          role="dialog"
+          aria-label="Notifications"
+          className="absolute right-0 top-full mt-2 w-80 bg-warm-white rounded-xl shadow-hover border border-cream-dark z-50 overflow-hidden animate-scale-in origin-top-right"
+        >
+          {/* Header */}
+          <div className="flex items-center justify-between px-4 py-3 border-b border-cream-dark">
+            <h3 className="font-medium text-sm text-charcoal">Notifications</h3>
+            {count > 0 && (
               <button
-                key={n._id}
-                onClick={() => handleClick(n)}
-                className={`w-full text-left block p-3 hover:bg-cream-dark/50 border-b border-cream-dark last:border-0 transition-colors ${!n.read ? "bg-sage/5" : ""}`}
+                onClick={() => void handleMarkAllRead()}
+                disabled={markingAll}
+                className="flex items-center gap-1 text-xs text-sage hover:text-sage-dark transition-colors disabled:opacity-50"
               >
-                <div className="flex gap-3">
-                  <div className="w-8 h-8 rounded-full bg-sage/15 overflow-hidden shrink-0">
+                <CheckIcon className="w-3.5 h-3.5" />
+                {markingAll ? "Marking…" : "Mark all read"}
+              </button>
+            )}
+          </div>
+
+          {/* List */}
+          <div className="max-h-80 overflow-y-auto divide-y divide-cream-dark">
+            {notifications === undefined ? (
+              <div className="p-4 space-y-3 animate-pulse">
+                {[1, 2, 3].map((i) => (
+                  <div key={i} className="flex gap-3">
+                    <div className="w-8 h-8 rounded-full bg-cream-dark shrink-0" />
+                    <div className="flex-1 space-y-1.5">
+                      <div className="h-3 bg-cream-dark rounded w-full" />
+                      <div className="h-3 bg-cream-dark rounded w-1/2" />
+                    </div>
+                  </div>
+                ))}
+              </div>
+            ) : notifications.length === 0 ? (
+              <div className="py-10 text-center">
+                <BellIcon className="w-8 h-8 text-stone mx-auto mb-2" />
+                <p className="text-sm text-stone">No notifications yet</p>
+              </div>
+            ) : (
+              notifications.map((n) => (
+                <button
+                  key={n._id}
+                  onClick={() => void handleNotificationClick(n)}
+                  className={`w-full flex items-start gap-3 px-4 py-3 text-left transition-colors hover:bg-cream-dark ${!n.read ? "bg-sage/5" : ""}`}
+                >
+                  {/* Actor avatar */}
+                  <div className="shrink-0 mt-0.5">
                     {n.actor?.image ? (
-                      <img src={n.actor.image} className="w-full h-full object-cover" alt="" />
+                      <img src={n.actor.image} alt="" className="w-8 h-8 rounded-full object-cover" />
                     ) : (
-                      <div className="w-full h-full flex items-center justify-center text-xs font-medium text-sage">
-                        {n.actor?.name?.[0] ?? "?"}
+                      <div className="w-8 h-8 rounded-full bg-sage/20 flex items-center justify-center text-sage text-xs font-medium">
+                        {n.actor?.name?.charAt(0).toUpperCase() ?? "?"}
                       </div>
                     )}
                   </div>
+                  {/* Message */}
                   <div className="flex-1 min-w-0">
-                    <p className="text-sm text-charcoal-light">
-                      <span className="font-medium text-charcoal">{n.actor?.name ?? "Someone"}</span>{" "}
+                    <p className={`text-sm leading-snug ${!n.read ? "text-charcoal font-medium" : "text-charcoal-light"}`}>
                       {notificationMessage(n)}
                     </p>
-                    <p className="text-xs text-stone mt-0.5">
-                      {new Date(n._creationTime).toLocaleDateString()}
-                    </p>
+                    <p className="text-xs text-stone mt-0.5">{timeAgo(n._creationTime)}</p>
                   </div>
-                  {!n.read && <div className="w-2 h-2 rounded-full bg-sage mt-2 shrink-0" />}
-                </div>
-              </button>
-            ))
-          )}
+                  {/* Unread dot */}
+                  {!n.read && (
+                    <div className="w-2 h-2 rounded-full bg-sage shrink-0 mt-1.5" aria-hidden="true" />
+                  )}
+                </button>
+              ))
+            )}
+          </div>
         </div>
-      </div>
-    </>
+      )}
+    </div>
   );
 }

@@ -138,7 +138,7 @@ export const create = mutation({
     status: v.union(v.literal("draft"), v.literal("published")),
     servings: v.optional(v.number()), prepTime: v.optional(v.number()),
     cookTime: v.optional(v.number()),
-    difficulty: v.optional(v.union(v.literal("easy"), v.literal("medium"), v.literal("hard"))),
+    difficulty: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
     const userId = await requireAuth(ctx);
@@ -155,6 +155,9 @@ export const update = mutation({
     category: v.string(), ingredients: v.array(v.string()), steps: v.array(v.string()),
     coverImage: v.optional(v.id("_storage")), videoUrl: v.optional(v.string()),
     status: v.union(v.literal("draft"), v.literal("published")),
+    servings: v.optional(v.number()), prepTime: v.optional(v.number()),
+    cookTime: v.optional(v.number()),
+    difficulty: v.optional(v.string()),
   },
   handler: async (ctx, { id, ...args }) => {
     const userId = await requireAuth(ctx);

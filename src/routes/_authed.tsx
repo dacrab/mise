@@ -1,7 +1,7 @@
 import { createFileRoute, Outlet } from "@tanstack/react-router";
 import { useQuery } from "convex/react";
 import { api } from "convex/_generated/api";
-import { Header } from "@/components/ui/Layout";
+import { Header } from "@/components/layout/Header";
 
 export const Route = createFileRoute("/_authed")({
   beforeLoad: async () => {
