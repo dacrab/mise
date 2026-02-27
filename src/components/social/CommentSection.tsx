@@ -3,6 +3,7 @@ import { api } from "convex/_generated/api";
 import { useState, useRef } from "react";
 import type { Id } from "convex/_generated/dataModel";
 import { PencilIcon, TrashIcon, CheckIcon, XMarkIcon } from "@heroicons/react/24/outline";
+import { Avatar } from "@/components/ui/Avatar";
 
 type Comment = {
   _id: Id<"comments">;
@@ -67,14 +68,7 @@ function CommentItem({
 
   return (
     <div className="flex gap-3">
-      <div className="shrink-0">
-        {authorImage
-          ? <img src={authorImage} alt="" className="w-8 h-8 rounded-full object-cover" />
-          : <div className="w-8 h-8 rounded-full bg-sage/20 flex items-center justify-center text-sage text-xs font-medium">
-              {authorName.charAt(0).toUpperCase()}
-            </div>
-        }
-      </div>
+      <Avatar src={authorImage} name={authorName} size="sm" />
       <div className="flex-1 min-w-0">
         <div className="flex items-baseline gap-2 flex-wrap">
           <span className="text-sm font-medium text-charcoal">{authorName}</span>

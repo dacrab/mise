@@ -3,6 +3,7 @@ import { useRouter } from "@tanstack/react-router";
 import { api } from "convex/_generated/api";
 import { useState, useEffect, useRef } from "react";
 import { BellIcon, CheckIcon } from "@heroicons/react/24/outline";
+import { Avatar } from "@/components/ui/Avatar";
 import { BellAlertIcon } from "@heroicons/react/24/solid";
 import type { Id } from "convex/_generated/dataModel";
 
@@ -156,16 +157,7 @@ export function NotificationBell() {
                   onClick={() => void handleNotificationClick(n)}
                   className={`w-full flex items-start gap-3 px-4 py-3 text-left transition-colors hover:bg-cream-dark ${!n.read ? "bg-sage/5" : ""}`}
                 >
-                  {/* Actor avatar */}
-                  <div className="shrink-0 mt-0.5">
-                    {n.actor?.image ? (
-                      <img src={n.actor.image} alt="" className="w-8 h-8 rounded-full object-cover" />
-                    ) : (
-                      <div className="w-8 h-8 rounded-full bg-sage/20 flex items-center justify-center text-sage text-xs font-medium">
-                        {n.actor?.name?.charAt(0).toUpperCase() ?? "?"}
-                      </div>
-                    )}
-                  </div>
+                  <Avatar src={n.actor?.image} name={n.actor?.name} size="sm" className="mt-0.5" />
                   {/* Message */}
                   <div className="flex-1 min-w-0">
                     <p className={`text-sm leading-snug ${!n.read ? "text-charcoal font-medium" : "text-charcoal-light"}`}>

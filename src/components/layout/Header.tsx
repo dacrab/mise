@@ -6,6 +6,7 @@ import { api } from "convex/_generated/api";
 import { NotificationBell } from "@/components/social/Notifications";
 import { Menu } from "@base-ui-components/react/menu";
 import { HomeIcon, Cog6ToothIcon, ArrowRightOnRectangleIcon, PlusIcon, ChevronDownIcon, Bars3Icon, XMarkIcon } from "@heroicons/react/24/outline";
+import { Avatar } from "@/components/ui/Avatar";
 import { HomeLink } from "@/components/layout/HomeLink";
 
 export function Header() {
@@ -49,10 +50,7 @@ export function Header() {
                 <NotificationBell />
                 <Menu.Root>
                   <Menu.Trigger className="btn-ghost text-sm flex items-center gap-2">
-                    {user.profileImageUrl || user.image
-                      ? <img src={user.profileImageUrl || user.image} alt="" className="w-6 h-6 rounded-full object-cover" />
-                      : <div className="w-6 h-6 rounded-full bg-sage/20 flex items-center justify-center text-sage text-xs font-medium">{user.name?.charAt(0).toUpperCase() ?? "?"}</div>
-                    }
+                    <Avatar src={user.profileImageUrl || user.image} name={user.name} size="xs" />
                     <span className="hidden sm:inline">{user.name?.split(" ")[0] ?? "Menu"}</span>
                     <ChevronDownIcon className="w-4 h-4" />
                   </Menu.Trigger>
@@ -125,10 +123,7 @@ export function Header() {
           {user ? (
             <>
               <div className="flex items-center gap-3 p-3 mb-4 bg-cream-dark rounded-lg">
-                {user.profileImageUrl || user.image
-                  ? <img src={user.profileImageUrl || user.image} alt="" className="w-10 h-10 rounded-full object-cover" />
-                  : <div className="w-10 h-10 rounded-full bg-sage/20 flex items-center justify-center text-sage font-medium">{user.name?.charAt(0).toUpperCase() ?? "?"}</div>
-                }
+                <Avatar src={user.profileImageUrl || user.image} name={user.name} size="md" />
                 <div className="min-w-0">
                   <p className="font-medium text-charcoal truncate">{user.name ?? "Chef"}</p>
                   {user.username && <p className="text-xs text-stone truncate">@{user.username}</p>}

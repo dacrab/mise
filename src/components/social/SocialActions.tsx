@@ -7,6 +7,7 @@ import { ActionButton } from "@/components/layout/ActionButton";
 import { api } from "convex/_generated/api";
 import type { Id } from "convex/_generated/dataModel";
 import { HeartIcon, BookmarkIcon } from "@heroicons/react/24/outline";
+import { Spinner } from "@/components/ui/Spinner";
 import { HeartIcon as HeartSolidIcon, BookmarkIcon as BookmarkSolidIcon, StarIcon as StarSolidIcon } from "@heroicons/react/24/solid";
 import { StarIcon } from "@heroicons/react/24/outline";
 
@@ -25,7 +26,6 @@ export function FollowButton({ userId }: { userId: Id<"users"> }) {
     finally { setPending(false); }
   };
 
-  // Skeleton while loading
   if (isFollowing === undefined) {
     return <div className="h-9 w-24 rounded-lg bg-cream-dark animate-pulse" aria-hidden="true" />;
   }
@@ -37,12 +37,7 @@ export function FollowButton({ userId }: { userId: Id<"users"> }) {
       aria-label={isFollowing ? "Unfollow this chef" : "Follow this chef"}
       className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-colors disabled:opacity-60 ${isFollowing ? "bg-cream-dark text-charcoal-light hover:bg-stone-light/50" : "bg-charcoal text-cream hover:bg-charcoal-light"}`}
     >
-      {pending && (
-        <svg className="w-3.5 h-3.5 animate-spin shrink-0" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-          <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-          <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z" />
-        </svg>
-      )}
+      {pending && <Spinner className="w-3.5 h-3.5" />}
       {isFollowing ? "Following" : "Follow"}
     </button>
   );

@@ -3,6 +3,7 @@ import { useQuery, usePaginatedQuery } from "convex/react";
 import { z } from "zod";
 import { useState } from "react";
 import { api } from "convex/_generated/api";
+import { Spinner } from "@/components/ui/Spinner";
 import { PageLayout } from "@/components/layout/PageLayout"; import { HomeLink } from "@/components/layout/HomeLink";
 import { RecipeCard } from "@/components/ui/RecipeCard";
 import { TrendingRecipes } from "@/components/recipe/RecipeWidgets";
@@ -176,15 +177,7 @@ function HomePage() {
                   disabled={isLoadingMore}
                   className="btn-ghost disabled:opacity-50"
                 >
-                  {isLoadingMore ? (
-                    <span className="flex items-center gap-2">
-                      <svg className="w-4 h-4 animate-spin" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z" />
-                      </svg>
-                      Loading…
-                    </span>
-                  ) : "Load more"}
+                  {isLoadingMore ? <span className="flex items-center gap-2"><Spinner /> Loading…</span> : "Load more"}
                 </button>
               </div>
             )}
