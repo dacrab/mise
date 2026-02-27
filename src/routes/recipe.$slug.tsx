@@ -3,21 +3,55 @@ import { convexQuery } from "@convex-dev/react-query";
 import { useSuspenseQuery } from "@tanstack/react-query";
 import { useQuery } from "convex/react";
 import { api } from "convex/_generated/api";
+import type { Id } from "convex/_generated/dataModel";
 import { PageLayout } from "@/components/layout";
 import { SocialActions, ForkButton, StarRating } from "@/components/social/SocialActions";
 import { CommentSection } from "@/components/social/CommentSection";
 import { CookingNow, CookingTimers } from "@/components/recipe/RecipeWidgets";
 import { IngredientScaler } from "@/components/recipe/IngredientScaler";
-import { RecipeMeta } from "@/components/recipe/RecipeMeta";
-import { RelatedRecipes } from "@/components/recipe/RelatedRecipes";
 import { AddToCollectionButton } from "@/components/recipe/AddToCollection";
-import { PrinterIcon } from "@heroicons/react/24/outline";
+import { RecipeCard } from "@/components/ui/RecipeCard";
+import { useToast } from "@/components/ui/toast";
+import { ClockIcon, FireIcon, UserGroupIcon, PrinterIcon, ShareIcon } from "@heroicons/react/24/outline";
 import { PlayIcon as PlayIconSolid } from "@heroicons/react/24/solid";
-import { ShareButton } from "@/components/recipe/ShareButton";
+
+function ShareButton({ title }: { title: string }) {
+  const { toast } = useToast();
+  const handleShare = async () => {
+    const url = window.location.href;
+    try {
+      if (navigator.share) { await navigator.share({ title, url }); }
+      else { await navigator.clipboard.writeText(url); toast("Link copied!", "success"); }
+    } catch (err) { if (err instanceof Error && err.name !== "AbortError") toast("Could not share", "error"); }
+  };
+  return <button onClick={() => void handleShare()} className="flex items-center gap-1.5 text-sm text-stone hover:text-sage transition-colors" aria-label="Share"><ShareIcon className="w-4 h-4" />Share</button>;
+}
+
+function MetaStat({ icon, label, value }: { icon: React.ReactNode; label: string; value: string }) {
+  return (
+    <div className="flex flex-col items-center gap-1 px-4 py-3 bg-cream-dark rounded-xl text-center">
+      <div className="text-stone">{icon}</div>
+      <span className="text-xs text-stone uppercase tracking-wide">{label}</span>
+      <span className="text-sm font-medium text-charcoal">{value}</span>
+    </div>
+  );
+}
+
+function RelatedRecipes({ recipeId }: { recipeId: Id<"recipes"> }) {
+  const related = useQuery(api.discovery.recommendations, { limit: 4 });
+  const filtered = related?.filter((r) => r._id !== recipeId).slice(0, 3);
+  if (!filtered?.length) return null;
+  return (
+    <section className="wrapper max-w-4xl pb-16">
+      <h2 className="font-serif text-2xl font-medium mb-6">You might also like</h2>
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-5">
+        {filtered.map((r) => <RecipeCard key={r._id} recipeId={r._id} slug={r.slug} title={r.title} category={r.category} coverImageUrl={r.coverImageUrl} />)}
+      </div>
+    </section>
+  );
+}
 
 export const Route = createFileRoute("/recipe/$slug")({
-  // Loader pre-fetches recipe data into the QueryClient cache before render.
-  // On the server this populates <head> meta tags for SEO/OG without a client roundtrip.
   loader: ({ params, context: { queryClient } }) =>
     queryClient.ensureQueryData(
       convexQuery(api.recipes.getBySlug, { slug: params.slug })
@@ -57,7 +91,15 @@ function RecipePage() {
           <h1 className="heading-1 text-3xl sm:text-4xl md:text-5xl mb-4">{recipe.title}</h1>
           {recipe.description && <p className="body-large max-w-2xl">{recipe.description}</p>}
 
-          <RecipeMeta prepTime={recipe.prepTime} cookTime={recipe.cookTime} servings={recipe.servings} difficulty={recipe.difficulty} />
+          {(recipe.prepTime || recipe.cookTime || recipe.servings || recipe.difficulty) && (
+            <div className="flex flex-wrap gap-3 mt-6">
+              {recipe.prepTime && <MetaStat icon={<ClockIcon className="w-4 h-4" />} label="Prep" value={`${recipe.prepTime} min`} />}
+              {recipe.cookTime && <MetaStat icon={<FireIcon className="w-4 h-4" />} label="Cook" value={`${recipe.cookTime} min`} />}
+              {recipe.prepTime && recipe.cookTime && <MetaStat icon={<ClockIcon className="w-4 h-4" />} label="Total" value={`${recipe.prepTime + recipe.cookTime} min`} />}
+              {recipe.servings && <MetaStat icon={<UserGroupIcon className="w-4 h-4" />} label="Servings" value={String(recipe.servings)} />}
+              {recipe.difficulty && <MetaStat icon={<FireIcon className="w-4 h-4" />} label="Difficulty" value={recipe.difficulty} />}
+            </div>
+          )}
 
           <div className="flex flex-wrap items-center gap-4 mt-8 pt-6 border-t border-cream-dark">
             <Link to="/chef/$username" params={{ username: recipe.author?.username || recipe.author?.name || "unknown" }} className="flex items-center gap-3 group">

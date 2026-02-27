@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from "react";
-import { useFileUpload } from "@/hooks";
+import { useFileUpload } from "@/hooks/useFileUpload";
 import { useMutation, useQuery } from "convex/react";
 import { Link, useNavigate } from "@tanstack/react-router";
 import { api } from "convex/_generated/api";

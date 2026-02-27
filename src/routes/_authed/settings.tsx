@@ -3,7 +3,7 @@ import { useQuery, useMutation } from "convex/react";
 import { api } from "convex/_generated/api";
 import type { Id } from "convex/_generated/dataModel";
 import { useState, useEffect, useRef } from "react";
-import { useFileUpload } from "@/hooks";
+import { useFileUpload } from "@/hooks/useFileUpload";
 import { ProgressBar } from "@/components/ui/ProgressBar";
 import { useToast } from "@/components/ui/toast";
 import { UserCircleIcon, EnvelopeIcon, CalendarIcon, CameraIcon } from "@heroicons/react/24/outline";

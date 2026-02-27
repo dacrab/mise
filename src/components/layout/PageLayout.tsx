@@ -1,7 +1,6 @@
 import { Link } from "@tanstack/react-router";
 import { Header } from "@/components/layout/Header";
 import { Footer } from "@/components/layout/Footer";
-import { HomeLink } from "@/components/layout/HomeLink";
 
 export function PageLayout({ children, className = "" }: { children: React.ReactNode; className?: string }) {
   return (
@@ -48,7 +47,7 @@ export function AuthLayout({ children, variant, tagline, subtitle }: {
   return (
     <div className="min-h-screen flex">
       <div className={`hidden lg:flex lg:w-1/2 ${bgColor} p-12 flex-col justify-between`}>
-        <HomeLink className={`font-serif text-2xl font-semibold ${textColor}`}>mise</HomeLink>
+        <Link to="/" className={`font-serif text-2xl font-semibold ${textColor}`}>mise</Link>
         <div>
           <p className={`font-hand text-3xl ${taglineColor} mb-4`}>{tagline}</p>
           <p className={`${subtitleColor} text-lg max-w-md`}>{subtitle}</p>
@@ -57,7 +56,7 @@ export function AuthLayout({ children, variant, tagline, subtitle }: {
       </div>
       <div className="flex-1 flex items-center justify-center p-8 bg-cream">
         <div className="w-full max-w-md">
-          <HomeLink className="lg:hidden font-serif text-2xl font-semibold text-charcoal block mb-8">mise</HomeLink>
+          <Link to="/" className="lg:hidden font-serif text-2xl font-semibold text-charcoal block mb-8">mise</Link>
           {children}
         </div>
       </div>
@@ -75,7 +74,7 @@ export function ErrorPage({ title, message, showHomeLink = true }: {
       <div>
         <h1 className="font-serif text-4xl font-medium text-charcoal mb-4">{title}</h1>
         {message && <p className="text-stone mb-6">{message}</p>}
-        {showHomeLink && <HomeLink className="btn-primary">Back to recipes</HomeLink>}
+        {showHomeLink && <Link to="/" className="btn-primary">Back to recipes</Link>}
       </div>
     </div>
   );

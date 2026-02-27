@@ -7,7 +7,6 @@ import { NotificationBell } from "@/components/social/Notifications";
 import { Menu } from "@base-ui-components/react/menu";
 import { HomeIcon, Cog6ToothIcon, ArrowRightOnRectangleIcon, PlusIcon, ChevronDownIcon, Bars3Icon, XMarkIcon } from "@heroicons/react/24/outline";
 import { Avatar } from "@/components/ui/Avatar";
-import { HomeLink } from "@/components/layout/HomeLink";
 
 export function Header() {
   const user = useQuery(api.users.currentUser);
@@ -41,7 +40,7 @@ export function Header() {
     <>
       <header className="fixed top-0 w-full z-50 glass">
         <div className="wrapper h-16 flex items-center justify-between">
-          <HomeLink className="font-serif text-2xl font-semibold tracking-tight text-charcoal hover:text-sage transition-colors">mise</HomeLink>
+          <Link to="/" className="font-serif text-2xl font-semibold tracking-tight text-charcoal hover:text-sage transition-colors">mise</Link>
 
           {/* Desktop nav */}
           <nav className="hidden sm:flex items-center gap-2">

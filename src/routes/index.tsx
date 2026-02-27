@@ -4,7 +4,7 @@ import { z } from "zod";
 import { useState } from "react";
 import { api } from "convex/_generated/api";
 import { Spinner } from "@/components/ui/Spinner";
-import { PageLayout, HomeLink } from "@/components/layout";
+import { PageLayout } from "@/components/layout";
 import { RecipeCard } from "@/components/ui/RecipeCard";
 import { TrendingRecipes } from "@/components/recipe/RecipeWidgets";
 import { Select } from "@/components/ui/Select";
@@ -141,7 +141,7 @@ function HomePage() {
         {hasFilters && (
           <div className="mt-4 flex items-center gap-3 text-sm">
             <span className="text-stone">{recipes.length} result{recipes.length !== 1 && "s"}{q && <> for "<span className="text-charcoal font-medium">{q}</span>"</>}{category && <> in <span className="text-charcoal font-medium">{category}</span></>}</span>
-            <HomeLink className="text-sage hover:underline">Clear</HomeLink>
+            <Link to="/" className="text-sage hover:underline">Clear</Link>
           </div>
         )}
       </section>
