@@ -1,4 +1,4 @@
-// Recipe page widgets: CookingNow presence indicator, CookingTimers, TrendingRecipes, RecommendedRecipes
+// Recipe page widgets: CookingNow presence indicator, CookingTimers, TrendingRecipes
 import { useState, useEffect, useRef } from "react";
 import { useQuery, useMutation } from "convex/react";
 import { api } from "convex/_generated/api";
@@ -114,17 +114,3 @@ export function TrendingRecipes() {
   );
 }
 
-export function RecommendedRecipes() {
-  const recipes = useQuery(api.discovery.recommendations, { limit: 6 }) ?? [];
-  if (recipes.length === 0) return null;
-  return (
-    <section>
-      <h2 className="font-serif text-2xl font-medium mb-6">Recommended for you</h2>
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-        {recipes.map((recipe) => (
-          <RecipeCard key={recipe._id} recipeId={recipe._id} slug={recipe.slug} title={recipe.title} category={recipe.category} coverImageUrl={recipe.coverImageUrl ?? null} />
-        ))}
-      </div>
-    </section>
-  );
-}

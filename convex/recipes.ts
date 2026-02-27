@@ -1,4 +1,4 @@
-import { query, mutation } from "./_generated/server";
+import { query, mutation, internalMutation } from "./_generated/server";
 import { v } from "convex/values";
 import { paginationOptsValidator } from "convex/server";
 import { requireAuth, getOptionalAuth, withCoverUrls, withCoverUrl, createNotification } from "./lib/helpers";
@@ -224,10 +224,6 @@ export const fork = mutation({
   },
 });
 
-
-// Internal: publish scheduled recipes (called by cron)
-import { internalMutation } from "./_generated/server";
-
 export const publishScheduled = internalMutation({
   handler: async (ctx) => {
     const now = Date.now();
@@ -250,9 +246,8 @@ export const publishScheduled = internalMutation({
   },
 });
 
-import { internalMutation as internalMutationAnalytics } from "./_generated/server";
 
-export const cleanupOldViews = internalMutationAnalytics({
+export const cleanupOldViews = internalMutation({
   handler: async (ctx) => {
     const thirtyDaysAgo = Date.now() - 30 * 24 * 60 * 60 * 1000;
     const old = await ctx.db.query("recipeViews").withIndex("by_timestamp", (q) => q.lt("timestamp", thirtyDaysAgo)).take(500);
@@ -260,6 +255,6 @@ export const cleanupOldViews = internalMutationAnalytics({
   },
 });
 
-export const recalculateTrending = internalMutationAnalytics({
+export const recalculateTrending = internalMutation({
   handler: async (_ctx) => {},
 });

@@ -101,9 +101,6 @@ export function LoginForm() {
   );
 }
 
-const STRENGTH_COLORS = ["bg-stone-light", "bg-terracotta", "bg-honey", "bg-sage"];
-const STRENGTH_LABELS = ["Too short", "Weak", "Good", "Strong"];
-
 const SIGNUP_ERRORS: Record<string, string> = {
   AccountAlreadyExists: "An account with this email already exists. Please sign in.",
   InvalidEmail: "Please enter a valid email address.",
@@ -153,7 +150,7 @@ export function SignupForm() {
       {error && <FormError message={error} />}
       <FormField id="signup-name" label="Name" type="text" value={name} onChange={setName} placeholder="Your name" autoComplete="name" />
       <FormField id="signup-email" label="Email" type="email" value={email} onChange={setEmail} placeholder="you@example.com" />
-      <PasswordField label="Password" value={password} onChange={setPassword} show={showPassword} onToggleShow={() => setShowPassword(!showPassword)} autoComplete="new-password" strengthMeter={{ strength, colors: STRENGTH_COLORS, labels: STRENGTH_LABELS }} />
+      <PasswordField label="Password" value={password} onChange={setPassword} show={showPassword} onToggleShow={() => setShowPassword(!showPassword)} autoComplete="new-password" strengthMeter={{ strength, colors: ["bg-stone-light", "bg-terracotta", "bg-honey", "bg-sage"], labels: ["Too short", "Weak", "Good", "Strong"] }} />
       <button type="submit" disabled={loading} className="btn-primary w-full">{loading ? "Creating…" : "Sign up"}</button>
       <Divider />
       <GoogleSignInButton />

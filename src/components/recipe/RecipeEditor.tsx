@@ -136,6 +136,8 @@ export function RecipeEditor({ initialData, isEditing }: Props) {
   const generateUploadUrl = useMutation(api.recipes.generateUploadUrl);
   const createRecipe = useMutation(api.recipes.create);
   const updateRecipe = useMutation(api.recipes.update);
+  const updateRecipeRef = useRef(updateRecipe);
+  updateRecipeRef.current = updateRecipe;
   const { upload, uploading, progress: uploadProgress } = useFileUpload(
     () => generateUploadUrl(),
     {
@@ -152,11 +154,12 @@ export function RecipeEditor({ initialData, isEditing }: Props) {
   // Auto-save draft every 30s when dirty and editing
   useEffect(() => {
     if (!isEditing || !initialData?.id) return;
+    const recipeId = initialData.id;
     const interval = setInterval(async () => {
       if (!isDirty.current) return;
       try {
-        await updateRecipe({
-          id: initialData.id!,
+        await updateRecipeRef.current({
+          id: recipeId,
           title: title.trim() || "Untitled",
           description: description.trim() || undefined,
           category: category || "General",
@@ -175,7 +178,7 @@ export function RecipeEditor({ initialData, isEditing }: Props) {
       } catch { /* silent auto-save fail */ }
     }, 30_000);
     return () => clearInterval(interval);
-  }, [isEditing, initialData?.id, title, description, category, prepTime, cookTime, servings, difficulty, ingredients, steps, coverImage, videoUrl, updateRecipe]);
+  }, [isEditing, initialData?.id, title, description, category, prepTime, cookTime, servings, difficulty, ingredients, steps, coverImage, videoUrl]);
 
   // Revoke blob URL on unmount
   useEffect(() => () => { if (coverImageUrl?.startsWith("blob:")) URL.revokeObjectURL(coverImageUrl); }, [coverImageUrl]);

@@ -2,7 +2,7 @@ import { Link } from "@tanstack/react-router";
 import { CakeIcon } from "@heroicons/react/24/outline";
 import type { Id } from "convex/_generated/dataModel";
 import { useMutation, useQuery } from "convex/react";
-import { useCallback, useState } from "react";
+import { useCallback, useRef, useState } from "react";
 import { BookmarkIcon } from "@heroicons/react/24/outline";
 import { BookmarkIcon as BookmarkSolidIcon } from "@heroicons/react/24/solid";
 import { api } from "convex/_generated/api";
@@ -13,16 +13,21 @@ function QuickBookmark({ recipeId }: { recipeId: Id<"recipes"> }) {
   const toggleBookmark = useMutation(api.social.toggleBookmark);
   const [pending, setPending] = useState(false);
 
+  const currentUserRef = useRef(currentUser);
+  currentUserRef.current = currentUser;
+  const toggleBookmarkRef = useRef(toggleBookmark);
+  toggleBookmarkRef.current = toggleBookmark;
+
   const isBookmarked = bookmarks?.some((r) => r !== null && r._id === recipeId) ?? false;
 
   const handleClick = useCallback(async (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
-    if (!currentUser || pending) return;
+    if (!currentUserRef.current || pending) return;
     setPending(true);
-    try { await toggleBookmark({ recipeId, collectionId: undefined }); }
+    try { await toggleBookmarkRef.current({ recipeId, collectionId: undefined }); }
     finally { setPending(false); }
-  }, [currentUser, pending, recipeId, toggleBookmark]);
+  }, [pending, recipeId]);
 
   if (currentUser === null) return null;
 
@@ -149,7 +154,7 @@ export function RecipeCard({
   );
 }
 
-export function RecipePlaceholder({ size }: { size: number }) {
+function RecipePlaceholder({ size }: { size: number }) {
   return (
     <div className="w-full h-full flex items-center justify-center text-stone-light">
       <CakeIcon style={{ width: size, height: size }} />
