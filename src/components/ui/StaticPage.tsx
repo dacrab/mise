@@ -1,6 +1,10 @@
-import { SimpleLayout } from "@/components/layout";
+import { SimpleLayout } from "@/components/layout/PageLayout";
 
-export function StaticPage({ title, description, children }: {
+export function StaticPage({
+  title,
+  description,
+  children,
+}: {
   title: string;
   description?: string;
   children: React.ReactNode;

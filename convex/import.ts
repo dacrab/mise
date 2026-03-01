@@ -1,22 +1,19 @@
 "use node";
-import { action } from "./_generated/server";
 import { v } from "convex/values";
+import { action } from "./_generated/server";
 
-const BLOCKED_HOSTNAMES = new Set([
-  "localhost",
-  "metadata.google.internal",
-]);
+const BLOCKED_HOSTNAMES = new Set(["localhost", "metadata.google.internal"]);
 
 const BLOCKED_IP_PREFIXES = [
   "169.254.", // link-local / AWS metadata
-  "10.",      // RFC-1918
-  "172.16.", "172.17.", "172.18.", "172.19.", "172.20.", "172.21.", "172.22.",
-  "172.23.", "172.24.", "172.25.", "172.26.", "172.27.", "172.28.", "172.29.",
-  "172.30.", "172.31.", // RFC-1918
+  "10.", // RFC-1918
+  // 172.16.0.0/12 — generate all 172.16–172.31 prefixes
+  ...Array.from({ length: 16 }, (_, i) => `172.${16 + i}.`),
   "192.168.", // RFC-1918
-  "127.",     // loopback
-  "::1",      // IPv6 loopback
-  "fc", "fd", // IPv6 ULA
+  "127.", // loopback
+  "::1", // IPv6 loopback
+  "fc",
+  "fd", // IPv6 ULA
 ];
 
 function assertSafeUrl(raw: string): URL {
@@ -57,7 +54,7 @@ export const importFromUrl = action({
 
     // Guard against huge responses
     const contentLength = res.headers.get("content-length");
-    if (contentLength && parseInt(contentLength) > MAX_BODY_BYTES) {
+    if (contentLength && parseInt(contentLength, 10) > MAX_BODY_BYTES) {
       throw new Error("Page too large to import");
     }
 
@@ -87,17 +84,19 @@ export const importFromUrl = action({
               title: recipe.name || "",
               description: recipe.description || "",
               ingredients: (recipe.recipeIngredient || []).map((i: string) => i.trim()),
-              steps: (recipe.recipeInstructions || []).map((s: { text?: string } | string) =>
-                typeof s === "string" ? s.trim() : s.text?.trim() || ""
-              ).filter(Boolean),
+              steps: (recipe.recipeInstructions || [])
+                .map((s: { text?: string } | string) => (typeof s === "string" ? s.trim() : s.text?.trim() || ""))
+                .filter(Boolean),
               prepTime: parseTime(recipe.prepTime),
               cookTime: parseTime(recipe.cookTime),
-              servings: parseInt(recipe.recipeYield) || undefined,
+              servings: parseInt(recipe.recipeYield, 10) || undefined,
               imageUrl: typeof recipe.image === "string" ? recipe.image : recipe.image?.[0] || recipe.image?.url,
               source: url,
             };
           }
-        } catch { /* continue */ }
+        } catch {
+          /* continue */
+        }
       }
     }
 
@@ -109,5 +108,5 @@ function parseTime(iso?: string): number | undefined {
   if (!iso) return undefined;
   const match = iso.match(/PT(?:(\d+)H)?(?:(\d+)M)?/);
   if (!match) return undefined;
-  return (parseInt(match[1] || "0") * 60) + parseInt(match[2] || "0");
+  return parseInt(match[1] || "0", 10) * 60 + parseInt(match[2] || "0", 10);
 }

@@ -1,14 +1,16 @@
 /// <reference types="vite/client" />
 import type { QueryClient } from "@tanstack/react-query";
-import { createRootRouteWithContext, Outlet, HeadContent, Scripts, useRouterState } from "@tanstack/react-router";
-import { ErrorPage } from "@/components/layout";
+import { createRootRouteWithContext, HeadContent, Outlet, Scripts, useRouterState } from "@tanstack/react-router";
+import { ErrorPage } from "@/components/layout/PageLayout";
 import appCss from "../styles.css?url";
 
 function RootComponent() {
   const { isLoading } = useRouterState();
   return (
     <html lang="en">
-      <head><HeadContent /></head>
+      <head>
+        <HeadContent />
+      </head>
       <body>
         {isLoading && <div className="fixed top-0 left-0 w-full h-px bg-sage animate-pulse z-50" />}
         <Outlet />
@@ -21,7 +23,9 @@ function RootComponent() {
 function RootErrorComponent({ error }: { error: Error }) {
   return (
     <html lang="en">
-      <head><HeadContent /></head>
+      <head>
+        <HeadContent />
+      </head>
       <body>
         <ErrorPage title="Something went wrong" message={error.message || "An unexpected error occurred"} />
         <Scripts />
@@ -43,7 +47,10 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       // preconnect shaves ~100ms off first Google Fonts request
       { rel: "preconnect", href: "https://fonts.googleapis.com" },
       { rel: "preconnect", href: "https://fonts.gstatic.com", crossOrigin: "anonymous" },
-      { rel: "stylesheet", href: "https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,500;0,600;0,700;1,400&family=Inter:wght@300;400;500;600&family=Caveat:wght@400;500;600&display=swap" },
+      {
+        rel: "stylesheet",
+        href: "https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,500;0,600;0,700;1,400&family=Inter:wght@300;400;500;600&family=Caveat:wght@400;500;600&display=swap",
+      },
     ],
   }),
   component: RootComponent,

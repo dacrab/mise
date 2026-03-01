@@ -1,11 +1,10 @@
+import { BookmarkIcon, CakeIcon } from "@heroicons/react/24/outline";
+import { BookmarkIcon as BookmarkSolidIcon } from "@heroicons/react/24/solid";
 import { Link } from "@tanstack/react-router";
-import { CakeIcon } from "@heroicons/react/24/outline";
+import { api } from "convex/_generated/api";
 import type { Id } from "convex/_generated/dataModel";
 import { useMutation, useQuery } from "convex/react";
 import { useCallback, useRef, useState } from "react";
-import { BookmarkIcon } from "@heroicons/react/24/outline";
-import { BookmarkIcon as BookmarkSolidIcon } from "@heroicons/react/24/solid";
-import { api } from "convex/_generated/api";
 
 function QuickBookmark({ recipeId }: { recipeId: Id<"recipes"> }) {
   const currentUser = useQuery(api.users.currentUser);
@@ -20,14 +19,20 @@ function QuickBookmark({ recipeId }: { recipeId: Id<"recipes"> }) {
 
   const isBookmarked = bookmarks?.some((r) => r !== null && r._id === recipeId) ?? false;
 
-  const handleClick = useCallback(async (e: React.MouseEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
-    if (!currentUserRef.current || pending) return;
-    setPending(true);
-    try { await toggleBookmarkRef.current({ recipeId, collectionId: undefined }); }
-    finally { setPending(false); }
-  }, [pending, recipeId]);
+  const handleClick = useCallback(
+    async (e: React.MouseEvent) => {
+      e.preventDefault();
+      e.stopPropagation();
+      if (!currentUserRef.current || pending) return;
+      setPending(true);
+      try {
+        await toggleBookmarkRef.current({ recipeId, collectionId: undefined });
+      } finally {
+        setPending(false);
+      }
+    },
+    [pending, recipeId]
+  );
 
   if (currentUser === null) return null;
 
@@ -69,11 +74,7 @@ export function RecipeCard({
   if (variant === "list") {
     return (
       <div className="group flex gap-4 p-3 -m-3 rounded-xl hover:bg-warm-white transition-colors relative">
-        <Link
-          to="/recipe/$slug"
-          params={{ slug }}
-          className="flex gap-4 flex-1 min-w-0"
-        >
+        <Link to="/recipe/$slug" params={{ slug }} className="flex gap-4 flex-1 min-w-0">
           <div className="w-24 h-24 rounded-lg overflow-hidden bg-cream-dark shrink-0">
             {coverImageUrl ? (
               <img src={coverImageUrl} alt={title} className="w-full h-full object-cover" />

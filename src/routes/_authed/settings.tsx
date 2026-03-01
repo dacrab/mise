@@ -1,12 +1,12 @@
+import { CalendarIcon, CameraIcon, EnvelopeIcon, UserCircleIcon } from "@heroicons/react/24/outline";
 import { createFileRoute } from "@tanstack/react-router";
-import { useQuery, useMutation } from "convex/react";
 import { api } from "convex/_generated/api";
 import type { Id } from "convex/_generated/dataModel";
-import { useState, useEffect, useRef } from "react";
-import { useFileUpload } from "@/hooks/useFileUpload";
-import { ProgressBar } from "@/components/ui/ProgressBar";
+import { useMutation, useQuery } from "convex/react";
+import { useEffect, useRef, useState } from "react";
+import { ProgressBar } from "@/components/ui/primitives";
 import { useToast } from "@/components/ui/toast";
-import { UserCircleIcon, EnvelopeIcon, CalendarIcon, CameraIcon } from "@heroicons/react/24/outline";
+import { useFileUpload } from "@/hooks/useFileUpload";
 
 export const Route = createFileRoute("/_authed/settings")({
   head: () => ({ meta: [{ title: "Settings | Mise" }] }),
@@ -17,18 +17,19 @@ function Settings() {
   const user = useQuery(api.users.currentUser);
   const updateProfile = useMutation(api.users.updateProfile);
   const generateUploadUrl = useMutation(api.users.generateUploadUrl);
-  const { upload, uploading, progress: uploadProgress } = useFileUpload(
-    () => generateUploadUrl(),
-    {
-      onSuccess: (storageId, preview) => {
-        setNewProfileImage(storageId as Id<"_storage">);
-        if (previewUrl) URL.revokeObjectURL(previewUrl);
-        setPreviewUrl(preview);
-        toast("Photo uploaded!", "success");
-      },
-      onError: () => toast("Could not upload image", "error"),
-    }
-  );
+  const {
+    upload,
+    uploading,
+    progress: uploadProgress,
+  } = useFileUpload(() => generateUploadUrl(), {
+    onSuccess: (storageId, preview) => {
+      setNewProfileImage(storageId as Id<"_storage">);
+      if (previewUrl) URL.revokeObjectURL(previewUrl);
+      setPreviewUrl(preview);
+      toast("Photo uploaded!", "success");
+    },
+    onError: () => toast("Could not upload image", "error"),
+  });
   const { toast } = useToast();
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -56,7 +57,12 @@ function Settings() {
   }, [userName, userUsername, userBio]);
 
   // Revoke preview object URL on unmount
-  useEffect(() => () => { if (previewUrl) URL.revokeObjectURL(previewUrl); }, [previewUrl]);
+  useEffect(
+    () => () => {
+      if (previewUrl) URL.revokeObjectURL(previewUrl);
+    },
+    [previewUrl]
+  );
 
   const hasChanges =
     !!user &&
@@ -72,8 +78,14 @@ function Settings() {
   const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
-    if (!file.type.startsWith("image/")) { toast("Please select an image file", "error"); return; }
-    if (file.size > 5 * 1024 * 1024) { toast("Image must be under 5MB", "error"); return; }
+    if (!file.type.startsWith("image/")) {
+      toast("Please select an image file", "error");
+      return;
+    }
+    if (file.size > 5 * 1024 * 1024) {
+      toast("Image must be under 5MB", "error");
+      return;
+    }
 
     await upload(file);
   };
@@ -83,12 +95,23 @@ function Settings() {
     if (!hasChanges) return;
     const trimName = name.trim();
     const trimUsername = username.trim();
-    if (!trimName) { toast("Name cannot be empty", "error"); return; }
-    if (trimUsername && !/^[a-z0-9_]+$/.test(trimUsername)) { toast("Username can only contain letters, numbers, and underscores", "error"); return; }
+    if (!trimName) {
+      toast("Name cannot be empty", "error");
+      return;
+    }
+    if (trimUsername && !/^[a-z0-9_]+$/.test(trimUsername)) {
+      toast("Username can only contain letters, numbers, and underscores", "error");
+      return;
+    }
 
     setSaving(true);
     try {
-      await updateProfile({ name: trimName, username: trimUsername || undefined, bio: bio.trim() || undefined, profileImage: newProfileImage ?? undefined });
+      await updateProfile({
+        name: trimName,
+        username: trimUsername || undefined,
+        bio: bio.trim() || undefined,
+        profileImage: newProfileImage ?? undefined,
+      });
       setNewProfileImage(null);
       toast("Profile saved", "success");
     } catch (err) {
@@ -113,16 +136,24 @@ function Settings() {
           </h2>
           <div className="flex items-center gap-5 mb-6">
             <div className="relative w-20 h-20 rounded-full overflow-hidden bg-cream-dark shrink-0 group/avatar">
-              {avatar
-                ? <img src={avatar} alt="Profile" className="w-full h-full object-cover" />
-                : <div className="w-full h-full flex items-center justify-center text-2xl font-medium text-sage">{(name || "?")[0]}</div>
-              }
+              {avatar ? (
+                <img src={avatar} alt="Profile" className="w-full h-full object-cover" />
+              ) : (
+                <div className="w-full h-full flex items-center justify-center text-2xl font-medium text-sage">
+                  {(name || "?")[0]}
+                </div>
+              )}
               {uploading && (
                 <div className="absolute inset-0 bg-charcoal/60 flex items-center justify-center">
                   <svg className="w-10 h-10" viewBox="0 0 36 36" aria-hidden="true">
                     <circle cx="18" cy="18" r="15" fill="none" stroke="white" strokeOpacity="0.3" strokeWidth="3" />
                     <circle
-                      cx="18" cy="18" r="15" fill="none" stroke="white" strokeWidth="3"
+                      cx="18"
+                      cy="18"
+                      r="15"
+                      fill="none"
+                      stroke="white"
+                      strokeWidth="3"
                       strokeDasharray={`${2 * Math.PI * 15}`}
                       strokeDashoffset={`${2 * Math.PI * 15 * (1 - uploadProgress / 100)}`}
                       strokeLinecap="round"
@@ -135,12 +166,24 @@ function Settings() {
               )}
               <label className="absolute inset-0 bg-charcoal/50 opacity-0 hover:opacity-100 transition-opacity flex items-center justify-center cursor-pointer">
                 <CameraIcon className="w-5 h-5 text-white" />
-                <input ref={fileInputRef} type="file" accept="image/*" onChange={handleImageUpload} className="hidden" aria-label="Upload profile photo" />
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  accept="image/*"
+                  onChange={handleImageUpload}
+                  className="hidden"
+                  aria-label="Upload profile photo"
+                />
               </label>
             </div>
             <div>
               <p className="font-medium text-charcoal">{name || "Anonymous"}</p>
-              <button type="button" onClick={() => fileInputRef.current?.click()} disabled={uploading} className="text-sm text-sage hover:text-sage-dark transition-colors">
+              <button
+                type="button"
+                onClick={() => fileInputRef.current?.click()}
+                disabled={uploading}
+                className="text-sm text-sage hover:text-sage-dark transition-colors"
+              >
                 {uploading ? `Uploading… ${uploadProgress}%` : "Change photo"}
               </button>
               {uploading && <ProgressBar value={uploadProgress} label="Uploading" className="mt-2 w-36" />}
@@ -149,20 +192,48 @@ function Settings() {
 
           <div className="space-y-5">
             <div>
-              <label htmlFor="name" className="block text-sm font-medium text-charcoal-light mb-2">Display name</label>
-              <input id="name" type="text" value={name} onChange={(e) => setName(e.target.value)} className="input-field" placeholder="Your name" />
+              <label htmlFor="name" className="block text-sm font-medium text-charcoal-light mb-2">
+                Display name
+              </label>
+              <input
+                id="name"
+                type="text"
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+                className="input-field"
+                placeholder="Your name"
+              />
             </div>
             <div>
-              <label htmlFor="username" className="block text-sm font-medium text-charcoal-light mb-2">Username</label>
+              <label htmlFor="username" className="block text-sm font-medium text-charcoal-light mb-2">
+                Username
+              </label>
               <div className="relative">
                 <span className="absolute left-3 top-1/2 -translate-y-1/2 text-stone">@</span>
-                <input id="username" type="text" value={username} onChange={(e) => setUsername(e.target.value.toLowerCase().replace(/[^a-z0-9_]/g, ""))} className="input-field pl-8" placeholder="username" />
+                <input
+                  id="username"
+                  type="text"
+                  value={username}
+                  onChange={(e) => setUsername(e.target.value.toLowerCase().replace(/[^a-z0-9_]/g, ""))}
+                  className="input-field pl-8"
+                  placeholder="username"
+                />
               </div>
               <p className="text-xs text-stone mt-1.5">Letters, numbers, and underscores only</p>
             </div>
             <div>
-              <label htmlFor="bio" className="block text-sm font-medium text-charcoal-light mb-2">Bio</label>
-              <textarea id="bio" value={bio} onChange={(e) => setBio(e.target.value)} className="textarea-field" rows={3} placeholder="A few words about yourself…" maxLength={160} />
+              <label htmlFor="bio" className="block text-sm font-medium text-charcoal-light mb-2">
+                Bio
+              </label>
+              <textarea
+                id="bio"
+                value={bio}
+                onChange={(e) => setBio(e.target.value)}
+                className="textarea-field"
+                rows={3}
+                placeholder="A few words about yourself…"
+                maxLength={160}
+              />
               <p className="text-xs text-stone mt-1.5 text-right">{bio.length}/160</p>
             </div>
           </div>
@@ -180,14 +251,22 @@ function Settings() {
               <dd className="text-charcoal">{user.email}</dd>
             </div>
             <div className="flex justify-between py-2 items-center">
-              <dt className="text-stone flex items-center gap-1.5"><CalendarIcon className="w-4 h-4" /> Member since</dt>
-              <dd className="text-charcoal">{new Date(user._creationTime).toLocaleDateString("en-US", { month: "long", year: "numeric" })}</dd>
+              <dt className="text-stone flex items-center gap-1.5">
+                <CalendarIcon className="w-4 h-4" /> Member since
+              </dt>
+              <dd className="text-charcoal">
+                {new Date(user._creationTime).toLocaleDateString("en-US", { month: "long", year: "numeric" })}
+              </dd>
             </div>
           </dl>
         </section>
 
         <div className="flex justify-end pt-2">
-          <button type="submit" disabled={saving || !hasChanges} className="btn-primary disabled:opacity-50 disabled:cursor-not-allowed">
+          <button
+            type="submit"
+            disabled={saving || !hasChanges}
+            className="btn-primary disabled:opacity-50 disabled:cursor-not-allowed"
+          >
             {saving ? "Saving…" : "Save changes"}
           </button>
         </div>

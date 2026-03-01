@@ -1,18 +1,14 @@
-import { describe, it, expect } from "vitest";
-import { formatTime, calculatePasswordStrength, getErrorMessage } from "@/lib/recipeUtils";
+import { describe, expect, it } from "vitest";
+import { calculatePasswordStrength, formatTime, getErrorMessage } from "@/lib/recipeUtils";
 
 describe("formatTime", () => {
-  it("formats 0 seconds", () => {
-    expect(formatTime(0)).toBe("0:00");
-  });
-  it("formats 65 seconds", () => {
-    expect(formatTime(65)).toBe("1:05");
-  });
-  it("formats exactly 1 minute", () => {
-    expect(formatTime(60)).toBe("1:00");
-  });
-  it("formats 3600 seconds (1 hour)", () => {
-    expect(formatTime(3600)).toBe("60:00");
+  it.each([
+    [0, "0:00"],
+    [60, "1:00"],
+    [65, "1:05"],
+    [3600, "60:00"],
+  ])("formatTime(%i) → %s", (input, expected) => {
+    expect(formatTime(input)).toBe(expected);
   });
 });
 

@@ -1,11 +1,11 @@
-import { createFileRoute, notFound } from "@tanstack/react-router";
 import { convexQuery } from "@convex-dev/react-query";
 import { useSuspenseQuery } from "@tanstack/react-query";
-import { useQuery } from "convex/react";
+import { createFileRoute, notFound } from "@tanstack/react-router";
 import { api } from "convex/_generated/api";
-import { PageLayout } from "@/components/layout";
+import { useQuery } from "convex/react";
+import { PageLayout } from "@/components/layout/PageLayout";
+import { FollowButton, FollowStats } from "@/components/social/Social";
 import { RecipeCard } from "@/components/ui/RecipeCard";
-import { FollowButton, FollowStats } from "@/components/social/SocialActions";
 
 function ChefSkeleton() {
   return (
@@ -44,9 +44,7 @@ export const Route = createFileRoute("/chef/$username")({
   // Pre-fetch chef profile so the page renders immediately on navigation
   // and bots get fully-populated HTML for SEO.
   loader: ({ params, context: { queryClient } }) =>
-    queryClient.ensureQueryData(
-      convexQuery(api.users.getByUsername, { username: params.username })
-    ),
+    queryClient.ensureQueryData(convexQuery(api.users.getByUsername, { username: params.username })),
   pendingComponent: ChefSkeleton,
   component: ChefPage,
   head: ({ loaderData }) => {
@@ -81,7 +79,9 @@ function ChefPage() {
               {chef.profileImageUrl || chef.image ? (
                 <img src={chef.profileImageUrl || chef.image} alt={chef.name} className="w-full h-full object-cover" />
               ) : (
-                <div className="w-full h-full flex items-center justify-center text-2xl font-medium text-sage">{(chef.name || "U")[0]}</div>
+                <div className="w-full h-full flex items-center justify-center text-2xl font-medium text-sage">
+                  {(chef.name || "U")[0]}
+                </div>
               )}
             </div>
             <div className="text-center sm:text-left">
@@ -90,7 +90,9 @@ function ChefPage() {
               {chef.bio && <p className="text-charcoal-light max-w-md mb-4">{chef.bio}</p>}
               <div className="flex flex-col sm:flex-row items-center gap-4">
                 <FollowStats userId={chef._id} />
-                <span className="text-sm text-charcoal"><strong>{recipes.length}</strong> recipes</span>
+                <span className="text-sm text-charcoal">
+                  <strong>{recipes.length}</strong> recipes
+                </span>
               </div>
               {!isOwnProfile && currentUser && (
                 <div className="mt-4">
@@ -118,7 +120,9 @@ function ChefPage() {
               ))}
             </div>
           ) : (
-            <div className="card p-12 text-center"><p className="text-stone">No recipes published yet.</p></div>
+            <div className="card p-12 text-center">
+              <p className="text-stone">No recipes published yet.</p>
+            </div>
           )}
         </section>
       </div>

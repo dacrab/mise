@@ -29,13 +29,23 @@
   body {
     @apply bg-cream text-charcoal font-sans antialiased;
   }
-  h1, h2, h3, h4 {
+  h1,
+  h2,
+  h3,
+  h4 {
     @apply font-serif text-charcoal;
   }
   ::selection {
     @apply bg-sage/30 text-charcoal;
   }
-  a, button, [role="button"], [type="button"], [type="submit"], label[for], select, [tabindex]:not([tabindex="-1"]) {
+  a,
+  button,
+  [role="button"],
+  [type="button"],
+  [type="submit"],
+  label[for],
+  select,
+  [tabindex]:not([tabindex="-1"]) {
     @apply cursor-pointer;
   }
 }
@@ -101,9 +111,15 @@
 }
 
 /* Tailwind v4: :has() selector for parent styling */
-.form-group:has(:focus) { @apply ring-2 ring-sage/20; }
-.form-group:has(:invalid:not(:placeholder-shown)) { @apply ring-2 ring-terracotta/30; }
-.card:has(img:hover) { @apply shadow-hover; }
+.form-group:has(:focus) {
+  @apply ring-2 ring-sage/20;
+}
+.form-group:has(:invalid:not(:placeholder-shown)) {
+  @apply ring-2 ring-terracotta/30;
+}
+.card:has(img:hover) {
+  @apply shadow-hover;
+}
 
 /* Recipe card grid variant */
 @utility recipe-card {
@@ -158,13 +174,25 @@
 }
 
 @keyframes fadeIn {
-  from { opacity: 0; transform: translateY(10px); }
-  to { opacity: 1; transform: translateY(0); }
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 @keyframes slideUp {
-  from { opacity: 0; transform: translateY(100%); }
-  to { opacity: 1; transform: translateY(0); }
+  from {
+    opacity: 0;
+    transform: translateY(100%);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 .animate-slide-up {
@@ -172,13 +200,25 @@
 }
 
 @keyframes scaleIn {
-  from { opacity: 0; transform: scale(0.96); }
-  to { opacity: 1; transform: scale(1); }
+  from {
+    opacity: 0;
+    transform: scale(0.96);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
 }
 
 @keyframes fadeSlide {
-  from { opacity: 0; transform: translateX(-10px); }
-  to { opacity: 1; transform: translateX(0); }
+  from {
+    opacity: 0;
+    transform: translateX(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
 }
 
 /* Utility for JS-triggered animations */

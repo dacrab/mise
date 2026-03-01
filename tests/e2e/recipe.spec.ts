@@ -1,4 +1,4 @@
-import { test, expect } from "@playwright/test";
+import { expect, test } from "@playwright/test";
 
 test.describe("Recipe page", () => {
   test("loads a recipe by slug", async ({ page }) => {
@@ -7,7 +7,7 @@ test.describe("Recipe page", () => {
     await page.waitForLoadState("networkidle");
 
     const recipeLink = page.locator("a[href^='/recipe/']").first();
-    const exists = await recipeLink.count() > 0;
+    const exists = (await recipeLink.count()) > 0;
     if (!exists) {
       test.skip(true, "No public recipes available to test");
       return;
@@ -25,7 +25,7 @@ test.describe("Recipe page", () => {
     await page.waitForLoadState("networkidle");
 
     const recipeLink = page.locator("a[href^='/recipe/']").first();
-    if (await recipeLink.count() === 0) {
+    if ((await recipeLink.count()) === 0) {
       test.skip(true, "No public recipes available");
       return;
     }

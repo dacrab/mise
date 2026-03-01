@@ -1,7 +1,7 @@
-import { query } from "./_generated/server";
 import { v } from "convex/values";
-import { getOptionalAuth, withCoverUrls } from "./lib/helpers";
 import type { Id } from "./_generated/dataModel";
+import { query } from "./_generated/server";
+import { getOptionalAuth, withCoverUrls } from "./lib/helpers";
 
 // Get trending recipes (most liked in last 7 days)
 export const trending = query({
@@ -22,6 +22,7 @@ export const trending = query({
       .map(([id]) => id);
 
     const recipes = await Promise.all(topRecipeIds.map((id) => ctx.db.get(id as Id<"recipes">)));
+
     const published = recipes.filter((r): r is NonNullable<typeof r> => r !== null && r.status === "published");
     const withUrls = await withCoverUrls(ctx, published);
 
@@ -39,29 +40,40 @@ export const recommendations = query({
     const userId = await getOptionalAuth(ctx);
 
     if (!userId) {
-      const recipes = await ctx.db.query("recipes")
-        .withIndex("by_status", (q) => q.eq("status", "published")).order("desc").take(limit);
+      const recipes = await ctx.db
+        .query("recipes")
+        .withIndex("by_status", (q) => q.eq("status", "published"))
+        .order("desc")
+        .take(limit);
       return withCoverUrls(ctx, recipes);
     }
 
-    const userLikes = await ctx.db.query("likes")
-      .withIndex("by_user_recipe", (q) => q.eq("userId", userId)).collect();
+    const userLikes = await ctx.db
+      .query("likes")
+      .withIndex("by_user_recipe", (q) => q.eq("userId", userId))
+      .collect();
     const likedRecipeIds = new Set(userLikes.map((l) => l.recipeId));
 
     if (likedRecipeIds.size === 0) {
-      const recipes = await ctx.db.query("recipes")
-        .withIndex("by_status", (q) => q.eq("status", "published")).order("desc").take(limit);
+      const recipes = await ctx.db
+        .query("recipes")
+        .withIndex("by_status", (q) => q.eq("status", "published"))
+        .order("desc")
+        .take(limit);
       return withCoverUrls(ctx, recipes);
     }
 
     const likedRecipes = await Promise.all([...likedRecipeIds].slice(0, 10).map((id) => ctx.db.get(id)));
-    const categories = [...new Set(likedRecipes.flatMap((r) => r ? [r.category] : []))];
+    const categories = [...new Set(likedRecipes.flatMap((r) => (r ? [r.category] : [])))];
 
     const recommendations = [];
     for (const category of categories) {
-      const categoryRecipes = await ctx.db.query("recipes")
+      const categoryRecipes = await ctx.db
+        .query("recipes")
         .withIndex("by_category", (q) => q.eq("category", category))
-        .filter((q) => q.eq(q.field("status"), "published")).order("desc").take(20);
+        .filter((q) => q.eq(q.field("status"), "published"))
+        .order("desc")
+        .take(20);
 
       for (const recipe of categoryRecipes) {
         if (!likedRecipeIds.has(recipe._id) && recipe.userId !== userId) {
@@ -74,4 +86,3 @@ export const recommendations = query({
     return withCoverUrls(ctx, unique);
   },
 });
-

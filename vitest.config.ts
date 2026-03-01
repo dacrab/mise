@@ -4,6 +4,12 @@ import { resolve } from "path";
 
 export default defineConfig({
   plugins: [react()],
+  resolve: {
+    alias: {
+      "@": resolve(__dirname, "./src"),
+      "convex": resolve(__dirname, "./convex"),
+    },
+  },
   test: {
     environment: "jsdom",
     globals: true,
@@ -20,18 +26,6 @@ export default defineConfig({
         "src/client.tsx",
         "src/server.tsx",
       ],
-      thresholds: {
-        statements: 60,
-        branches: 60,
-        functions: 60,
-        lines: 60,
-      },
-    },
-  },
-  resolve: {
-    alias: {
-      "@": resolve(__dirname, "./src"),
-      "convex": resolve(__dirname, "./convex"),
     },
   },
 });

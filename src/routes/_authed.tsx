@@ -1,14 +1,9 @@
 import { createFileRoute, Outlet } from "@tanstack/react-router";
-import { useQuery } from "convex/react";
 import { api } from "convex/_generated/api";
+import { useQuery } from "convex/react";
 import { Header } from "@/components/layout/Header";
 
 export const Route = createFileRoute("/_authed")({
-  beforeLoad: async () => {
-    // Server-side: Convex auth is client-only, so we can't gate here yet.
-    // The component-level guard handles the redirect on the client.
-    // This hook is reserved for future SSR token validation.
-  },
   component: AuthedLayout,
 });
 

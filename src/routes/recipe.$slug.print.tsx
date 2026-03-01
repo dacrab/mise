@@ -1,7 +1,7 @@
-import { createFileRoute, notFound } from "@tanstack/react-router";
-import { useQuery } from "convex/react";
-import { api } from "convex/_generated/api";
 import { PrinterIcon } from "@heroicons/react/24/outline";
+import { createFileRoute, notFound } from "@tanstack/react-router";
+import { api } from "convex/_generated/api";
+import { useQuery } from "convex/react";
 
 export const Route = createFileRoute("/recipe/$slug/print")({
   component: PrintRecipe,
@@ -18,9 +18,13 @@ function PrintRecipe() {
         <div className="h-4 w-full bg-gray-200 rounded mb-2" />
         <div className="h-4 w-1/2 bg-gray-200 rounded mb-8" />
         <div className="h-6 w-32 bg-gray-200 rounded mb-4" />
-        {Array.from({ length: 6 }).map((_, i) => <div key={i} className="h-4 bg-gray-200 rounded mb-2" />)}
+        {Array.from({ length: 6 }).map((_, i) => (
+          <div key={i} className="h-4 bg-gray-200 rounded mb-2" />
+        ))}
         <div className="h-6 w-32 bg-gray-200 rounded mt-8 mb-4" />
-        {Array.from({ length: 4 }).map((_, i) => <div key={i} className="h-4 bg-gray-200 rounded mb-3" />)}
+        {Array.from({ length: 4 }).map((_, i) => (
+          <div key={i} className="h-4 bg-gray-200 rounded mb-3" />
+        ))}
       </div>
     );
   }
@@ -30,7 +34,7 @@ function PrintRecipe() {
   return (
     <div className="max-w-2xl mx-auto p-8 print:p-0 bg-white min-h-screen">
       <style>{`@media print { body { -webkit-print-color-adjust: exact; } }`}</style>
-      
+
       <header className="mb-8 pb-6 border-b-2 border-charcoal">
         <h1 className="text-3xl font-bold mb-2">{recipe.title}</h1>
         {recipe.description && <p className="text-stone">{recipe.description}</p>}

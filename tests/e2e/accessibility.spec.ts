@@ -1,17 +1,16 @@
-import { test, expect } from "@playwright/test";
+import { expect, test } from "@playwright/test";
 
 test.describe("Accessibility", () => {
-  test("home page has a main landmark", async ({ page }) => {
-    await page.goto("/");
-    await page.waitForLoadState("networkidle");
-    await expect(page.getByRole("main")).toBeVisible();
-  });
-
-  test("home page has a nav landmark", async ({ page }) => {
-    await page.goto("/");
-    await page.waitForLoadState("networkidle");
-    await expect(page.getByRole("navigation")).toBeVisible();
-  });
+  for (const [landmark, role] of [
+    ["main", "main"],
+    ["nav", "navigation"],
+  ] as const) {
+    test(`home page has a ${landmark} landmark`, async ({ page }) => {
+      await page.goto("/");
+      await page.waitForLoadState("networkidle");
+      await expect(page.getByRole(role)).toBeVisible();
+    });
+  }
 
   test("images have alt text", async ({ page }) => {
     await page.goto("/");

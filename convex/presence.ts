@@ -1,6 +1,6 @@
 import { v } from "convex/values";
 import { mutation, query } from "./_generated/server";
-import { requireAuth, getOptionalAuth } from "./lib/helpers";
+import { getOptionalAuth, requireAuth } from "./lib/helpers";
 
 const PRESENCE_TTL = 30_000; // 30 seconds
 

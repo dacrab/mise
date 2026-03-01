@@ -1,6 +1,6 @@
-import { query, mutation } from "./_generated/server";
 import { v } from "convex/values";
-import { requireAuth, getOptionalAuth } from "./lib/helpers";
+import { mutation, query } from "./_generated/server";
+import { getOptionalAuth, requireAuth } from "./lib/helpers";
 
 // Get user's notifications
 export const list = query({
@@ -17,15 +17,15 @@ export const list = query({
 
     // Batch fetch actors and recipes
     const actorIds = [...new Set(notifications.map((n) => n.actorId))];
-    const recipeIds = [...new Set(notifications.flatMap((n) => n.recipeId ? [n.recipeId] : []))];
+    const recipeIds = [...new Set(notifications.flatMap((n) => (n.recipeId ? [n.recipeId] : [])))];
 
     const [actors, recipes] = await Promise.all([
       Promise.all(actorIds.map((id) => ctx.db.get(id))),
       Promise.all(recipeIds.map((id) => ctx.db.get(id))),
     ]);
 
-    const actorMap = new Map(actors.flatMap((a) => a ? [[a._id, a] as const] : []));
-    const recipeMap = new Map(recipes.flatMap((r) => r ? [[r._id, r] as const] : []));
+    const actorMap = new Map(actors.flatMap((a) => (a ? [[a._id, a] as const] : [])));
+    const recipeMap = new Map(recipes.flatMap((r) => (r ? [[r._id, r] as const] : [])));
 
     return notifications.map((n) => {
       const actor = actorMap.get(n.actorId);

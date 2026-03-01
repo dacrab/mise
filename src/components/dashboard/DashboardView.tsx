@@ -1,20 +1,20 @@
-
-import { useState } from "react";
-import { useQuery, useMutation } from "convex/react";
+import { BookmarkIcon, PhotoIcon } from "@heroicons/react/24/outline";
 import { Link, useSearch } from "@tanstack/react-router";
 import { api } from "convex/_generated/api";
 import type { Id } from "convex/_generated/dataModel";
-import { useToast } from "@/components/ui/toast";
+import { useMutation, useQuery } from "convex/react";
 import { Collections } from "@/components/dashboard/Collections";
-import { BookmarkIcon, PhotoIcon } from "@heroicons/react/24/outline";
+import { useConfirmAction } from "@/hooks/useConfirmAction";
 
 export function DashboardView() {
-  const { toast } = useToast();
   const user = useQuery(api.users.currentUser);
   const myRecipes = useQuery(api.recipes.myRecipes);
   const myBookmarks = useQuery(api.recipes.myBookmarks);
   const deleteRecipe = useMutation(api.recipes.remove);
-  const [pendingDelete, setPendingDelete] = useState<Id<"recipes"> | null>(null);
+  const { trigger: handleDelete, pendingId: pendingDelete } = useConfirmAction<Id<"recipes">>(
+    async (id) => { await deleteRecipe({ id }); },
+    { confirmMessage: "Tap delete again to confirm", successMessage: "Recipe deleted", errorMessage: "Could not delete recipe" }
+  );
 
   const { tab = "my-recipes" } = useSearch({ strict: false }) as { tab?: string };
   let recipes: typeof myRecipes;
@@ -49,29 +49,15 @@ export function DashboardView() {
     );
   }
 
-  const handleDelete = async (id: Id<"recipes">) => {
-    if (pendingDelete !== id) {
-      setPendingDelete(id);
-      toast("Tap delete again to confirm", "info");
-      setTimeout(() => setPendingDelete(null), 3000);
-      return;
-    }
-    setPendingDelete(null);
-    try {
-      await deleteRecipe({ id });
-      toast("Recipe deleted", "success");
-    } catch {
-      toast("Could not delete recipe", "error");
-    }
-  };
-
   return (
     <div className="wrapper py-8">
       <div className="py-8 md:py-12 border-b border-cream-dark mb-8">
         <div className="flex flex-col md:flex-row md:items-end justify-between gap-6">
           <div>
             <p className="font-hand text-xl text-sage mb-1">your kitchen</p>
-            <h1 className="font-serif text-3xl md:text-4xl font-medium">Welcome back, {user.name?.split(" ")[0] || "Chef"}</h1>
+            <h1 className="font-serif text-3xl md:text-4xl font-medium">
+              Welcome back, {user.name?.split(" ")[0] || "Chef"}
+            </h1>
           </div>
           <div className="flex gap-6">
             <div className="text-center">
@@ -112,27 +98,48 @@ export function DashboardView() {
             <BookmarkIcon className="w-6 h-6 text-stone" />
           </div>
           <h2 className="font-serif text-xl font-medium mb-2">Nothing here yet</h2>
-          <p className="text-stone text-sm mb-6">{tab === "saved" ? "Recipes you bookmark will appear here." : "Start by creating your first recipe."}</p>
-          {tab !== "saved" && <Link to="/dashboard/create" className="btn-primary text-sm">Create recipe</Link>}
+          <p className="text-stone text-sm mb-6">
+            {tab === "saved" ? "Recipes you bookmark will appear here." : "Start by creating your first recipe."}
+          </p>
+          {tab !== "saved" && (
+            <Link to="/dashboard/create" className="btn-primary text-sm">
+              Create recipe
+            </Link>
+          )}
         </div>
       ) : (
         <div className="space-y-3">
           {(recipes ?? []).map((r) => (
             <div key={r._id} className="card-hover flex items-center gap-4 p-4 group">
               <div className="w-16 h-16 md:w-20 md:h-20 rounded-lg overflow-hidden bg-cream-dark shrink-0">
-                {r.coverImageUrl ? <img src={r.coverImageUrl} className="w-full h-full object-cover" alt="" /> : <div className="w-full h-full flex items-center justify-center"><PhotoIcon className="w-6 h-6 text-stone-light" /></div>}
+                {r.coverImageUrl ? (
+                  <img src={r.coverImageUrl} className="w-full h-full object-cover" alt="" />
+                ) : (
+                  <div className="w-full h-full flex items-center justify-center">
+                    <PhotoIcon className="w-6 h-6 text-stone-light" />
+                  </div>
+                )}
               </div>
               <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-2 mb-1">
                   <h3 className="font-serif text-lg font-medium truncate group-hover:text-sage">{r.title}</h3>
                   {r.status === "draft" && <span className="tag text-[10px] bg-honey/20 text-honey">Draft</span>}
                 </div>
-                <Link to="/recipe/$slug" params={{ slug: r.slug }} className="text-xs text-stone hover:text-sage">View →</Link>
+                <Link to="/recipe/$slug" params={{ slug: r.slug }} className="text-xs text-stone hover:text-sage">
+                  View →
+                </Link>
               </div>
               {tab === "my-recipes" && (
                 <div className="flex gap-2">
-                  <Link to="/dashboard/edit/$id" params={{ id: r._id }} className="btn-ghost text-xs py-1.5 px-3">Edit</Link>
-                  <button onClick={() => handleDelete(r._id)} className={`btn-ghost text-xs py-1.5 px-3 ${pendingDelete === r._id ? "text-terracotta font-semibold" : "text-terracotta"}`}>{pendingDelete === r._id ? "Confirm?" : "Delete"}</button>
+                  <Link to="/dashboard/edit/$id" params={{ id: r._id }} className="btn-ghost text-xs py-1.5 px-3">
+                    Edit
+                  </Link>
+                  <button
+                    onClick={() => handleDelete(r._id)}
+                    className={`btn-ghost text-xs py-1.5 px-3 ${pendingDelete === r._id ? "text-terracotta font-semibold" : "text-terracotta"}`}
+                  >
+                    {pendingDelete === r._id ? "Confirm?" : "Delete"}
+                  </button>
                 </div>
               )}
             </div>

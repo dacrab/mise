@@ -1,6 +1,13 @@
-import { query, mutation } from "./_generated/server";
-import { v } from "convex/values";
 import { getAuthUserId } from "@convex-dev/auth/server";
+import { v } from "convex/values";
+import { mutation, query } from "./_generated/server";
+
+async function withProfileImageUrl<T extends { profileImage?: string | null }>(
+  ctx: { storage: { getUrl: (id: string) => Promise<string | null> } },
+  user: T
+) {
+  return { ...user, profileImageUrl: user.profileImage ? await ctx.storage.getUrl(user.profileImage) : null };
+}
 
 export const currentUser = query({
   args: {},
@@ -9,13 +16,7 @@ export const currentUser = query({
     if (!userId) return null;
     const user = await ctx.db.get(userId);
     if (!user) return null;
-    
-    // Get profile image URL if exists
-    const profileImageUrl = user.profileImage 
-      ? await ctx.storage.getUrl(user.profileImage)
-      : null;
-    
-    return { ...user, profileImageUrl };
+    return withProfileImageUrl(ctx, user);
   },
 });
 
@@ -27,12 +28,7 @@ export const getByUsername = query({
       .withIndex("by_username", (q) => q.eq("username", username))
       .first();
     if (!user) return null;
-    
-    const profileImageUrl = user.profileImage 
-      ? await ctx.storage.getUrl(user.profileImage)
-      : null;
-    
-    return { ...user, profileImageUrl };
+    return withProfileImageUrl(ctx, user);
   },
 });
 

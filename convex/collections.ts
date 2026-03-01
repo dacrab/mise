@@ -1,6 +1,6 @@
-import { query, mutation } from "./_generated/server";
 import { v } from "convex/values";
-import { requireAuth, getOptionalAuth, withCoverUrls, validateLength } from "./lib/helpers";
+import { mutation, query } from "./_generated/server";
+import { getOptionalAuth, requireAuth, validateLength, withCoverUrls } from "./lib/helpers";
 
 // List user's collections
 export const list = query({
@@ -50,10 +50,7 @@ export const remove = mutation({
       .withIndex("by_collection", (q) => q.eq("collectionId", id))
       .collect();
 
-    await Promise.all([
-      ...bookmarks.map((b) => ctx.db.patch(b._id, { collectionId: undefined })),
-      ctx.db.delete(id),
-    ]);
+    await Promise.all([...bookmarks.map((b) => ctx.db.patch(b._id, { collectionId: undefined })), ctx.db.delete(id)]);
   },
 });
 
@@ -65,10 +62,17 @@ export const getBookmarks = query({
     if (!userId) return [];
 
     const bookmarks = collectionId
-      ? await ctx.db.query("bookmarks").withIndex("by_collection", (q) => q.eq("collectionId", collectionId)).collect()
-      : await ctx.db.query("bookmarks").withIndex("by_user", (q) => q.eq("userId", userId)).filter((q) => q.eq(q.field("collectionId"), undefined)).collect();
+      ? await ctx.db
+          .query("bookmarks")
+          .withIndex("by_collection", (q) => q.eq("collectionId", collectionId))
+          .collect()
+      : await ctx.db
+          .query("bookmarks")
+          .withIndex("by_user", (q) => q.eq("userId", userId))
+          .filter((q) => q.eq(q.field("collectionId"), undefined))
+          .collect();
 
     const recipes = await Promise.all(bookmarks.map((b) => ctx.db.get(b.recipeId)));
-    return withCoverUrls(ctx, recipes.filter(Boolean) as Array<NonNullable<typeof recipes[number]>>);
+    return withCoverUrls(ctx, recipes.filter(Boolean) as Array<NonNullable<(typeof recipes)[number]>>);
   },
 });

@@ -3,6 +3,7 @@ node_modules/
 
 # Build
 dist
+coverage/
 playwright-report
 test-results/
 .output/

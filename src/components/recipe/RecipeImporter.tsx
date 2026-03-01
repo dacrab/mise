@@ -1,6 +1,6 @@
-import { useState } from "react";
-import { useAction } from "convex/react";
 import { api } from "convex/_generated/api";
+import { useAction } from "convex/react";
+import { useState } from "react";
 
 type ImportedRecipe = {
   title: string;
@@ -39,7 +39,9 @@ export function RecipeImporter({ onImport }: { onImport: (recipe: ImportedRecipe
     <div className="p-4 bg-cream rounded-lg border border-cream-dark">
       <h3 className="font-medium mb-2">Import from URL</h3>
       <div className="flex gap-2">
-        <label htmlFor="import-url" className="sr-only">Recipe URL</label>
+        <label htmlFor="import-url" className="sr-only">
+          Recipe URL
+        </label>
         <input
           id="import-url"
           type="url"

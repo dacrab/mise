@@ -3,6 +3,19 @@
  * No React, no Convex, no side effects.
  */
 
+export const CATEGORIES = [
+  "Breakfast",
+  "Lunch",
+  "Dinner",
+  "Dessert",
+  "Vegan",
+  "Quick & Easy",
+  "Baking",
+  "Italian",
+  "Asian",
+  "Mexican",
+] as const;
+
 const FRACTIONS: Array<[number, string]> = [
   [0.125, "⅛"],
   [0.25, "¼"],

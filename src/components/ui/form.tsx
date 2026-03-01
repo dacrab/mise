@@ -1,6 +1,15 @@
 import { EyeIcon, EyeSlashIcon } from "@heroicons/react/24/outline";
 
-export function FormField({ label, id, type, value, onChange, placeholder, error, autoComplete }: {
+export function FormField({
+  label,
+  id,
+  type,
+  value,
+  onChange,
+  placeholder,
+  error,
+  autoComplete,
+}: {
   label: string;
   id: string;
   type: string;
@@ -16,7 +25,9 @@ export function FormField({ label, id, type, value, onChange, placeholder, error
   const errorId = `${id}-error`;
   return (
     <div>
-      <label htmlFor={id} className="block text-sm font-medium text-charcoal-light mb-2">{label}</label>
+      <label htmlFor={id} className="block text-sm font-medium text-charcoal-light mb-2">
+        {label}
+      </label>
       <input
         id={id}
         type={type}
@@ -28,12 +39,24 @@ export function FormField({ label, id, type, value, onChange, placeholder, error
         aria-describedby={error ? errorId : undefined}
         autoComplete={autoComplete ?? defaultAutoComplete}
       />
-      {error && <p id={errorId} className="text-xs text-terracotta mt-1">{error}</p>}
+      {error && (
+        <p id={errorId} className="text-xs text-terracotta mt-1">
+          {error}
+        </p>
+      )}
     </div>
   );
 }
 
-export function PasswordField({ label, value, onChange, show, onToggleShow, autoComplete, strengthMeter }: {
+export function PasswordField({
+  label,
+  value,
+  onChange,
+  show,
+  onToggleShow,
+  autoComplete,
+  strengthMeter,
+}: {
   label: string;
   value: string;
   onChange: (v: string) => void;
@@ -66,8 +89,19 @@ export function PasswordField({ label, value, onChange, show, onToggleShow, auto
       </div>
       {strengthMeter && value && (
         <div id="password-strength" className="mt-3 space-y-2" aria-live="polite">
-          <div className="flex gap-1 h-1" role="progressbar" aria-valuenow={strengthMeter.strength} aria-valuemin={0} aria-valuemax={5}>
-            {[1,2,3,4,5].map((i) => <div key={i} className={`flex-1 rounded-full ${i <= strengthMeter.strength ? strengthMeter.colors[strengthMeter.strength] : "bg-cream-dark"}`} />)}
+          <div
+            className="flex gap-1 h-1"
+            role="progressbar"
+            aria-valuenow={strengthMeter.strength}
+            aria-valuemin={0}
+            aria-valuemax={5}
+          >
+            {[1, 2, 3, 4, 5].map((i) => (
+              <div
+                key={i}
+                className={`flex-1 rounded-full ${i <= strengthMeter.strength ? strengthMeter.colors[strengthMeter.strength] : "bg-cream-dark"}`}
+              />
+            ))}
           </div>
           <p className="text-xs text-stone">{strengthMeter.labels[strengthMeter.strength]}</p>
         </div>
@@ -87,9 +121,12 @@ export function FormError({ message }: { message: string }) {
 export function Divider() {
   return (
     <div className="relative py-4">
-      <div className="absolute inset-0 flex items-center"><div className="w-full border-t border-cream-dark" /></div>
-      <div className="relative flex justify-center"><span className="bg-cream px-3 text-xs text-stone">or</span></div>
+      <div className="absolute inset-0 flex items-center">
+        <div className="w-full border-t border-cream-dark" />
+      </div>
+      <div className="relative flex justify-center">
+        <span className="bg-cream px-3 text-xs text-stone">or</span>
+      </div>
     </div>
   );
 }
-

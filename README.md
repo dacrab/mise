@@ -33,10 +33,10 @@ A modern recipe sharing platform built with TanStack Start, React, and Convex.
 - "Who's cooking now" presence
 
 ### User Features
-- Email/password authentication
+- Email/password + Google authentication
 - Password reset flow
 - Profile settings with custom avatar upload
-- Recipe collections (organize bookmarks)
+- Recipe collections (organise bookmarks)
 - Chef profiles with follower counts
 - Personal dashboard
 
@@ -68,7 +68,7 @@ bun typecheck        # Run TypeScript checks
 
 bun test             # Run unit tests (watch mode)
 bun test:run         # Run unit tests once
-bun test:coverage    # Run tests with coverage
+bun test:coverage    # Run tests with coverage report
 bun test:e2e         # Run E2E tests
 bun test:e2e:ui      # Run E2E with Playwright UI
 bun test:all         # Run all checks (typecheck + lint + tests)
@@ -82,7 +82,7 @@ VITE_CONVEX_URL="https://your-deployment.convex.cloud"
 ```
 
 Set in [Convex Dashboard](https://dashboard.convex.dev):
-- `SITE_URL` - Your site URL
+- `SITE_URL` — Your site URL
 
 ## Project Structure
 
@@ -94,36 +94,41 @@ src/
 │   ├── _authed/
 │   │   ├── dashboard/       # Dashboard pages
 │   │   └── settings.tsx     # User settings
-│   ├── (auth)/              # Auth pages (login, signup)
+│   ├── (auth)/              # Auth pages (login, signup, forgot-password)
 │   ├── index.tsx            # Home page
 │   ├── recipe.$slug.tsx     # Recipe detail
 │   ├── chef.$username.tsx   # Chef profile
 │   └── about|privacy|terms  # Static pages
 ├── components/
-│   ├── auth/                # Auth forms
-│   ├── layout/              # Header, Footer
-│   ├── recipe/              # Recipe components
-│   ├── social/              # Social features
-│   └── ui/                  # Shared UI components
-├── hooks/                   # Custom hooks
+│   ├── auth/                # AuthForms
+│   ├── dashboard/           # Collections, DashboardView
+│   ├── layout/              # Header, PageLayout
+│   ├── recipe/              # RecipeEditor, RecipeWidgets, RecipeImporter
+│   ├── social/              # Social (comments, notifications, actions)
+│   └── ui/                  # primitives, form, RecipeCard, Select, toast…
+├── hooks/
+│   ├── useConfirmAction.ts  # Double-tap confirmation pattern
+│   └── useFileUpload.ts     # File upload helper
+├── lib/
+│   └── recipeUtils.ts       # Pure utilities + CATEGORIES constant
 └── styles.css               # Global styles
 
 convex/
-├── auth.ts                  # Auth config
+├── schema.ts                # Database schema
+├── auth.ts / auth.config.ts # Auth setup
 ├── recipes.ts               # Recipe CRUD
 ├── social.ts                # Likes, bookmarks, comments
-├── follows.ts               # Follow system
-├── notifications.ts         # Notifications
 ├── collections.ts           # Bookmark collections
 ├── discovery.ts             # Trending, recommendations
-├── ratings.ts               # Star ratings
+├── notifications.ts         # Notifications
 ├── presence.ts              # Who's cooking
-└── schema.ts                # Database schema
+├── import.ts                # URL recipe importer
+├── users.ts                 # User profiles
+└── lib/helpers.ts           # Shared Convex helpers
 
 tests/
 ├── unit/                    # Unit tests (Vitest)
-├── e2e/                     # E2E tests (Playwright)
-└── fixtures/                # Test mocks
+└── e2e/                     # E2E tests (Playwright)
 ```
 
 ## Testing
@@ -133,8 +138,8 @@ tests/
 bun test:run
 ```
 - Ingredient scaling logic
-- Recipe utilities (slug generation, validation)
-- UI utilities (time formatting, password strength)
+- Recipe utilities (slug generation, time formatting)
+- UI utilities (password strength)
 
 ### E2E Tests
 ```bash
@@ -144,7 +149,6 @@ bun test:e2e
 - Authentication flows
 - Recipe interactions
 - Accessibility checks
-- Responsive design
 
 ## License
 

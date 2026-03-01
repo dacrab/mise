@@ -1,6 +1,6 @@
-import type { QueryCtx, MutationCtx } from "../_generated/server";
 import { getAuthUserId } from "@convex-dev/auth/server";
 import type { Id } from "../_generated/dataModel";
+import type { MutationCtx, QueryCtx } from "../_generated/server";
 
 export async function requireAuth(ctx: MutationCtx | QueryCtx) {
   const userId = await getAuthUserId(ctx);
@@ -52,10 +52,6 @@ export async function createNotification(
   if (args.userId === args.actorId) return;
   await ctx.db.insert("notifications", { ...args, read: false });
 }
-
-// sanitizeInput was removed: Convex stores data as structured JSON, not HTML,
-// so HTML-escaping at the persistence layer is both wrong and unnecessary.
-// Escaping for display belongs in the React layer (React does this automatically).
 
 export function validateLength(value: string, min: number, max: number, field: string) {
   const trimmed = value.trim();

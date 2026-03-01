@@ -1,28 +1,33 @@
-
-import { useState } from "react";
-import { useQuery, useMutation } from "convex/react";
+import { FolderIcon, FolderPlusIcon, PlusIcon, TrashIcon } from "@heroicons/react/24/outline";
 import { Link } from "@tanstack/react-router";
 import { api } from "convex/_generated/api";
 import type { Id } from "convex/_generated/dataModel";
-import { useToast } from "@/components/ui/toast";
+import { useMutation, useQuery } from "convex/react";
+import { useState } from "react";
 import { RecipeCard } from "@/components/ui/RecipeCard";
-import { FolderIcon, FolderPlusIcon, TrashIcon, PlusIcon } from "@heroicons/react/24/outline";
+import { useConfirmAction } from "@/hooks/useConfirmAction";
+import { useToast } from "@/components/ui/toast";
 
 export function Collections() {
   const { toast } = useToast();
   const collections = useQuery(api.collections.list) ?? [];
   const createCollection = useMutation(api.collections.create);
   const removeCollection = useMutation(api.collections.remove);
-  
+
   const [selectedId, setSelectedId] = useState<Id<"collections"> | null>(null);
   const [newName, setNewName] = useState("");
   const [showCreate, setShowCreate] = useState(false);
-  const [pendingDeleteId, setPendingDeleteId] = useState<Id<"collections"> | null>(null);
+  const { trigger: handleDelete } = useConfirmAction<Id<"collections">>(
+    async (id) => {
+      await removeCollection({ id });
+      if (selectedId === id) setSelectedId(null);
+    },
+    { confirmMessage: "Tap delete again to confirm", successMessage: "Collection deleted", errorMessage: "Could not delete collection" }
+  );
 
-  const bookmarks = useQuery(
-    api.collections.getBookmarks,
-    selectedId ? { collectionId: selectedId } : { collectionId: undefined }
-  ) ?? [];
+  const bookmarks =
+    useQuery(api.collections.getBookmarks, selectedId ? { collectionId: selectedId } : { collectionId: undefined }) ??
+    [];
 
   const handleCreate = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -34,23 +39,6 @@ export function Collections() {
       toast("Collection created", "success");
     } catch {
       toast("Could not create collection", "error");
-    }
-  };
-
-  const handleDelete = async (id: Id<"collections">) => {
-    if (pendingDeleteId !== id) {
-      setPendingDeleteId(id);
-      toast("Tap delete again to confirm", "info");
-      setTimeout(() => setPendingDeleteId(null), 3000);
-      return;
-    }
-    setPendingDeleteId(null);
-    try {
-      await removeCollection({ id });
-      if (selectedId === id) setSelectedId(null);
-      toast("Collection deleted", "success");
-    } catch {
-      toast("Could not delete collection", "error");
     }
   };
 
@@ -91,7 +79,9 @@ export function Collections() {
 
         {showCreate ? (
           <form onSubmit={handleCreate} className="flex gap-2">
-            <label htmlFor="new-collection-name" className="sr-only">Collection name</label>
+            <label htmlFor="new-collection-name" className="sr-only">
+              Collection name
+            </label>
             <input
               id="new-collection-name"
               type="text"
@@ -99,7 +89,6 @@ export function Collections() {
               onChange={(e) => setNewName(e.target.value)}
               placeholder="Collection name"
               className="flex-1 px-3 py-2 text-sm rounded-lg border border-cream-dark focus:outline-none focus:border-sage"
-              autoFocus
             />
             <button type="submit" className="btn-primary text-sm py-2 px-3">
               <PlusIcon className="w-4 h-4" />
@@ -121,12 +110,14 @@ export function Collections() {
         <h2 className="font-serif text-xl font-medium mb-4">
           {selectedId ? collections.find((c) => c._id === selectedId)?.name : "All Saved Recipes"}
         </h2>
-        
+
         {bookmarks.length === 0 ? (
           <div className="card p-12 text-center">
             <FolderIcon className="w-12 h-12 text-stone-light mx-auto mb-4" />
             <p className="text-stone mb-4">No recipes in this collection</p>
-            <Link to="/" className="btn-primary text-sm">Browse recipes</Link>
+            <Link to="/" className="btn-primary text-sm">
+              Browse recipes
+            </Link>
           </div>
         ) : (
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
