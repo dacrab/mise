@@ -1,5 +1,6 @@
 /// <reference types="vite/client" />
 import type { QueryClient } from "@tanstack/react-query";
+import { Analytics } from "@vercel/analytics/react";
 import { createRootRouteWithContext, HeadContent, Outlet, Scripts, useRouterState } from "@tanstack/react-router";
 import { ErrorPage } from "@/components/layout/PageLayout";
 import appCss from "../styles.css?url";
@@ -14,6 +15,7 @@ function RootComponent() {
       <body>
         {isLoading && <div className="fixed top-0 left-0 w-full h-px bg-sage animate-pulse z-50" />}
         <Outlet />
+        <Analytics />
         <Scripts />
       </body>
     </html>
