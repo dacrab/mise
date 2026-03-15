@@ -25,10 +25,11 @@ interface ImportMetaEnv extends Env {
 	readonly SSR: boolean;
 }
 
-type Runtime = import("@astrojs/cloudflare").Runtime<Env>;
+type Runtime = import("@astrojs/cloudflare").Runtime;
 
 declare namespace App {
 	interface Locals extends Runtime {
+		env: Env;
 		session: import("better-auth").Session | null;
 		user: import("better-auth").User | null;
         db: ReturnType<typeof import("./db").getDb>;
