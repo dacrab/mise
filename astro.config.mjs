@@ -8,7 +8,6 @@ import cloudflare from '@astrojs/cloudflare';
 // https://astro.build/config
 export default defineConfig({
   vite: {
-    // @ts-expect-error - @tailwindcss/vite type is incompatible with Astro 6's bundled Vite type
     plugins: [tailwindcss()],
     ssr: {
       external: ['node:async_hooks']
