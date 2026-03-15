@@ -34,7 +34,7 @@ export const server = {
     }),
     handler: async ({ fileType, fileSize }, context) => {
       const { user } = requireAuth(context);
-      const env = context.locals.runtime.env;
+      const env = context.locals.env;
 
       const s3 = new S3Client({
         region: "auto",
