@@ -1,23 +1,40 @@
 {
-  "extends": "astro/tsconfigs/strict",
-  "include": [
-    ".astro/types.d.ts",
-    "**/*"
-  ],
-  "exclude": [
-    "dist"
-  ],
   "compilerOptions": {
+    "target": "ES2022",
+    "module": "ESNext",
+    "moduleResolution": "bundler",
+    "lib": ["ES2022", "DOM", "DOM.Iterable"],
     "jsx": "react-jsx",
-    "jsxImportSource": "react",
+    
+    // Strict type safety
+    "strict": true,
+    // exactOptionalPropertyTypes is intentionally omitted — @convex-dev/auth and
+    // Convex's generated types use T | undefined in optional positions which is
+    // incompatible with this flag. noUncheckedIndexedAccess provides the safety
+    // benefit without breaking third-party types.
+    "noUncheckedIndexedAccess": true,
+    "noPropertyAccessFromIndexSignature": true,
+
+    // Dead code & correctness
+    "noUnusedLocals": true,
+    "noUnusedParameters": true,
+    "noImplicitReturns": true,
+    "noFallthroughCasesInSwitch": true,
+    "noImplicitOverride": true,
+    "forceConsistentCasingInFileNames": true,
+    
+    "skipLibCheck": true,
+    "esModuleInterop": true,
+    "resolveJsonModule": true,
+    "isolatedModules": true,
+    "noEmit": true,
+    
     "baseUrl": ".",
     "paths": {
-      "@/*": [
-        "src/*"
-      ]
-    },
-    "types": [
-      "astro/client"
-    ]
-  }
+      "@/*": ["./src/*"],
+      "convex/*": ["./convex/*"]
+    }
+  },
+  "include": ["src/**/*", "convex/**/*", "tests/**/*"],
+  "exclude": ["node_modules", "dist", ".output", ".vinxi", ".tanstack"]
 }

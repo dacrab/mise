@@ -18,16 +18,22 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
-      - uses: actions/checkout@v6
-      - uses: actions/setup-node@v6
-        with:
-          node-version: '22'
+      - uses: actions/checkout@v4
       - uses: oven-sh/setup-bun@v2
+
       - name: Install dependencies
-        run: |
-          if [ "${{ github.event_name }}" = "pull_request" ]; then
-            bun install --frozen-lockfile
-          else
-            bun install
-          fi
-      - run: bun run check
+        run: bun install
+
+      - name: Typecheck
+        run: bun run typecheck
+
+      - name: Lint
+        run: bun run lint
+
+      - name: Unit tests
+        run: bun run test:run
+
+      - name: Build
+        run: bun run build
+        env:
+          VITE_CONVEX_URL: "https://placeholder.convex.cloud"
