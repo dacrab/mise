@@ -8,13 +8,22 @@ updates:
       time: "02:00"
       timezone: "Europe/Athens"
     open-pull-requests-limit: 10
+    versioning-strategy: increase
     groups:
-      dependencies:
-        patterns:
-          - "*"
-        update-types:
-          - "minor"
-          - "patch"
+      patch-updates:
+        patterns: ["*"]
+        update-types: ["patch"]
+      minor-updates:
+        patterns: ["*"]
+        exclude-patterns: ["vite", "astro*", "knip", "@astrojs/*"]
+        update-types: ["minor"]
+    ignore:
+      - dependency-name: "vite"
+        update-types: ["version-update:semver-major"]
+      - dependency-name: "vite"
+        versions: ["8.x"]
+      - dependency-name: "astro"
+        update-types: ["version-update:semver-major"]
     labels:
       - "dependencies"
 
@@ -27,11 +36,7 @@ updates:
       timezone: "Europe/Athens"
     open-pull-requests-limit: 10
     groups:
-      dependencies:
-        patterns:
-          - "*"
-        update-types:
-          - "minor"
-          - "patch"
+      github-actions:
+        patterns: ["*"]
     labels:
       - "dependencies"
