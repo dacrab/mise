@@ -15,7 +15,6 @@ test-results/
 src/routeTree.gen.ts
 
 # Convex
-convex/_generated/
 .convex-tmp/
 
 # Env

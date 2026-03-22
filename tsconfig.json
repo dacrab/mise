@@ -35,6 +35,6 @@
       "convex/*": ["./convex/*"]
     }
   },
-  "include": ["src/**/*", "tests/**/*"],
-  "exclude": ["node_modules", "dist", ".output", ".vinxi", ".tanstack", "convex"]
+  "include": ["src/**/*", "tests/**/*", "convex/_generated/**/*"],
+  "exclude": ["node_modules", "dist", ".output", ".vinxi", ".tanstack"]
 }
