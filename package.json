@@ -39,7 +39,7 @@
   "devDependencies": {
     "@playwright/test": "^1.58.2",
     "@tailwindcss/vite": "^4.2.2",
-    "@tanstack/eslint-plugin-query": "^5.91.2",
+    "@tanstack/eslint-plugin-query": "^5.95.2",
     "@tanstack/eslint-plugin-router": "^1.161.6",
     "@testing-library/dom": "^10.4.1",
     "@testing-library/jest-dom": "^6.9.1",
