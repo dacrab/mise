@@ -23,8 +23,7 @@ src/routeTree.gen.ts
 !.env.example
 
 # IDE
-.vscode/*
-!.vscode/extensions.json
+.vscode/
 .idea/
 
 # OS
