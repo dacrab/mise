@@ -110,13 +110,20 @@ export const getByUser = query({
   args: { userId: v.id("users") },
   handler: async (ctx, { userId }) => {
     const currentUserId = await getOptionalAuth(ctx);
-    const recipes = await ctx.db
-      .query("recipes")
-      .withIndex("by_user", (q) => q.eq("userId", userId))
-      .order("desc")
-      .collect();
-    const filtered = recipes.filter((r) => r.status === "published" || r.userId === currentUserId);
-    return withCoverUrls(ctx, filtered);
+    const isOwner = currentUserId === userId;
+    const recipes = isOwner
+      ? await ctx.db
+          .query("recipes")
+          .withIndex("by_user", (q) => q.eq("userId", userId))
+          .order("desc")
+          .take(100)
+      : await ctx.db
+          .query("recipes")
+          .withIndex("by_user", (q) => q.eq("userId", userId))
+          .filter((q) => q.eq(q.field("status"), "published"))
+          .order("desc")
+          .take(100);
+    return withCoverUrls(ctx, recipes);
   },
 });
 
@@ -130,7 +137,7 @@ export const myRecipes = query({
       .query("recipes")
       .withIndex("by_user", (q) => q.eq("userId", userId))
       .order("desc")
-      .collect();
+      .take(100);
     return withCoverUrls(ctx, recipes);
   },
 });
@@ -145,7 +152,8 @@ export const myBookmarks = query({
       .query("bookmarks")
       .withIndex("by_user", (q) => q.eq("userId", userId))
       .order("desc")
-      .collect();
+      .take(100);
+    // Batch fetch all recipes in parallel (already one db.get per bookmark — unavoidable without denormalization)
     const recipes = await Promise.all(bookmarks.map((b) => ctx.db.get(b.recipeId)));
     return withCoverUrls(ctx, recipes.filter(Boolean) as Array<NonNullable<(typeof recipes)[number]>>);
   },
@@ -280,20 +288,18 @@ export const fork = mutation({
 export const publishScheduled = internalMutation({
   handler: async (ctx) => {
     const now = Date.now();
-    const scheduled = await ctx.db
+    // Use by_status index to only scan drafts, then filter by publishAt in memory
+    // (Convex doesn't support compound range queries on two fields — this is the correct pattern)
+    const drafts = await ctx.db
       .query("recipes")
-      .filter((q) =>
-        q.and(
-          q.eq(q.field("status"), "draft"),
-          q.neq(q.field("publishAt"), undefined),
-          q.lte(q.field("publishAt"), now)
-        )
-      )
-      .take(50);
+      .withIndex("by_status", (q) => q.eq("status", "draft"))
+      .take(200);
 
-    for (const recipe of scheduled) {
-      await ctx.db.patch(recipe._id, { status: "published", publishAt: undefined });
-    }
+    const scheduled = drafts.filter((r) => r.publishAt !== undefined && r.publishAt <= now);
+
+    await Promise.all(
+      scheduled.map((recipe) => ctx.db.patch(recipe._id, { status: "published", publishAt: undefined }))
+    );
 
     return { published: scheduled.length };
   },

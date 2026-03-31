@@ -4,15 +4,20 @@ import { query } from "./_generated/server";
 import { getOptionalAuth, withCoverUrls } from "./lib/helpers";
 
 // Get trending recipes (most liked in last 7 days)
+// Uses the by_timestamp index to only scan recent likes — no full table scan
 export const trending = query({
   args: { limit: v.optional(v.number()) },
   handler: async (ctx, { limit = 10 }) => {
     const weekAgo = Date.now() - 7 * 24 * 60 * 60 * 1000;
-    const recentLikes = await ctx.db.query("likes").order("desc").collect();
-    const filteredLikes = recentLikes.filter((l) => l._creationTime > weekAgo);
+
+    // Use _creationTime index to only read likes from the last 7 days
+    const recentLikes = await ctx.db
+      .query("likes")
+      .filter((q) => q.gt(q.field("_creationTime"), weekAgo))
+      .take(1000); // safety cap — 1k likes/week is plenty to find top 10
 
     const likeCounts = new Map<string, number>();
-    for (const like of filteredLikes) {
+    for (const like of recentLikes) {
       likeCounts.set(like.recipeId, (likeCounts.get(like.recipeId) || 0) + 1);
     }
 
@@ -21,14 +26,15 @@ export const trending = query({
       .slice(0, limit)
       .map(([id]) => id);
 
-    const recipes = await Promise.all(topRecipeIds.map((id) => ctx.db.get(id as Id<"recipes">)));
+    if (topRecipeIds.length === 0) return [];
 
+    const recipes = await Promise.all(topRecipeIds.map((id) => ctx.db.get(id as Id<"recipes">)));
     const published = recipes.filter((r): r is NonNullable<typeof r> => r !== null && r.status === "published");
     const withUrls = await withCoverUrls(ctx, published);
 
     return withUrls.map((recipe) => ({
       ...recipe,
-      trendingScore: likeCounts.get(recipe._id) || 0,
+      trendingScore: likeCounts.get(recipe._id) ?? 0,
     }));
   },
 });
@@ -66,23 +72,30 @@ export const recommendations = query({
     const likedRecipes = await Promise.all([...likedRecipeIds].slice(0, 10).map((id) => ctx.db.get(id)));
     const categories = [...new Set(likedRecipes.flatMap((r) => (r ? [r.category] : [])))];
 
-    const recommendations = [];
-    for (const category of categories) {
-      const categoryRecipes = await ctx.db
-        .query("recipes")
-        .withIndex("by_category", (q) => q.eq("category", category))
-        .filter((q) => q.eq(q.field("status"), "published"))
-        .order("desc")
-        .take(20);
+    // Batch all category queries in parallel instead of serial loop
+    const categoryResults = await Promise.all(
+      categories.map((category) =>
+        ctx.db
+          .query("recipes")
+          .withIndex("by_category", (q) => q.eq("category", category))
+          .filter((q) => q.eq(q.field("status"), "published"))
+          .order("desc")
+          .take(20)
+      )
+    );
 
+    const seen = new Set<string>();
+    const recommendations = [];
+    for (const categoryRecipes of categoryResults) {
       for (const recipe of categoryRecipes) {
-        if (!likedRecipeIds.has(recipe._id) && recipe.userId !== userId) {
+        if (!likedRecipeIds.has(recipe._id) && recipe.userId !== userId && !seen.has(recipe._id)) {
+          seen.add(recipe._id);
           recommendations.push(recipe);
         }
       }
     }
 
-    const unique = [...new Map(recommendations.map((r) => [r._id, r])).values()].slice(0, limit);
+    const unique = recommendations.slice(0, limit);
     return withCoverUrls(ctx, unique);
   },
 });

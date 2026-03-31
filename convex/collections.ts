@@ -14,15 +14,17 @@ export const list = query({
       .withIndex("by_user", (q) => q.eq("userId", userId))
       .collect();
 
-    return Promise.all(
-      collections.map(async (c) => {
-        const bookmarks = await ctx.db
+    // Batch all bookmark count queries in parallel
+    const counts = await Promise.all(
+      collections.map((c) =>
+        ctx.db
           .query("bookmarks")
           .withIndex("by_collection", (q) => q.eq("collectionId", c._id))
-          .collect();
-        return { ...c, count: bookmarks.length };
-      })
+          .collect()
+          .then((b) => b.length)
+      )
     );
+    return collections.map((c, i) => ({ ...c, count: counts[i] }));
   },
 });
 

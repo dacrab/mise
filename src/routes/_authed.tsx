@@ -1,29 +1,23 @@
-import { createFileRoute, Outlet } from "@tanstack/react-router";
+import { convexQuery } from "@convex-dev/react-query";
+import { useSuspenseQuery } from "@tanstack/react-query";
+import { createFileRoute, Outlet, redirect } from "@tanstack/react-router";
 import { api } from "convex/_generated/api";
-import { useQuery } from "convex/react";
 import { Header } from "@/components/layout/Header";
 
 export const Route = createFileRoute("/_authed")({
+  // Prefetch auth state on the server / before rendering the layout
+  loader: async ({ context: { queryClient } }) => {
+    const user = await queryClient.ensureQueryData(convexQuery(api.users.currentUser, {}));
+    if (!user) throw redirect({ to: "/login", replace: true });
+  },
   component: AuthedLayout,
 });
 
 function AuthedLayout() {
-  const user = useQuery(api.users.currentUser);
-  const navigate = Route.useNavigate();
+  // Data is guaranteed to exist (loader throws redirect if null)
+  const { data: user } = useSuspenseQuery(convexQuery(api.users.currentUser, {}));
 
-  if (user === undefined) {
-    return (
-      <div className="min-h-screen bg-cream flex items-center justify-center">
-        <div className="text-stone animate-pulse">Loading…</div>
-      </div>
-    );
-  }
-
-  if (user === null) {
-    // Use router navigation instead of window.location so history is preserved
-    void navigate({ to: "/login", replace: true });
-    return null;
-  }
+  if (!user) return null;
 
   return (
     <>
