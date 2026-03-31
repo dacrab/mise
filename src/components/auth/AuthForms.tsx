@@ -4,27 +4,32 @@ import { Link, useRouter } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
 import { Spinner } from "@/components/ui/primitives";
 import { useToast } from "@/components/ui/toast";
+import { useAsyncAction } from "@/hooks/useAsyncAction";
+import { calculatePasswordStrength } from "@/lib/recipeUtils";
 
-// ── Inlined form primitives (auth-only, not worth a separate file) ─────────────
 
 function FormField({
-  label, id, type, value, onChange, placeholder, error, autoComplete,
+  label, id, type = "text", value, onChange, placeholder, error, autoComplete,
 }: {
-  label: string; id: string; type: string; value: string;
-  onChange: (v: string) => void; placeholder: string; error?: string; autoComplete?: string;
+  label: string; id: string; type?: string; value: string;
+  onChange: (v: string) => void; placeholder?: string; error?: string; autoComplete?: string;
 }) {
-  let defaultAutoComplete = "name";
-  if (type === "email") defaultAutoComplete = "email";
-  else if (type === "password") defaultAutoComplete = "current-password";
   const errorId = `${id}-error`;
+  let defaultAC = "on";
+  if (type === "email") defaultAC = "email";
+  else if (type === "password") defaultAC = "current-password";
+  else if (type === "text") defaultAC = "name";
   return (
     <div>
       <label htmlFor={id} className="block text-sm font-medium text-charcoal-light mb-2">{label}</label>
       <input
-        id={id} type={type} value={value} onChange={(e) => onChange(e.target.value)}
-        className={`input-field ${error ? "border-terracotta" : ""}`} placeholder={placeholder}
-        aria-invalid={!!error} aria-describedby={error ? errorId : undefined}
-        autoComplete={autoComplete ?? defaultAutoComplete}
+        id={id} type={type} value={value}
+        onChange={(e) => onChange(e.target.value)}
+        className={`input-field w-full${error ? " border-terracotta" : ""}`}
+        placeholder={placeholder}
+        aria-invalid={!!error}
+        aria-describedby={error ? errorId : undefined}
+        autoComplete={autoComplete ?? defaultAC}
       />
       {error && <p id={errorId} className="text-xs text-terracotta mt-1">{error}</p>}
     </div>
@@ -32,21 +37,22 @@ function FormField({
 }
 
 function PasswordField({
-  label, value, onChange, show, onToggleShow, autoComplete, strengthMeter,
+  label, id = "password", value, onChange, show, onToggleShow, autoComplete, strengthMeter,
 }: {
-  label: string; value: string; onChange: (v: string) => void;
+  label: string; id?: string; value: string; onChange: (v: string) => void;
   show: boolean; onToggleShow: () => void; autoComplete?: string;
   strengthMeter?: { strength: number; colors: string[]; labels: string[] };
 }) {
   return (
     <div>
-      <label className="block text-sm font-medium text-charcoal-light mb-2">{label}</label>
+      <label htmlFor={id} className="block text-sm font-medium text-charcoal-light mb-2">{label}</label>
       <div className="relative">
         <input
-          type={show ? "text" : "password"} value={value} onChange={(e) => onChange(e.target.value)}
-          className="input-field pr-10" placeholder="••••••••"
+          id={id} type={show ? "text" : "password"} value={value}
+          onChange={(e) => onChange(e.target.value)}
+          className="input-field w-full pr-10" placeholder="••••••••"
           autoComplete={autoComplete ?? "current-password"}
-          aria-describedby={strengthMeter ? "password-strength" : undefined}
+          aria-describedby={strengthMeter ? `${id}-strength` : undefined}
         />
         <button type="button" onClick={onToggleShow}
           className="absolute right-3 top-1/2 -translate-y-1/2 text-stone hover:text-charcoal"
@@ -56,10 +62,10 @@ function PasswordField({
         </button>
       </div>
       {strengthMeter && value && (
-        <div id="password-strength" className="mt-3 space-y-2" aria-live="polite">
-          <div className="flex gap-1 h-1" role="progressbar" aria-valuenow={strengthMeter.strength} aria-valuemin={0} aria-valuemax={5}>
-            {[1, 2, 3, 4, 5].map((i) => (
-              <div key={i} className={`flex-1 rounded-full ${i <= strengthMeter.strength ? strengthMeter.colors[strengthMeter.strength] : "bg-cream-dark"}`} />
+        <div id={`${id}-strength`} className="mt-3 space-y-1" aria-live="polite">
+          <div className="flex gap-1 h-1" role="progressbar" aria-valuenow={strengthMeter.strength} aria-valuemin={0} aria-valuemax={4}>
+            {[1, 2, 3, 4].map((i) => (
+              <div key={i} className={`flex-1 rounded-full ${i <= strengthMeter.strength ? strengthMeter.colors[strengthMeter.strength] ?? "bg-sage" : "bg-cream-dark"}`} />
             ))}
           </div>
           <p className="text-xs text-stone">{strengthMeter.labels[strengthMeter.strength]}</p>
@@ -86,7 +92,6 @@ function Divider() {
   );
 }
 
-// ── Shared helpers ────────────────────────────────────────────────────────────
 
 function GoogleIcon() {
   return (
@@ -101,32 +106,24 @@ function GoogleIcon() {
 
 function GoogleSignInButton() {
   const { signIn } = useAuthActions();
-  const { toast } = useToast();
-  const [loading, setLoading] = useState(false);
-
-  const handleClick = async () => {
-    setLoading(true);
-    try {
-      await signIn("google");
-    } catch (err) {
-      toast(err instanceof Error ? err.message : "Could not sign in with Google", "error");
-      setLoading(false);
-    }
-  };
-
+  const { execute, isPending } = useAsyncAction(
+    async () => { await signIn("google"); },
+    { errorMessage: "Could not sign in with Google" }
+  );
   return (
     <button
       type="button"
-      onClick={() => void handleClick()}
-      disabled={loading}
+      onClick={() => void execute()}
+      disabled={isPending}
       className="btn-secondary w-full flex items-center justify-center gap-2 disabled:opacity-50"
     >
-      {loading ? <Spinner /> : <GoogleIcon />}
-      {loading ? "Redirecting…" : "Continue with Google"}
+      {isPending ? <Spinner /> : <GoogleIcon />}
+      {isPending ? "Redirecting…" : "Continue with Google"}
     </button>
   );
 }
 
+/** Map a raw auth error to a user-friendly message from a lookup table. */
 function mapAuthError(map: Record<string, string>, error: unknown): string {
   const msg = error instanceof Error ? error.message : String(error);
   for (const [key, val] of Object.entries(map)) {
@@ -135,32 +132,7 @@ function mapAuthError(map: Record<string, string>, error: unknown): string {
   return map["default"] ?? "An error occurred";
 }
 
-function useAuthForm() {
-  const [error, setError] = useState("");
-  const [loading, setLoading] = useState(false);
-  const { toast } = useToast();
-
-  const run = async (
-    fn: () => Promise<void>,
-    errorMap: Record<string, string>
-  ) => {
-    setError("");
-    setLoading(true);
-    try {
-      await fn();
-    } catch (err) {
-      const message = mapAuthError(errorMap, err);
-      setError(message);
-      toast(message, "error");
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  return { error, loading, run };
-}
-
-// ── Login ─────────────────────────────────────────────────────────────────────
+// ── Forms ─────────────────────────────────────────────────────────────────────
 
 const LOGIN_ERRORS: Record<string, string> = {
   InvalidAccountId: "No account found with this email. Please sign up first.",
@@ -176,39 +148,41 @@ export function LoginForm() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
-  const { error, loading, run } = useAuthForm();
+  const [formError, setFormError] = useState("");
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!email || !password) return;
-    void run(async () => {
-      const result = await signIn("password", { email, password, flow: "signIn" });
-      if (result.signingIn) {
-        toast("Welcome back!", "success");
-        await router.navigate({ to: "/dashboard", replace: true });
+  const { execute: handleSubmit, isPending } = useAsyncAction(
+    async (e: React.FormEvent) => {
+      e.preventDefault();
+      if (!email || !password) return;
+      setFormError("");
+      try {
+        const result = await signIn("password", { email, password, flow: "signIn" });
+        if (result.signingIn) {
+          toast("Welcome back!", "success");
+          await router.navigate({ to: "/dashboard", replace: true });
+        }
+      } catch (err) {
+        const msg = mapAuthError(LOGIN_ERRORS, err);
+        setFormError(msg);
+        throw err; // re-throw so useAsyncAction can show error toast
       }
-    }, LOGIN_ERRORS);
-  };
+    }
+  );
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-4">
-      {error && <FormError message={error} />}
+    <form onSubmit={(e) => void handleSubmit(e)} className="space-y-4">
+      {formError && <FormError message={formError} />}
       <FormField id="login-email" label="Email" type="email" value={email} onChange={setEmail} placeholder="you@example.com" />
       <PasswordField
-        label="Password"
-        value={password}
-        onChange={setPassword}
-        show={showPassword}
-        onToggleShow={() => setShowPassword((s) => !s)}
+        id="login-password" label="Password" value={password} onChange={setPassword}
+        show={showPassword} onToggleShow={() => setShowPassword((s) => !s)}
         autoComplete="current-password"
       />
       <div className="text-right">
-        <Link to="/forgot-password" className="text-sm text-sage hover:text-sage-light">
-          Forgot password?
-        </Link>
+        <Link to="/forgot-password" className="text-sm text-sage hover:text-sage-light">Forgot password?</Link>
       </div>
-      <button type="submit" disabled={loading} className="btn-primary w-full">
-        {loading ? "Signing in…" : "Sign in"}
+      <button type="submit" disabled={isPending || !email || !password} className="btn-primary w-full disabled:opacity-50">
+        {isPending ? <span className="flex items-center justify-center gap-2"><Spinner /> Signing in…</span> : "Sign in"}
       </button>
       <Divider />
       <GoogleSignInButton />
@@ -216,13 +190,15 @@ export function LoginForm() {
   );
 }
 
-// ── Signup ────────────────────────────────────────────────────────────────────
 
 const SIGNUP_ERRORS: Record<string, string> = {
   AccountAlreadyExists: "An account with this email already exists. Please sign in.",
   InvalidEmail: "Please enter a valid email address.",
   default: "Could not create account. Please try again.",
 };
+
+const STRENGTH_COLORS = ["bg-stone-light", "bg-terracotta", "bg-honey", "bg-sage", "bg-sage"];
+const STRENGTH_LABELS = ["Too short", "Weak", "Good", "Strong", "Strong"];
 
 export function SignupForm() {
   const { signIn } = useAuthActions();
@@ -232,51 +208,46 @@ export function SignupForm() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
-  const { error, loading, run } = useAuthForm();
+  const [formError, setFormError] = useState("");
 
-  const strength = useMemo(() => {
-    if (!password || password.length < 6) return 0;
-    if (password.length < 8) return 1;
-    const hasUpper = /[A-Z]/.test(password);
-    const hasNumber = /[0-9]/.test(password);
-    if (hasUpper && hasNumber) return 3;
-    if (hasUpper || hasNumber) return 2;
-    return 1;
-  }, [password]);
+  const strength = useMemo(() => calculatePasswordStrength(password), [password]);
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!name || !email || !password) return;
-    if (password.length < 6) return;
-    void run(async () => {
-      const result = await signIn("password", { email, password, name, flow: "signUp" });
-      if (result.signingIn) {
-        toast("Account created! Welcome to Mise.", "success");
-        await router.navigate({ to: "/dashboard", replace: true });
+  const { execute: handleSubmit, isPending } = useAsyncAction(
+    async (e: React.FormEvent) => {
+      e.preventDefault();
+      if (!name || !email || !password || password.length < 6) return;
+      setFormError("");
+      try {
+        const result = await signIn("password", { email, password, name, flow: "signUp" });
+        if (result.signingIn) {
+          toast("Account created! Welcome to Mise.", "success");
+          await router.navigate({ to: "/dashboard", replace: true });
+        }
+      } catch (err) {
+        const msg = mapAuthError(SIGNUP_ERRORS, err);
+        setFormError(msg);
+        throw err;
       }
-    }, SIGNUP_ERRORS);
-  };
+    }
+  );
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-4">
-      {error && <FormError message={error} />}
+    <form onSubmit={(e) => void handleSubmit(e)} className="space-y-4">
+      {formError && <FormError message={formError} />}
       <FormField id="signup-name" label="Name" type="text" value={name} onChange={setName} placeholder="Your name" autoComplete="name" />
       <FormField id="signup-email" label="Email" type="email" value={email} onChange={setEmail} placeholder="you@example.com" />
       <PasswordField
-        label="Password"
-        value={password}
-        onChange={setPassword}
-        show={showPassword}
-        onToggleShow={() => setShowPassword((s) => !s)}
+        id="signup-password" label="Password" value={password} onChange={setPassword}
+        show={showPassword} onToggleShow={() => setShowPassword((s) => !s)}
         autoComplete="new-password"
-        strengthMeter={{
-          strength,
-          colors: ["bg-stone-light", "bg-terracotta", "bg-honey", "bg-sage"],
-          labels: ["Too short", "Weak", "Good", "Strong"],
-        }}
+        strengthMeter={{ strength, colors: STRENGTH_COLORS, labels: STRENGTH_LABELS }}
       />
-      <button type="submit" disabled={loading} className="btn-primary w-full">
-        {loading ? "Creating…" : "Sign up"}
+      <button
+        type="submit"
+        disabled={isPending || !name || !email || password.length < 6}
+        className="btn-primary w-full disabled:opacity-50"
+      >
+        {isPending ? <span className="flex items-center justify-center gap-2"><Spinner /> Creating…</span> : "Sign up"}
       </button>
       <Divider />
       <GoogleSignInButton />
@@ -284,7 +255,6 @@ export function SignupForm() {
   );
 }
 
-// ── Forgot Password ───────────────────────────────────────────────────────────
 
 export function ForgotPasswordForm() {
   const { signIn } = useAuthActions();
@@ -294,48 +264,44 @@ export function ForgotPasswordForm() {
   const [email, setEmail] = useState("");
   const [code, setCode] = useState("");
   const [newPassword, setNewPassword] = useState("");
-  const [error, setError] = useState("");
-  const [loading, setLoading] = useState(false);
+  const [formError, setFormError] = useState("");
 
-  const submit = async (fn: () => Promise<void>) => {
-    setError("");
-    setLoading(true);
-    try {
-      await fn();
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Something went wrong");
-    } finally {
-      setLoading(false);
+  const { execute: handleRequestReset, isPending: sendingCode } = useAsyncAction(
+    async (e: React.FormEvent) => {
+      e.preventDefault();
+      if (!email.trim()) return;
+      setFormError("");
+      try {
+        const fd = new FormData();
+        fd.set("email", email); fd.set("flow", "reset");
+        await signIn("password", fd);
+        setStep("code");
+        toast("Reset code sent to your email", "success");
+      } catch (err) {
+        setFormError(err instanceof Error ? err.message : "Something went wrong");
+        throw err;
+      }
     }
-  };
+  );
 
-  const handleRequestReset = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!email.trim()) return;
-    void submit(async () => {
-      const fd = new FormData();
-      fd.set("email", email);
-      fd.set("flow", "reset");
-      await signIn("password", fd);
-      setStep("code");
-      toast("Reset code sent to your email", "success");
-    });
-  };
-
-  const handleResetPassword = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!code.trim() || !newPassword.trim() || newPassword.length < 8) return;
-    void submit(async () => {
-      const fd = new FormData();
-      fd.set("email", email);
-      fd.set("code", code);
-      fd.set("newPassword", newPassword);
-      fd.set("flow", "reset-verification");
-      await signIn("password", fd);
-      toast("Password reset successfully!", "success");
-      await router.navigate({ to: "/login", replace: true });
-    });
-  };
+  const { execute: handleResetPassword, isPending: resetting } = useAsyncAction(
+    async (e: React.FormEvent) => {
+      e.preventDefault();
+      if (!code.trim() || newPassword.length < 8) return;
+      setFormError("");
+      try {
+        const fd = new FormData();
+        fd.set("email", email); fd.set("code", code);
+        fd.set("newPassword", newPassword); fd.set("flow", "reset-verification");
+        await signIn("password", fd);
+        toast("Password reset successfully!", "success");
+        await router.navigate({ to: "/login", replace: true });
+      } catch (err) {
+        setFormError(err instanceof Error ? err.message : "Something went wrong");
+        throw err;
+      }
+    }
+  );
 
   if (step === "code") {
     return (
@@ -345,12 +311,12 @@ export function ForgotPasswordForm() {
         </button>
         <h1 className="font-serif text-2xl font-medium mb-2">Enter reset code</h1>
         <p className="text-stone mb-6">We sent a code to {email}</p>
-        <form onSubmit={handleResetPassword} className="space-y-4">
+        <form onSubmit={(e) => void handleResetPassword(e)} className="space-y-4">
+          {formError && <FormError message={formError} />}
           <FormField id="reset-code" label="Reset code" type="text" value={code} onChange={setCode} placeholder="Enter code" autoComplete="one-time-code" />
           <FormField id="reset-password" label="New password" type="password" value={newPassword} onChange={setNewPassword} placeholder="At least 8 characters" autoComplete="new-password" />
-          {error && <FormError message={error} />}
-          <button type="submit" disabled={loading} className="btn-primary w-full">
-            {loading ? "Resetting…" : "Reset password"}
+          <button type="submit" disabled={resetting || !code.trim() || newPassword.length < 8} className="btn-primary w-full disabled:opacity-50">
+            {resetting ? <span className="flex items-center justify-center gap-2"><Spinner /> Resetting…</span> : "Reset password"}
           </button>
         </form>
       </div>
@@ -364,11 +330,11 @@ export function ForgotPasswordForm() {
       </Link>
       <h1 className="font-serif text-2xl font-medium mb-2">Forgot password?</h1>
       <p className="text-stone mb-6">Enter your email and we'll send you a reset code.</p>
-      <form onSubmit={handleRequestReset} className="space-y-4">
+      <form onSubmit={(e) => void handleRequestReset(e)} className="space-y-4">
+        {formError && <FormError message={formError} />}
         <FormField id="forgot-email" label="Email" type="email" value={email} onChange={setEmail} placeholder="you@example.com" />
-        {error && <FormError message={error} />}
-        <button type="submit" disabled={loading} className="btn-primary w-full">
-          {loading ? "Sending…" : "Send reset code"}
+        <button type="submit" disabled={sendingCode || !email.trim()} className="btn-primary w-full disabled:opacity-50">
+          {sendingCode ? <span className="flex items-center justify-center gap-2"><Spinner /> Sending…</span> : "Send reset code"}
         </button>
       </form>
     </div>

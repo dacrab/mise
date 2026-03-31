@@ -8,8 +8,11 @@ export async function requireAuth(ctx: MutationCtx | QueryCtx) {
   return userId;
 }
 
-export async function getOptionalAuth(ctx: QueryCtx) {
-  return await getAuthUserId(ctx);
+export async function withProfileImageUrl<T extends { profileImage?: string | null }>(
+  ctx: { storage: { getUrl: (id: string) => Promise<string | null> } },
+  user: T
+): Promise<T & { profileImageUrl: string | null }> {
+  return { ...user, profileImageUrl: user.profileImage ? await ctx.storage.getUrl(user.profileImage) : null };
 }
 
 export async function withCoverUrls<T extends { coverImage?: Id<"_storage"> | null }>(

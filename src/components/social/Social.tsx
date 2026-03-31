@@ -1,7 +1,6 @@
 import { useRouter } from "@tanstack/react-router";
 import { useMutation, useQuery } from "convex/react";
-import { useCallback, useRef, useState, useEffect } from "react";
-import { useToast } from "@/components/ui/toast";
+import { useRef, useState, useEffect } from "react";
 import { BookmarkIcon, HeartIcon, StarIcon, BellIcon, CheckIcon, PencilIcon, TrashIcon, XMarkIcon } from "@heroicons/react/24/outline";
 import {
   BookmarkIcon as BookmarkSolidIcon,
@@ -12,12 +11,11 @@ import {
 import { api } from "convex/_generated/api";
 import type { Id } from "convex/_generated/dataModel";
 import { Avatar, Spinner } from "@/components/ui/primitives";
+import { useAsyncAction } from "@/hooks/useAsyncAction";
+import { useConfirmAction } from "@/hooks/useConfirmAction";
+import { timeAgo } from "@/lib/recipeUtils";
 
-// ============================================================================
-// Types and Helpers
-// ============================================================================
-
-type AsyncFunction = (...args: never[]) => Promise<unknown>;
+// ── Types ─────────────────────────────────────────────────────────────────────
 
 type Notification = {
   _id: Id<"notifications">;
@@ -36,56 +34,7 @@ type Comment = {
   user: { name?: string | null; image?: string | null } | null;
 };
 
-// ============================================================================
-// Internal Hooks and Utilities
-// ============================================================================
-
-function useAsyncAction<T extends AsyncFunction>(
-  action: T,
-  options?: {
-    onSuccess?: (result: Awaited<ReturnType<T>>) => void;
-    onError?: (error: Error) => void;
-    successMessage?: string;
-    errorMessage?: string;
-  }
-) {
-  const [isPending, setIsPending] = useState(false);
-  const { toast } = useToast();
-
-  // Keep latest action + options in a ref so the execute callback never
-  // needs to be recreated when they change, avoiding infinite re-render loops
-  // that would occur if `action` (a new function reference each render) were
-  // listed as a dependency of useCallback.
-  const actionRef = useRef(action);
-  actionRef.current = action;
-  const optionsRef = useRef(options);
-  optionsRef.current = options;
-
-  const execute = useCallback(
-    async (...args: Parameters<T>): Promise<Awaited<ReturnType<T>> | undefined> => {
-      if (isPending) return undefined;
-      setIsPending(true);
-      try {
-        const result = await (actionRef.current as (...args: Parameters<T>) => Promise<unknown>)(...args);
-        const opts = optionsRef.current;
-        if (opts?.successMessage) toast(opts.successMessage, "success");
-        opts?.onSuccess?.(result as Awaited<ReturnType<T>>);
-        return result as Awaited<ReturnType<T>>;
-      } catch (e) {
-        const error = e instanceof Error ? e : new Error("An error occurred");
-        const opts = optionsRef.current;
-        toast(opts?.errorMessage || error.message, "error");
-        opts?.onError?.(error);
-        return undefined;
-      } finally {
-        setIsPending(false);
-      }
-    },
-    [isPending, toast] // intentionally omit action/options — they live in refs
-  );
-
-  return { execute, isPending };
-}
+// ── Internal components ───────────────────────────────────────────────────────
 
 interface ActionButtonProps {
   onClick: () => void;
@@ -159,68 +108,39 @@ function notificationMessage(n: Notification): string {
   }
 }
 
-function timeAgo(ms: number): string {
-  const diff = Date.now() - ms;
-  const mins = Math.floor(diff / 60000);
-  if (mins < 1) return "just now";
-  if (mins < 60) return `${mins}m ago`;
-  const hrs = Math.floor(mins / 60);
-  if (hrs < 24) return `${hrs}h ago`;
-  const days = Math.floor(hrs / 24);
-  if (days < 7) return `${days}d ago`;
-  return new Date(ms).toLocaleDateString();
-}
-
 function CommentItem({ comment, currentUserId }: { comment: Comment; currentUserId?: string | null }) {
   const updateComment = useMutation(api.social.updateComment);
   const deleteComment = useMutation(api.social.deleteComment);
-  const [editing, setEditing] = useState(false);
+  const [isEditing, setIsEditing] = useState(false);
   const [editText, setEditText] = useState(comment.content);
-  const [pending, setPending] = useState(false);
-  const [confirmDelete, setConfirmDelete] = useState(false);
-  const confirmTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const editRef = useRef<HTMLTextAreaElement>(null);
   const isOwner = !!currentUserId && currentUserId === comment.userId;
 
+  const { execute: handleSaveEdit, isPending: savePending } = useAsyncAction(
+    async () => {
+      const trimmed = editText.trim();
+      if (!trimmed || trimmed === comment.content) { handleCancelEdit(); return; }
+      await updateComment({ id: comment._id, content: trimmed });
+      setIsEditing(false);
+    }
+  );
+
+  const { trigger: handleDelete, pendingId: deletePendingId } = useConfirmAction<string>(
+    async () => { await deleteComment({ id: comment._id }); },
+    { confirmMessage: "Tap again to confirm delete", errorMessage: "Could not delete comment" }
+  );
+
+  const isPending = savePending;
+
   const handleEdit = () => {
     setEditText(comment.content);
-    setEditing(true);
+    setIsEditing(true);
     setTimeout(() => editRef.current?.focus(), 0);
   };
 
   const handleCancelEdit = () => {
-    setEditing(false);
+    setIsEditing(false);
     setEditText(comment.content);
-  };
-
-  const handleSaveEdit = async () => {
-    const trimmed = editText.trim();
-    if (!trimmed || trimmed === comment.content) {
-      handleCancelEdit();
-      return;
-    }
-    setPending(true);
-    try {
-      await updateComment({ id: comment._id, content: trimmed });
-      setEditing(false);
-    } finally {
-      setPending(false);
-    }
-  };
-
-  const handleDelete = async () => {
-    if (!confirmDelete) {
-      setConfirmDelete(true);
-      confirmTimer.current = setTimeout(() => setConfirmDelete(false), 3000);
-      return;
-    }
-    if (confirmTimer.current) clearTimeout(confirmTimer.current);
-    setPending(true);
-    try {
-      await deleteComment({ id: comment._id });
-    } finally {
-      setPending(false);
-    }
   };
 
   const authorName = comment.user?.name ?? "Chef";
@@ -235,7 +155,7 @@ function CommentItem({ comment, currentUserId }: { comment: Comment; currentUser
           <span className="text-xs text-stone">{new Date(comment._creationTime).toLocaleDateString()}</span>
         </div>
 
-        {editing ? (
+        {isEditing ? (
           <div className="mt-1">
             <label htmlFor={`edit-comment-${comment._id}`} className="sr-only">
               Edit comment
@@ -251,19 +171,19 @@ function CommentItem({ comment, currentUserId }: { comment: Comment; currentUser
               }}
               rows={2}
               className="input-field w-full text-sm resize-none"
-              disabled={pending}
+              disabled={isPending}
             />
             <div className="flex gap-2 mt-1.5">
               <button
                 onClick={() => void handleSaveEdit()}
-                disabled={pending || !editText.trim()}
-                className="flex items-center gap-1 text-xs btn-sage px-2 py-1 disabled:opacity-50"
+                disabled={isPending || !editText.trim()}
+                className="flex items-center gap-1 text-xs btn-primary px-2 py-1 disabled:opacity-50"
               >
                 <CheckIcon className="w-3.5 h-3.5" /> Save
               </button>
               <button
                 onClick={handleCancelEdit}
-                disabled={pending}
+                disabled={isPending}
                 className="flex items-center gap-1 text-xs btn-ghost px-2 py-1"
               >
                 <XMarkIcon className="w-3.5 h-3.5" /> Cancel
@@ -274,22 +194,22 @@ function CommentItem({ comment, currentUserId }: { comment: Comment; currentUser
           <p className="text-sm text-charcoal-light mt-0.5 break-words">{comment.content}</p>
         )}
 
-        {isOwner && !editing && (
+        {isOwner && !isEditing && (
           <div className="flex gap-3 mt-1.5">
             <button
               onClick={handleEdit}
-              disabled={pending}
+              disabled={isPending}
               className="flex items-center gap-1 text-xs text-stone hover:text-sage transition-colors"
             >
               <PencilIcon className="w-3 h-3" /> Edit
             </button>
             <button
-              onClick={() => void handleDelete()}
-              disabled={pending}
-              className={`flex items-center gap-1 text-xs transition-colors ${confirmDelete ? "text-terracotta font-medium" : "text-stone hover:text-terracotta"}`}
+              onClick={() => void handleDelete(comment._id)}
+              disabled={isPending}
+              className={`flex items-center gap-1 text-xs transition-colors ${deletePendingId === comment._id ? "text-terracotta font-medium" : "text-stone hover:text-terracotta"}`}
             >
               <TrashIcon className="w-3 h-3" />
-              {confirmDelete ? "Confirm delete?" : "Delete"}
+              {deletePendingId === comment._id ? "Confirm delete?" : "Delete"}
             </button>
           </div>
         )}
@@ -298,26 +218,16 @@ function CommentItem({ comment, currentUserId }: { comment: Comment; currentUser
   );
 }
 
-// ============================================================================
-// Exported Components
-// ============================================================================
+// ── Exported components ───────────────────────────────────────────────────────
 
 export function FollowButton({ userId }: { userId: Id<"users"> }) {
   const isFollowing = useQuery(api.social.isFollowing, { userId });
   const toggle = useMutation(api.social.toggleFollow);
-  const [pending, setPending] = useState(false);
-  const { toast } = useToast();
 
-  const handleClick = async () => {
-    setPending(true);
-    try {
-      await toggle({ userId });
-    } catch {
-      toast("Could not update follow", "error");
-    } finally {
-      setPending(false);
-    }
-  };
+  const { execute: handleClick, isPending } = useAsyncAction(
+    () => toggle({ userId }),
+    { errorMessage: "Could not update follow" }
+  );
 
   if (isFollowing === undefined) {
     return <div className="h-9 w-24 rounded-lg bg-cream-dark animate-pulse" aria-hidden="true" />;
@@ -326,25 +236,25 @@ export function FollowButton({ userId }: { userId: Id<"users"> }) {
   return (
     <button
       onClick={() => void handleClick()}
-      disabled={pending}
+      disabled={isPending}
       aria-label={isFollowing ? "Unfollow this chef" : "Follow this chef"}
       className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-colors disabled:opacity-60 ${isFollowing ? "bg-cream-dark text-charcoal-light hover:bg-stone-light/50" : "bg-charcoal text-cream hover:bg-charcoal-light"}`}
     >
-      {pending && <Spinner className="w-3.5 h-3.5" />}
+      {isPending && <Spinner className="w-3.5 h-3.5" />}
       {isFollowing ? "Following" : "Follow"}
     </button>
   );
 }
 
 export function FollowStats({ userId }: { userId: Id<"users"> }) {
-  const counts = useQuery(api.social.followCounts, { userId }) ?? { followers: 0, following: 0 };
+  const counts = useQuery(api.social.followCounts, { userId });
   return (
     <div className="flex gap-4 text-sm text-charcoal-light">
       <span>
-        <strong className="text-charcoal">{counts.followers}</strong> followers
+        <strong className="text-charcoal">{counts?.followers ?? 0}</strong> followers
       </span>
       <span>
-        <strong className="text-charcoal">{counts.following}</strong> following
+        <strong className="text-charcoal">{counts?.following ?? 0}</strong> following
       </span>
     </div>
   );
@@ -353,39 +263,30 @@ export function FollowStats({ userId }: { userId: Id<"users"> }) {
 export function ForkButton({ recipeId, recipeTitle }: { recipeId: Id<"recipes">; recipeTitle: string }) {
   const fork = useMutation(api.recipes.fork);
   const router = useRouter();
-  const { toast } = useToast();
-  const [pending, setPending] = useState(false);
-  const [confirming, setConfirming] = useState(false);
 
-  const handleFork = async () => {
-    if (!confirming) {
-      setConfirming(true);
-      toast(`Tap again to fork "${recipeTitle}" to your kitchen`, "info");
-      setTimeout(() => setConfirming(false), 3000);
-      return;
-    }
-    setConfirming(false);
-    setPending(true);
-    try {
-      const result = await fork({ id: recipeId });
+  const { trigger, pendingId } = useConfirmAction<Id<"recipes">>(
+    async (id) => {
+      const result = await fork({ id });
       await router.navigate({ to: "/dashboard/edit/$id", params: { id: result.id } });
-    } catch {
-      toast("Could not fork recipe", "error");
-    } finally {
-      setPending(false);
+    },
+    {
+      confirmMessage: `Tap again to fork "${recipeTitle}" to your kitchen`,
+      errorMessage: "Could not fork recipe",
     }
-  };
+  );
+
+  const isConfirming = pendingId === recipeId;
 
   return (
     <button
-      onClick={handleFork}
-      disabled={pending}
-      className="flex items-center gap-2 px-3 py-2 text-sm text-charcoal-light hover:text-sage hover:bg-cream-dark rounded-lg transition-colors disabled:opacity-50"
+      onClick={() => void trigger(recipeId)}
+      disabled={false}
+      className="flex items-center gap-2 px-3 py-2 text-sm text-charcoal-light hover:text-sage hover:bg-cream-dark rounded-lg transition-colors"
       title="Fork this recipe"
       aria-label="Fork this recipe into your kitchen"
     >
       <ForkIcon className="w-4 h-4" />
-      {pending ? "Forking…" : confirming ? "Confirm?" : "Fork"}
+      {isConfirming ? "Confirm?" : "Fork"}
     </button>
   );
 }
@@ -455,31 +356,31 @@ export function SocialActions({ recipeId, slug }: { recipeId: Id<"recipes">; slu
     { errorMessage: "Sign in to save recipes" }
   );
 
-  const liked = recipe?.isLiked ?? false;
-  const bookmarked = recipe?.isBookmarked ?? false;
+  const isLiked = recipe?.isLiked ?? false;
+  const isBookmarked = recipe?.isBookmarked ?? false;
   const count = recipe?.likesCount ?? 0;
 
   return (
     <div className="flex items-center gap-3" role="group" aria-label="Recipe actions">
       <ActionButton
         onClick={handleLike}
-        isActive={liked}
+        isActive={isLiked}
         isPending={isLiking}
         activeClass="bg-terracotta/10 border-terracotta/30 text-terracotta"
         inactiveClass="bg-warm-white border-cream-dark text-charcoal-light hover:border-terracotta/30 hover:text-terracotta"
-        ariaLabel={liked ? `Unlike recipe (${count} likes)` : `Like recipe (${count} likes)`}
+        ariaLabel={isLiked ? `Unlike recipe (${count} likes)` : `Like recipe (${count} likes)`}
       >
-        {liked ? <HeartSolidIcon className="w-4 h-4" /> : <HeartIcon className="w-4 h-4" />}
+        {isLiked ? <HeartSolidIcon className="w-4 h-4" /> : <HeartIcon className="w-4 h-4" />}
         {count}
       </ActionButton>
       <ActionButton
         onClick={handleBookmark}
-        isActive={bookmarked}
+        isActive={isBookmarked}
         isPending={isBookmarking}
-        ariaLabel={bookmarked ? "Remove from saved" : "Save recipe"}
+        ariaLabel={isBookmarked ? "Remove from saved" : "Save recipe"}
       >
-        {bookmarked ? <BookmarkSolidIcon className="w-4 h-4" /> : <BookmarkIcon className="w-4 h-4" />}
-        {bookmarked ? "Saved" : "Save"}
+        {isBookmarked ? <BookmarkSolidIcon className="w-4 h-4" /> : <BookmarkIcon className="w-4 h-4" />}
+        {isBookmarked ? "Saved" : "Save"}
       </ActionButton>
     </div>
   );
@@ -491,7 +392,6 @@ export function NotificationBell() {
   const markRead = useMutation(api.notifications.markRead);
   const markAllRead = useMutation(api.notifications.markAllRead);
   const [open, setOpen] = useState(false);
-  const [markingAll, setMarkingAll] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
   const router = useRouter();
 
@@ -519,11 +419,7 @@ export function NotificationBell() {
 
   const handleNotificationClick = async (n: Notification) => {
     setOpen(false);
-    // Mark as read
-    if (!n.read) {
-      await markRead({ id: n._id });
-    }
-    // Navigate to relevant page
+    if (!n.read) await markRead({ id: n._id });
     if (n.type === "follow" && n.actor?.username) {
       void router.navigate({ to: "/chef/$username", params: { username: n.actor.username } });
     } else if (n.recipe?.slug) {
@@ -531,14 +427,9 @@ export function NotificationBell() {
     }
   };
 
-  const handleMarkAllRead = async () => {
-    setMarkingAll(true);
-    try {
-      await markAllRead();
-    } finally {
-      setMarkingAll(false);
-    }
-  };
+  const { execute: handleMarkAllRead, isPending: markingAll } = useAsyncAction(
+    async () => { await markAllRead(); }
+  );
 
   return (
     <div className="relative" ref={containerRef}>
@@ -563,7 +454,6 @@ export function NotificationBell() {
           aria-label="Notifications"
           className="absolute right-0 top-full mt-2 w-80 bg-warm-white rounded-xl shadow-hover border border-cream-dark z-50 overflow-hidden animate-scale-in origin-top-right"
         >
-          {/* Header */}
           <div className="flex items-center justify-between px-4 py-3 border-b border-cream-dark">
             <h3 className="font-medium text-sm text-charcoal">Notifications</h3>
             {count > 0 && (
@@ -578,7 +468,6 @@ export function NotificationBell() {
             )}
           </div>
 
-          {/* List */}
           <div className="max-h-80 overflow-y-auto divide-y divide-cream-dark">
             {notifications === undefined ? (
               <div className="p-4 space-y-3 animate-pulse">
@@ -605,7 +494,6 @@ export function NotificationBell() {
                   className={`w-full flex items-start gap-3 px-4 py-3 text-left transition-colors hover:bg-cream-dark ${!n.read ? "bg-sage/5" : ""}`}
                 >
                   <Avatar src={n.actor?.image} name={n.actor?.name} size="sm" className="mt-0.5" />
-                  {/* Message */}
                   <div className="flex-1 min-w-0">
                     <p
                       className={`text-sm leading-snug ${!n.read ? "text-charcoal font-medium" : "text-charcoal-light"}`}
@@ -614,7 +502,6 @@ export function NotificationBell() {
                     </p>
                     <p className="text-xs text-stone mt-0.5">{timeAgo(n._creationTime)}</p>
                   </div>
-                  {/* Unread dot */}
                   {!n.read && <div className="w-2 h-2 rounded-full bg-sage shrink-0 mt-1.5" aria-hidden="true" />}
                 </button>
               ))
@@ -631,20 +518,16 @@ export function CommentSection({ recipeId }: { recipeId: Id<"recipes"> }) {
   const addComment = useMutation(api.social.addComment);
   const currentUser = useQuery(api.users.currentUser);
   const [text, setText] = useState("");
-  const [submitting, setSubmitting] = useState(false);
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    const trimmed = text.trim();
-    if (!trimmed || submitting) return;
-    setSubmitting(true);
-    try {
+  const { execute: handleSubmit, isPending: submitting } = useAsyncAction(
+    async (e: React.FormEvent) => {
+      e.preventDefault();
+      const trimmed = text.trim();
+      if (!trimmed) return;
       await addComment({ recipeId, content: trimmed });
       setText("");
-    } finally {
-      setSubmitting(false);
     }
-  };
+  );
 
   return (
     <section aria-label="Comments">

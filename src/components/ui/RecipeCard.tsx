@@ -4,42 +4,30 @@ import { Link } from "@tanstack/react-router";
 import { api } from "convex/_generated/api";
 import type { Id } from "convex/_generated/dataModel";
 import { useMutation, useQuery } from "convex/react";
-import { useCallback, useRef, useState } from "react";
+import { useAsyncAction } from "@/hooks/useAsyncAction";
 
 function QuickBookmark({ recipeId }: { recipeId: Id<"recipes"> }) {
   const currentUser = useQuery(api.users.currentUser);
   const bookmarks = useQuery(api.recipes.myBookmarks);
   const toggleBookmark = useMutation(api.social.toggleBookmark);
-  const [pending, setPending] = useState(false);
-
-  const currentUserRef = useRef(currentUser);
-  currentUserRef.current = currentUser;
-  const toggleBookmarkRef = useRef(toggleBookmark);
-  toggleBookmarkRef.current = toggleBookmark;
 
   const isBookmarked = bookmarks?.some((r) => r !== null && r._id === recipeId) ?? false;
 
-  const handleClick = useCallback(
+  const { execute: handleClick, isPending } = useAsyncAction(
     async (e: React.MouseEvent) => {
       e.preventDefault();
       e.stopPropagation();
-      if (!currentUserRef.current || pending) return;
-      setPending(true);
-      try {
-        await toggleBookmarkRef.current({ recipeId, collectionId: undefined });
-      } finally {
-        setPending(false);
-      }
-    },
-    [pending, recipeId]
+      if (!currentUser) return;
+      await toggleBookmark({ recipeId, collectionId: undefined });
+    }
   );
 
   if (currentUser === null) return null;
 
   return (
     <button
-      onClick={handleClick}
-      disabled={pending}
+      onClick={(e) => void handleClick(e)}
+      disabled={isPending}
       aria-label={isBookmarked ? "Remove from saved" : "Save recipe"}
       className={`p-2 rounded-full shadow-sm transition-all duration-200 backdrop-blur-sm disabled:opacity-50 ${isBookmarked ? "bg-charcoal/80 text-honey" : "bg-black/40 text-white hover:bg-charcoal/80"}`}
     >
@@ -121,7 +109,6 @@ export function RecipeCard({
     );
   }
 
-  // Default grid variant
   return (
     <Link to="/recipe/$slug" params={{ slug }} className="recipe-card group">
       <div className="relative overflow-hidden">

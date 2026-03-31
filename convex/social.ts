@@ -1,14 +1,8 @@
+import { getAuthUserId } from "@convex-dev/auth/server";
 import { v } from "convex/values";
 import { mutation, query } from "./_generated/server";
-import {
-  createNotification,
-  getOptionalAuth,
-  requireAuth,
-  requirePublishedRecipe,
-  validateLength,
-} from "./lib/helpers";
+import { createNotification, requireAuth, requirePublishedRecipe, validateLength } from "./lib/helpers";
 
-// Toggle like
 export const toggleLike = mutation({
   args: { recipeId: v.id("recipes") },
   handler: async (ctx, { recipeId }) => {
@@ -31,7 +25,6 @@ export const toggleLike = mutation({
   },
 });
 
-// Toggle bookmark
 export const toggleBookmark = mutation({
   args: { recipeId: v.id("recipes"), collectionId: v.optional(v.id("collections")) },
   handler: async (ctx, { recipeId, collectionId }) => {
@@ -62,7 +55,6 @@ export const toggleBookmark = mutation({
   },
 });
 
-// Get comments - batch user lookups
 export const getComments = query({
   args: { recipeId: v.id("recipes") },
   handler: async (ctx, { recipeId }) => {
@@ -83,7 +75,6 @@ export const getComments = query({
   },
 });
 
-// Add comment
 export const addComment = mutation({
   args: { recipeId: v.id("recipes"), content: v.string() },
   handler: async (ctx, { recipeId, content }) => {
@@ -119,7 +110,7 @@ export const toggleFollow = mutation({
 export const isFollowing = query({
   args: { userId: v.id("users") },
   handler: async (ctx, { userId: targetId }) => {
-    const userId = await getOptionalAuth(ctx);
+    const userId = await getAuthUserId(ctx);
     if (!userId) return false;
     return !!(await ctx.db
       .query("follows")
@@ -194,7 +185,7 @@ export const ratingStats = query({
       .collect();
     if (ratings.length === 0) return { average: 0, count: 0, userRating: null };
     const average = ratings.reduce((sum, r) => sum + r.value, 0) / ratings.length;
-    const userId = await getOptionalAuth(ctx);
+    const userId = await getAuthUserId(ctx);
     const userRating = userId ? (ratings.find((r) => r.userId === userId)?.value ?? null) : null;
     return { average: Math.round(average * 10) / 10, count: ratings.length, userRating };
   },

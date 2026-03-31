@@ -9,20 +9,23 @@ import { PageLayout } from "@/components/layout/PageLayout";
 import { AddToCollectionButton, MetaStat, RelatedRecipes, ShareButton } from "@/components/recipe/RecipeActions";
 import { CookingNow, CookingTimers, IngredientScaler } from "@/components/recipe/RecipeWidgets";
 import { CommentSection, ForkButton, SocialActions, StarRating } from "@/components/social/Social";
+import { AuthorCard } from "@/components/ui/AuthorCard";
 
 export const Route = createFileRoute("/recipe/$slug")({
   loader: ({ params, context: { queryClient } }) =>
     queryClient.ensureQueryData(convexQuery(api.recipes.getBySlug, { slug: params.slug })),
   component: RecipePage,
   head: ({ loaderData }) => {
-    const recipe = loaderData as { title?: string; description?: string; coverImageUrl?: string } | undefined;
+    const title = loaderData?.title;
+    const description = loaderData?.description;
+    const coverImageUrl = loaderData?.coverImageUrl;
     return {
       meta: [
-        { title: recipe?.title ? `${recipe.title} | Mise` : "Recipe | Mise" },
-        { name: "description", content: recipe?.description || "A delicious recipe on Mise" },
-        { property: "og:title", content: recipe?.title || "Recipe" },
-        { property: "og:description", content: recipe?.description || "A delicious recipe on Mise" },
-        { property: "og:image", content: recipe?.coverImageUrl || "" },
+        { title: title ? `${title} | Mise` : "Recipe | Mise" },
+        { name: "description", content: description ?? "A delicious recipe on Mise" },
+        { property: "og:title", content: title ?? "Recipe" },
+        { property: "og:description", content: description ?? "A delicious recipe on Mise" },
+        { property: "og:image", content: coverImageUrl ?? "" },
         { property: "og:type", content: "article" },
         { name: "twitter:card", content: "summary_large_image" },
       ],
@@ -42,7 +45,7 @@ function RecipePage() {
       <article className="wrapper max-w-4xl">
         <header className="py-12 md:py-16">
           <div className="flex items-center gap-4 mb-4">
-            <span className="tag-sage">{recipe.category || "Recipe"}</span>
+            <span className="tag-sage">{recipe.category ?? "Recipe"}</span>
             <CookingNow recipeId={recipe._id} />
           </div>
           <h1 className="heading-1 text-3xl sm:text-4xl md:text-5xl mb-4">{recipe.title}</h1>
@@ -77,29 +80,13 @@ function RecipePage() {
           )}
 
           <div className="flex flex-wrap items-center gap-4 mt-8 pt-6 border-t border-cream-dark">
-            <Link
-              to="/chef/$username"
-              params={{ username: recipe.author?.username || recipe.author?.name || "unknown" }}
-              className="flex items-center gap-3 group"
+            <AuthorCard
+              name={recipe.author?.name}
+              username={recipe.author?.username}
+              image={recipe.author?.image}
             >
-              {recipe.author?.image ? (
-                <img
-                  src={recipe.author.image}
-                  alt=""
-                  className="w-10 h-10 rounded-full object-cover ring-2 ring-cream-dark"
-                />
-              ) : (
-                <div className="w-10 h-10 rounded-full bg-sage/15 flex items-center justify-center text-sage font-medium">
-                  {(recipe.author?.name || "U")[0]}
-                </div>
-              )}
-              <div>
-                <span className="block text-sm font-medium text-charcoal group-hover:text-sage">
-                  {recipe.author?.name || "Community Chef"}
-                </span>
-                <span className="block text-xs text-stone">View kitchen →</span>
-              </div>
-            </Link>
+              <span className="block text-xs text-stone">View kitchen →</span>
+            </AuthorCard>
             <span className="text-stone-light">·</span>
             <time className="text-sm text-stone">
               {new Date(recipe._creationTime).toLocaleDateString("en-US", {
@@ -132,7 +119,7 @@ function RecipePage() {
           <aside className="space-y-6">
             <div className="card p-6 sticky top-24">
               <h3 className="font-serif text-lg font-medium mb-4">Ingredients</h3>
-              <IngredientScaler ingredients={recipe.ingredients} defaultServings={recipe.servings || 4} />
+              <IngredientScaler ingredients={recipe.ingredients} defaultServings={recipe.servings ?? 4} />
             </div>
             <CookingTimers />
           </aside>

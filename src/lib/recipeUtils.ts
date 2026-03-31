@@ -16,6 +16,27 @@ export const CATEGORIES = [
   "Mexican",
 ] as const;
 
+export type Category = (typeof CATEGORIES)[number];
+
+/** Emoji icons for each recipe category — single source of truth. */
+export const CATEGORY_ICONS: Record<string, string> = {
+  Breakfast: "☀️",
+  Lunch: "🥗",
+  Dinner: "🍽️",
+  Dessert: "🍰",
+  Vegan: "🌱",
+  "Quick & Easy": "⚡",
+  Baking: "🥐",
+  Italian: "🍝",
+  Asian: "🍜",
+  Mexican: "🌮",
+};
+
+/** Difficulty levels for recipes — single source of truth. */
+export const DIFFICULTIES = ["Easy", "Medium", "Hard", "Expert"] as const;
+
+export type Difficulty = (typeof DIFFICULTIES)[number];
+
 const FRACTIONS: Array<[number, string]> = [
   [0.125, "⅛"],
   [0.25, "¼"],
@@ -55,11 +76,24 @@ export function scaleIngredient(ingredient: string, scale: number): string {
   });
 }
 
-/** Format seconds as "m:ss". */
-export function formatTime(seconds: number): string {
+/** Format a duration in seconds as "m:ss". */
+export function formatSeconds(seconds: number): string {
   const m = Math.floor(seconds / 60);
   const s = seconds % 60;
   return `${m}:${s.toString().padStart(2, "0")}`;
+}
+
+/** Format a timestamp (ms since epoch) as a relative "time ago" string. */
+export function timeAgo(ms: number): string {
+  const diff = Date.now() - ms;
+  const mins = Math.floor(diff / 60000);
+  if (mins < 1) return "just now";
+  if (mins < 60) return `${mins}m ago`;
+  const hrs = Math.floor(mins / 60);
+  if (hrs < 24) return `${hrs}h ago`;
+  const days = Math.floor(hrs / 24);
+  if (days < 7) return `${days}d ago`;
+  return new Date(ms).toLocaleDateString();
 }
 
 /** Score password strength 0–4. */

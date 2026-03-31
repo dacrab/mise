@@ -1,13 +1,7 @@
 import { getAuthUserId } from "@convex-dev/auth/server";
 import { v } from "convex/values";
 import { mutation, query } from "./_generated/server";
-
-async function withProfileImageUrl<T extends { profileImage?: string | null }>(
-  ctx: { storage: { getUrl: (id: string) => Promise<string | null> } },
-  user: T
-) {
-  return { ...user, profileImageUrl: user.profileImage ? await ctx.storage.getUrl(user.profileImage) : null };
-}
+import { withProfileImageUrl } from "./lib/helpers";
 
 export const currentUser = query({
   args: {},
@@ -46,7 +40,7 @@ export const updateProfile = mutation({
     if (args.username) {
       const existing = await ctx.db
         .query("users")
-        .withIndex("by_username", (q) => q.eq("username", args.username ?? ""))
+        .withIndex("by_username", (q) => q.eq("username", args.username))
         .first();
       if (existing && existing._id !== userId) {
         throw new Error("Username already taken");

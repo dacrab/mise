@@ -56,7 +56,7 @@ export function DashboardView() {
           <div>
             <p className="font-hand text-xl text-sage mb-1">your kitchen</p>
             <h1 className="font-serif text-3xl md:text-4xl font-medium">
-              Welcome back, {user.name?.split(" ")[0] || "Chef"}
+              Welcome back, {user.name?.split(" ")[0] ?? "Chef"}
             </h1>
           </div>
           <div className="flex gap-6">

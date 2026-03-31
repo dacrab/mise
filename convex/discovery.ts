@@ -1,9 +1,9 @@
+import { getAuthUserId } from "@convex-dev/auth/server";
 import { v } from "convex/values";
 import type { Id } from "./_generated/dataModel";
 import { query } from "./_generated/server";
-import { getOptionalAuth, withCoverUrls } from "./lib/helpers";
+import { withCoverUrls } from "./lib/helpers";
 
-// Get trending recipes (most liked in last 7 days)
 // Uses the by_timestamp index to only scan recent likes — no full table scan
 export const trending = query({
   args: { limit: v.optional(v.number()) },
@@ -18,7 +18,7 @@ export const trending = query({
 
     const likeCounts = new Map<string, number>();
     for (const like of recentLikes) {
-      likeCounts.set(like.recipeId, (likeCounts.get(like.recipeId) || 0) + 1);
+      likeCounts.set(like.recipeId, (likeCounts.get(like.recipeId) ?? 0) + 1);
     }
 
     const topRecipeIds = [...likeCounts.entries()]
@@ -39,11 +39,10 @@ export const trending = query({
   },
 });
 
-// Get recommendations
 export const recommendations = query({
   args: { limit: v.optional(v.number()) },
   handler: async (ctx, { limit = 10 }) => {
-    const userId = await getOptionalAuth(ctx);
+    const userId = await getAuthUserId(ctx);
 
     if (!userId) {
       const recipes = await ctx.db

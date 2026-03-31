@@ -29,7 +29,7 @@ function RootErrorComponent({ error }: { error: Error }) {
         <HeadContent />
       </head>
       <body>
-        <ErrorPage title="Something went wrong" message={error.message || "An unexpected error occurred"} />
+        <ErrorPage title="Something went wrong" message={error.message || "Unexpected error"} />
         <Scripts />
       </body>
     </html>
