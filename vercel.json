@@ -2,5 +2,6 @@
   "buildCommand": "bun run build",
   "outputDirectory": "dist/client",
   "installCommand": "bun install",
-  "framework": null
+  "framework": null,
+  "ignoreCommand": "[ \"$VERCEL_GIT_COMMIT_AUTHOR_LOGIN\" = \"dependabot[bot]\" ] && exit 0 || exit 1"
 }
