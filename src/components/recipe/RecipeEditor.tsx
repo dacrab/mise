@@ -10,11 +10,10 @@ import { ProgressBar } from "@/components/ui/primitives";
 import { Select } from "@/components/ui/Select";
 import { useToast } from "@/components/ui/toast";
 import { useFileUpload } from "@/hooks/useFileUpload";
-import { CATEGORIES as BASE_CATEGORIES } from "@/lib/recipeUtils";
+import { CATEGORIES as BASE_CATEGORIES, DIFFICULTIES } from "@/lib/recipeUtils";
 
 import { RecipeImporter } from "@/components/recipe/RecipeImporter";
 
-const DIFFICULTIES = ["Easy", "Medium", "Hard", "Expert"] as const;
 const CATEGORIES = ["General", ...BASE_CATEGORIES];
 
 // All fields are strings in the RHF layer (native HTML inputs return strings).
@@ -86,13 +85,13 @@ export function RecipeEditor({ initialData, isEditing }: Props) {
   const [coverImage, setCoverImage] = useState<Id<"_storage"> | null>(initialData?.coverImage ?? null);
   const [coverImageUrl, setCoverImageUrl] = useState(initialData?.coverImageUrl ?? "");
 
-  // Pending status for submit
+  // Tracks which button (Save draft / Publish) was clicked before RHF handleSubmit runs.
   const pendingStatusRef = useRef<"draft" | "published" | null>(null);
 
   const {
     register,
     control,
-    handleSubmit,
+    handleSubmit: rhfHandleSubmit,
     watch,
     reset,
     setValue,
@@ -131,13 +130,12 @@ export function RecipeEditor({ initialData, isEditing }: Props) {
     name: "steps",
   });
 
-  // Helper to unwrap { value } objects to plain string[] — stable ref for useEffect deps
+  // Unwrap RHF's { value } wrapper to plain string[]. Stable ref avoids useEffect churn.
   const unwrap = useCallback((arr: Array<{ value: string }>) => arr.map((x) => x.value), []);
 
-  // Watch all form values for auto-save
   const watchedValues = watch();
 
-  // Warn on browser close/refresh when dirty
+  // Warn on tab close/refresh when the form has unsaved changes.
   useEffect(() => {
     const handler = (e: BeforeUnloadEvent) => {
       if (isDirty) e.preventDefault();
@@ -166,7 +164,7 @@ export function RecipeEditor({ initialData, isEditing }: Props) {
     onError: () => toast("Could not upload image", "error"),
   });
 
-  // Auto-save draft every 30s when dirty and editing
+  // Auto-save draft every 30s while editing and the form is dirty.
   useEffect(() => {
     if (!isEditing || !initialData?.id) return;
     const recipeId = initialData.id;
@@ -184,7 +182,6 @@ export function RecipeEditor({ initialData, isEditing }: Props) {
           prepTime: watchedValues.prepTime ? Number(watchedValues.prepTime) : undefined,
           cookTime: watchedValues.cookTime ? Number(watchedValues.cookTime) : undefined,
           servings: watchedValues.servings ? Number(watchedValues.servings) : undefined,
-          // Note: string → number conversion is intentional here for the Convex payload
           difficulty: watchedValues.difficulty || undefined,
           ingredients: validIngredients,
           steps: validSteps,
@@ -200,7 +197,7 @@ export function RecipeEditor({ initialData, isEditing }: Props) {
     return () => clearInterval(interval);
   }, [isEditing, initialData?.id, isDirty, watchedValues, coverImage, unwrap]);
 
-  // Revoke blob URL on unmount
+  // Revoke the blob preview URL when the component unmounts to free memory.
   useEffect(
     () => () => {
       if (coverImageUrl?.startsWith("blob:")) URL.revokeObjectURL(coverImageUrl);
@@ -208,7 +205,7 @@ export function RecipeEditor({ initialData, isEditing }: Props) {
     [coverImageUrl]
   );
 
-  // Redirect unauthenticated users — must be in effect, not render
+  // Redirect must happen in an effect — calling navigate during render is not allowed.
   const userIsNull = user === null;
   useEffect(() => {
     if (userIsNull) void navigate({ to: "/login", replace: true });
@@ -225,7 +222,7 @@ export function RecipeEditor({ initialData, isEditing }: Props) {
     await upload(file);
   };
 
-  const onSubmit = async (data: RecipeFormData) => {
+  const handleSubmit = async (data: RecipeFormData) => {
     const status = pendingStatusRef.current;
     if (!status) return;
 
@@ -277,12 +274,12 @@ export function RecipeEditor({ initialData, isEditing }: Props) {
 
   const handleDraftClick = () => {
     pendingStatusRef.current = "draft";
-    void handleSubmit(onSubmit)();
+    void rhfHandleSubmit(handleSubmit)();
   };
 
   const handlePublishClick = () => {
     pendingStatusRef.current = "published";
-    void handleSubmit(onSubmit)();
+    void rhfHandleSubmit(handleSubmit)();
   };
 
   return (
@@ -334,7 +331,6 @@ export function RecipeEditor({ initialData, isEditing }: Props) {
 
       <div className="grid lg:grid-cols-[1fr_300px] gap-8">
         <div className="space-y-8">
-          {/* Basic info */}
           <section className="card p-6 space-y-5">
             <h2 className="font-serif text-lg font-medium">Basic info</h2>
             <div>
@@ -463,7 +459,6 @@ export function RecipeEditor({ initialData, isEditing }: Props) {
             </div>
           </section>
 
-          {/* Ingredients */}
           <section className="card p-6 space-y-4">
             <h2 className="font-serif text-lg font-medium">Ingredients</h2>
             <div className="space-y-3">
@@ -501,7 +496,6 @@ export function RecipeEditor({ initialData, isEditing }: Props) {
             </div>
           </section>
 
-          {/* Steps */}
           <section className="card p-6 space-y-4">
             <h2 className="font-serif text-lg font-medium">Instructions</h2>
             <div className="space-y-3">
@@ -540,7 +534,6 @@ export function RecipeEditor({ initialData, isEditing }: Props) {
           </section>
         </div>
 
-        {/* Cover image */}
         <aside>
           <div className="card p-5 sticky top-24 space-y-4">
             <h3 className="text-sm font-medium text-charcoal-light">Cover image</h3>

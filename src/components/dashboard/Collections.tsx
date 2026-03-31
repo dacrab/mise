@@ -44,7 +44,6 @@ export function Collections() {
 
   return (
     <div className="grid md:grid-cols-[240px_1fr] gap-6">
-      {/* Sidebar */}
       <aside className="space-y-2">
         <button
           onClick={() => setSelectedId(null)}
@@ -105,7 +104,6 @@ export function Collections() {
         )}
       </aside>
 
-      {/* Content */}
       <div>
         <h2 className="font-serif text-xl font-medium mb-4">
           {selectedId ? collections.find((c) => c._id === selectedId)?.name : "All Saved Recipes"}

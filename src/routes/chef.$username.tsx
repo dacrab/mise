@@ -49,12 +49,13 @@ export const Route = createFileRoute("/chef/$username")({
   pendingComponent: ChefSkeleton,
   component: ChefPage,
   head: ({ loaderData }) => {
-    const chef = loaderData as { name?: string; bio?: string } | null | undefined;
+    const name = loaderData?.name;
+    const bio = loaderData?.bio;
     return {
       meta: [
-        { title: chef?.name ? `${chef.name}'s Kitchen | Mise` : "Chef | Mise" },
-        { name: "description", content: chef?.bio || `Recipes by ${chef?.name ?? "this chef"} on Mise` },
-        { property: "og:title", content: chef?.name ? `${chef.name}'s Kitchen` : "Chef" },
+        { title: name ? `${name}'s Kitchen | Mise` : "Chef | Mise" },
+        { name: "description", content: bio ?? (name ? `Recipes by ${name} on Mise` : "Chef on Mise") },
+        { property: "og:title", content: name ? `${name}'s Kitchen` : "Chef" },
         { property: "og:type", content: "profile" },
       ],
     };
@@ -77,17 +78,21 @@ function ChefPage() {
         <div className="py-12 md:py-16 border-b border-cream-dark mb-10">
           <div className="flex flex-col sm:flex-row items-center sm:items-start gap-6">
             <div className="w-24 h-24 rounded-full bg-sage/15 overflow-hidden shrink-0">
-              {chef.profileImageUrl || chef.image ? (
-                <img src={chef.profileImageUrl || chef.image} alt={chef.name} className="w-full h-full object-cover" />
+              {chef.profileImageUrl ?? chef.image ? (
+                <img
+                  src={chef.profileImageUrl ?? chef.image ?? ""}
+                  alt={chef.name ?? ""}
+                  className="w-full h-full object-cover"
+                />
               ) : (
                 <div className="w-full h-full flex items-center justify-center text-2xl font-medium text-sage">
-                  {(chef.name || "U")[0]}
+                  {chef.name?.[0] ?? "U"}
                 </div>
               )}
             </div>
             <div className="text-center sm:text-left">
               <h1 className="font-serif text-3xl font-medium mb-1">{chef.name}</h1>
-              <p className="text-stone text-sm mb-3">@{chef.username}</p>
+              {chef.username && <p className="text-stone text-sm mb-3">@{chef.username}</p>}
               {chef.bio && <p className="text-charcoal-light max-w-md mb-4">{chef.bio}</p>}
               <div className="flex flex-col sm:flex-row items-center gap-4">
                 <FollowStats userId={chef._id} />

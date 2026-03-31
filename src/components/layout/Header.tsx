@@ -53,7 +53,6 @@ export function Header() {
             mise
           </Link>
 
-          {/* Desktop nav */}
           <nav className="hidden sm:flex items-center gap-2">
             {user ? (
               <>
@@ -101,7 +100,6 @@ export function Header() {
             ) : null}
           </nav>
 
-          {/* Mobile: right side */}
           <div className="flex sm:hidden items-center gap-2">
             {user && <NotificationBell />}
             <button

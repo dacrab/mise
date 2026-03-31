@@ -1,7 +1,8 @@
 import { paginationOptsValidator } from "convex/server";
 import { v } from "convex/values";
 import { internalMutation, mutation, query } from "./_generated/server";
-import { createNotification, getOptionalAuth, requireAuth, withCoverUrl, withCoverUrls } from "./lib/helpers";
+import { getAuthUserId } from "@convex-dev/auth/server";
+import { createNotification, requireAuth, withCoverUrl, withCoverUrls } from "./lib/helpers";
 
 function generateSlug(title: string): string {
   const base = title
@@ -14,7 +15,6 @@ function generateSlug(title: string): string {
   return `${base}-${suffix}`;
 }
 
-// Paginated list for infinite scroll
 export const listPaginated = query({
   args: { paginationOpts: paginationOptsValidator, category: v.optional(v.string()) },
   handler: async (ctx, { paginationOpts, category }) => {
@@ -34,7 +34,6 @@ export const listPaginated = query({
   },
 });
 
-// List published recipes
 export const list = query({
   args: { search: v.optional(v.string()), category: v.optional(v.string()), limit: v.optional(v.number()) },
   handler: async (ctx, { search, category, limit = 50 }) => {
@@ -68,7 +67,6 @@ export const list = query({
   },
 });
 
-// Get recipe by slug with author info
 export const getBySlug = query({
   args: { slug: v.string() },
   handler: async (ctx, { slug }) => {
@@ -84,10 +82,10 @@ export const getBySlug = query({
         .query("likes")
         .withIndex("by_recipe", (q) => q.eq("recipeId", recipe._id))
         .collect(),
-      getOptionalAuth(ctx),
+      getAuthUserId(ctx),
     ]);
 
-    const isLiked = userId ? likes.some((l) => l.userId === userId) : false;
+    const isLiked = userId ? likes.some((l: { userId: string }) => l.userId === userId) : false;
     const isBookmarked = userId
       ? !!(await ctx.db
           .query("bookmarks")
@@ -105,11 +103,10 @@ export const getBySlug = query({
   },
 });
 
-// Get recipes by user
 export const getByUser = query({
   args: { userId: v.id("users") },
   handler: async (ctx, { userId }) => {
-    const currentUserId = await getOptionalAuth(ctx);
+    const currentUserId = await getAuthUserId(ctx);
     const isOwner = currentUserId === userId;
     const recipes = isOwner
       ? await ctx.db
@@ -127,11 +124,10 @@ export const getByUser = query({
   },
 });
 
-// Get current user's recipes
 export const myRecipes = query({
   args: {},
   handler: async (ctx) => {
-    const userId = await getOptionalAuth(ctx);
+    const userId = await getAuthUserId(ctx);
     if (!userId) return [];
     const recipes = await ctx.db
       .query("recipes")
@@ -142,31 +138,28 @@ export const myRecipes = query({
   },
 });
 
-// Get user's bookmarked recipes
 export const myBookmarks = query({
   args: {},
   handler: async (ctx) => {
-    const userId = await getOptionalAuth(ctx);
+    const userId = await getAuthUserId(ctx);
     if (!userId) return [];
     const bookmarks = await ctx.db
       .query("bookmarks")
       .withIndex("by_user", (q) => q.eq("userId", userId))
       .order("desc")
       .take(100);
-    // Batch fetch all recipes in parallel (already one db.get per bookmark — unavoidable without denormalization)
     const recipes = await Promise.all(bookmarks.map((b) => ctx.db.get(b.recipeId)));
     return withCoverUrls(ctx, recipes.filter(Boolean) as Array<NonNullable<(typeof recipes)[number]>>);
   },
 });
 
-// Get recipe by ID (for editing)
 export const getById = query({
   args: { id: v.id("recipes") },
   handler: async (ctx, { id }) => {
     const recipe = await ctx.db.get(id);
     if (!recipe) return null;
     if (recipe.status === "draft") {
-      const userId = await getOptionalAuth(ctx);
+      const userId = await getAuthUserId(ctx);
       if (recipe.userId !== userId) return null;
     }
     return withCoverUrl(ctx, recipe);
@@ -188,7 +181,6 @@ const recipeArgs = {
   difficulty: v.optional(v.string()),
 };
 
-// Create recipe
 export const create = mutation({
   args: recipeArgs,
   handler: async (ctx, args) => {
@@ -199,7 +191,6 @@ export const create = mutation({
   },
 });
 
-// Update recipe
 export const update = mutation({
   args: { id: v.id("recipes"), ...recipeArgs },
   handler: async (ctx, { id, ...args }) => {
@@ -211,7 +202,6 @@ export const update = mutation({
   },
 });
 
-// Delete recipe
 export const remove = mutation({
   args: { id: v.id("recipes") },
   handler: async (ctx, { id }) => {
@@ -244,7 +234,6 @@ export const remove = mutation({
   },
 });
 
-// Generate upload URL
 export const generateUploadUrl = mutation({
   args: {},
   handler: async (ctx) => {
@@ -253,7 +242,6 @@ export const generateUploadUrl = mutation({
   },
 });
 
-// Fork a recipe
 export const fork = mutation({
   args: { id: v.id("recipes") },
   handler: async (ctx, { id }) => {

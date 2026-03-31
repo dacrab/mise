@@ -1,12 +1,10 @@
-// Recipe page widgets: IngredientScaler, CookingNow, CookingTimers, TrendingRecipes
-
 import { ArrowPathIcon, PauseIcon, PlayIcon, XMarkIcon } from "@heroicons/react/24/outline";
 import { api } from "convex/_generated/api";
 import type { Id } from "convex/_generated/dataModel";
 import { useMutation, useQuery } from "convex/react";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { RecipeCard } from "@/components/ui/RecipeCard";
-import { scaleIngredient } from "@/lib/recipeUtils";
+import { formatSeconds, scaleIngredient } from "@/lib/recipeUtils";
 
 // ── Ingredient Scaler ─────────────────────────────────────────────────────────
 
@@ -131,7 +129,7 @@ export function CookingTimers() {
     setNewLabel("");
   };
 
-  const fmt = (s: number) => `${Math.floor(s / 60)}:${String(s % 60).padStart(2, "0")}`;
+  const fmt = formatSeconds;
 
   return (
     <div className="card p-5">

@@ -6,6 +6,7 @@ import { useMutation, useQuery } from "convex/react";
 import { useEffect, useRef, useState } from "react";
 import { ProgressBar } from "@/components/ui/primitives";
 import { useToast } from "@/components/ui/toast";
+import { useAsyncAction } from "@/hooks/useAsyncAction";
 import { useFileUpload } from "@/hooks/useFileUpload";
 
 export const Route = createFileRoute("/_authed/settings")({
@@ -36,7 +37,6 @@ function Settings() {
   const [name, setName] = useState("");
   const [username, setUsername] = useState("");
   const [bio, setBio] = useState("");
-  const [saving, setSaving] = useState(false);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [newProfileImage, setNewProfileImage] = useState<Id<"_storage"> | null>(null);
 
@@ -71,6 +71,27 @@ function Settings() {
       bio !== (userBio ?? "") ||
       newProfileImage !== null);
 
+  const { execute: handleSubmit, isPending: saving } = useAsyncAction(
+    async (e: React.FormEvent) => {
+      e.preventDefault();
+      if (!hasChanges) return;
+      if (!name.trim()) { toast("Name cannot be empty", "error"); return; }
+      if (username.trim() && !/^[a-z0-9_]+$/.test(username.trim())) {
+        toast("Username can only contain letters, numbers, and underscores", "error");
+        return;
+      }
+      await updateProfile({
+        name: name.trim(),
+        username: username.trim() || undefined,
+        bio: bio.trim() || undefined,
+        profileImage: newProfileImage ?? undefined,
+      });
+      setNewProfileImage(null);
+      toast("Profile saved", "success");
+    },
+    { errorMessage: "Could not save profile" }
+  );
+
   if (!user) {
     return <div className="flex items-center justify-center min-h-[60vh] text-stone animate-pulse">Loading…</div>;
   }
@@ -86,39 +107,7 @@ function Settings() {
       toast("Image must be under 5MB", "error");
       return;
     }
-
     await upload(file);
-  };
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!hasChanges) return;
-    const trimName = name.trim();
-    const trimUsername = username.trim();
-    if (!trimName) {
-      toast("Name cannot be empty", "error");
-      return;
-    }
-    if (trimUsername && !/^[a-z0-9_]+$/.test(trimUsername)) {
-      toast("Username can only contain letters, numbers, and underscores", "error");
-      return;
-    }
-
-    setSaving(true);
-    try {
-      await updateProfile({
-        name: trimName,
-        username: trimUsername || undefined,
-        bio: bio.trim() || undefined,
-        profileImage: newProfileImage ?? undefined,
-      });
-      setNewProfileImage(null);
-      toast("Profile saved", "success");
-    } catch (err) {
-      toast(err instanceof Error ? err.message : "Could not save profile", "error");
-    } finally {
-      setSaving(false);
-    }
   };
 
   const avatar = previewUrl ?? user.profileImageUrl ?? user.image;
@@ -127,8 +116,7 @@ function Settings() {
     <div className="wrapper max-w-2xl py-8 md:py-12">
       <h1 className="font-serif text-3xl font-medium mb-8">Settings</h1>
 
-      <form onSubmit={handleSubmit} className="space-y-6">
-        {/* Avatar */}
+      <form onSubmit={(e) => { void handleSubmit(e); }} className="space-y-6">
         <section className="card p-6">
           <h2 className="font-serif text-lg font-medium mb-4 flex items-center gap-2">
             <UserCircleIcon className="w-5 h-5 text-sage" />
@@ -177,7 +165,7 @@ function Settings() {
               </label>
             </div>
             <div>
-              <p className="font-medium text-charcoal">{name || "Anonymous"}</p>
+              <p className="font-medium text-charcoal">{name || "Chef"}</p>
               <button
                 type="button"
                 onClick={() => fileInputRef.current?.click()}
@@ -239,7 +227,6 @@ function Settings() {
           </div>
         </section>
 
-        {/* Account info */}
         <section className="card p-6">
           <h2 className="font-serif text-lg font-medium mb-4 flex items-center gap-2">
             <EnvelopeIcon className="w-5 h-5 text-sage" />

@@ -1,12 +1,12 @@
+import { getAuthUserId } from "@convex-dev/auth/server";
 import { v } from "convex/values";
 import { mutation, query } from "./_generated/server";
-import { getOptionalAuth, requireAuth } from "./lib/helpers";
+import { requireAuth } from "./lib/helpers";
 
-// Get user's notifications
 export const list = query({
   args: { limit: v.optional(v.number()) },
   handler: async (ctx, { limit = 20 }) => {
-    const userId = await getOptionalAuth(ctx);
+    const userId = await getAuthUserId(ctx);
     if (!userId) return [];
 
     const notifications = await ctx.db
@@ -39,11 +39,10 @@ export const list = query({
   },
 });
 
-// Get unread count
 export const unreadCount = query({
   args: {},
   handler: async (ctx) => {
-    const userId = await getOptionalAuth(ctx);
+    const userId = await getAuthUserId(ctx);
     if (!userId) return 0;
     const unread = await ctx.db
       .query("notifications")
@@ -53,7 +52,6 @@ export const unreadCount = query({
   },
 });
 
-// Mark all as read
 export const markAllRead = mutation({
   args: {},
   handler: async (ctx) => {
@@ -66,7 +64,6 @@ export const markAllRead = mutation({
   },
 });
 
-// Mark single as read
 export const markRead = mutation({
   args: { id: v.id("notifications") },
   handler: async (ctx, { id }) => {

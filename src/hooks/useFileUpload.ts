@@ -2,7 +2,7 @@ import { useState } from "react";
 
 interface UploadOptions {
   onSuccess?: (storageId: string, previewUrl: string) => void;
-  onError?: (err: unknown) => void;
+  onError?: (err: Error) => void;
 }
 
 export function useFileUpload(getUploadUrl: () => Promise<string>, options: UploadOptions = {}) {
@@ -36,7 +36,7 @@ export function useFileUpload(getUploadUrl: () => Promise<string>, options: Uplo
       options.onSuccess?.(storageId, previewUrl);
       return { storageId, previewUrl };
     } catch (err) {
-      options.onError?.(err);
+      options.onError?.(err instanceof Error ? err : new Error(String(err)));
       setProgress(0);
       return null;
     } finally {

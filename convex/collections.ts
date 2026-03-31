@@ -1,12 +1,12 @@
 import { v } from "convex/values";
 import { mutation, query } from "./_generated/server";
-import { getOptionalAuth, requireAuth, validateLength, withCoverUrls } from "./lib/helpers";
+import { getAuthUserId } from "@convex-dev/auth/server";
+import { requireAuth, validateLength, withCoverUrls } from "./lib/helpers";
 
-// List user's collections
 export const list = query({
   args: {},
   handler: async (ctx) => {
-    const userId = await getOptionalAuth(ctx);
+    const userId = await getAuthUserId(ctx);
     if (!userId) return [];
 
     const collections = await ctx.db
@@ -28,7 +28,6 @@ export const list = query({
   },
 });
 
-// Create collection
 export const create = mutation({
   args: { name: v.string() },
   handler: async (ctx, { name }) => {
@@ -39,7 +38,6 @@ export const create = mutation({
   },
 });
 
-// Delete collection
 export const remove = mutation({
   args: { id: v.id("collections") },
   handler: async (ctx, { id }) => {
@@ -56,11 +54,10 @@ export const remove = mutation({
   },
 });
 
-// Get bookmarks by collection
 export const getBookmarks = query({
   args: { collectionId: v.optional(v.id("collections")) },
   handler: async (ctx, { collectionId }) => {
-    const userId = await getOptionalAuth(ctx);
+    const userId = await getAuthUserId(ctx);
     if (!userId) return [];
 
     const bookmarks = collectionId

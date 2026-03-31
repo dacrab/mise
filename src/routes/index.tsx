@@ -9,21 +9,9 @@ import { TrendingRecipes } from "@/components/recipe/RecipeWidgets";
 import { RecipeCard } from "@/components/ui/RecipeCard";
 import { Select } from "@/components/ui/Select";
 import { Spinner } from "@/components/ui/primitives";
-import { CATEGORIES } from "@/lib/recipeUtils";
+import { CATEGORIES, CATEGORY_ICONS } from "@/lib/recipeUtils";
 
 const searchSchema = z.object({ q: z.string().optional(), category: z.string().optional() });
-const CATEGORY_ICONS: Record<string, string> = {
-  Breakfast: "☀️",
-  Lunch: "🥗",
-  Dinner: "🍽️",
-  Dessert: "🍰",
-  Vegan: "🌱",
-  "Quick & Easy": "⚡",
-  Baking: "🥐",
-  Italian: "🍝",
-  Asian: "🍜",
-  Mexican: "🌮",
-};
 
 export const Route = createFileRoute("/")({
   validateSearch: searchSchema.parse,
@@ -61,13 +49,11 @@ function HomePage() {
     });
   };
 
-  // For search, use a plain Convex query (undefined while loading, then resolves)
   const searchResults = useQuery(
     api.recipes.list,
     hasSearch ? { search: q, category: category || undefined, limit: 50 } : "skip"
   );
 
-  // For browsing, use Convex's native pagination
   const paginatedQuery = usePaginatedQuery(
     api.recipes.listPaginated,
     { category: category || undefined },
@@ -79,7 +65,6 @@ function HomePage() {
   const loadMore = () => {
     setIsLoadingMore(true);
     paginatedQuery.loadMore(20);
-    // Reset after a short delay — Convex doesn't expose a loading state here
     setTimeout(() => setIsLoadingMore(false), 1500);
   };
 
@@ -128,7 +113,6 @@ function HomePage() {
         </div>
       </section>
 
-      {/* Category quick-filter pills */}
       <section className="wrapper -mt-4 mb-6">
         <div className="flex gap-2 overflow-x-auto pb-2 scrollbar-none">
           <button

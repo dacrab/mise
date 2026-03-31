@@ -1,10 +1,10 @@
 import { v } from "convex/values";
 import { mutation, query } from "./_generated/server";
-import { getOptionalAuth, requireAuth } from "./lib/helpers";
+import { getAuthUserId } from "@convex-dev/auth/server";
+import { requireAuth } from "./lib/helpers";
 
 const PRESENCE_TTL = 30_000; // 30 seconds
 
-// Heartbeat - call every ~10s while on recipe page
 export const heartbeat = mutation({
   args: { recipeId: v.id("recipes") },
   handler: async (ctx, { recipeId }) => {
@@ -24,11 +24,10 @@ export const heartbeat = mutation({
   },
 });
 
-// Leave - call when navigating away
 export const leave = mutation({
   args: { recipeId: v.id("recipes") },
   handler: async (ctx, { recipeId }) => {
-    const userId = await getOptionalAuth(ctx);
+    const userId = await getAuthUserId(ctx);
     if (!userId) return;
 
     const existing = await ctx.db
@@ -40,7 +39,6 @@ export const leave = mutation({
   },
 });
 
-// Get active cooks on a recipe
 export const getCooking = query({
   args: { recipeId: v.id("recipes") },
   handler: async (ctx, { recipeId }) => {
@@ -51,7 +49,7 @@ export const getCooking = query({
       .collect();
 
     const active = presence.filter((p) => p.lastSeen > cutoff);
-    const currentUserId = await getOptionalAuth(ctx);
+    const currentUserId = await getAuthUserId(ctx);
 
     const users = await Promise.all(
       active
