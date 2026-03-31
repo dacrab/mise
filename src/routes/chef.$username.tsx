@@ -5,7 +5,7 @@ import { api } from "convex/_generated/api";
 import { useQuery } from "convex/react";
 
 import { PageLayout } from "@/components/layout/PageLayout";
-import { FollowButton, FollowStats } from "@/components/social/Social";
+import { FollowButton, FollowStats } from "@/components/social/Follow";
 import { RecipeCard } from "@/components/ui/RecipeCard";
 
 function ChefSkeleton() {

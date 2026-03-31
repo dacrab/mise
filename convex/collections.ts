@@ -1,7 +1,9 @@
 import { v } from "convex/values";
 import { mutation, query } from "./_generated/server";
 import { getAuthUserId } from "@convex-dev/auth/server";
-import { requireAuth, validateLength, withCoverUrls } from "./lib/helpers";
+import { requireAuth } from "./lib/auth";
+import { validateLength } from "./lib/validation";
+import { withCoverUrls } from "./lib/storage";
 
 export const list = query({
   args: {},

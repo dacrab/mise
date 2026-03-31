@@ -4,7 +4,7 @@ import type { Id } from "convex/_generated/dataModel";
 import { useMutation, useQuery } from "convex/react";
 import { useEffect, useRef, useState } from "react";
 import { RecipeCard } from "@/components/ui/RecipeCard";
-import { useToast } from "@/components/ui/toast";
+import { useToast } from "@/components/ui/Toast";
 
 // ─── Add to Collection ────────────────────────────────────────────────────────
 

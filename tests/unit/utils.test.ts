@@ -1,13 +1,7 @@
 import { describe, expect, it } from "vitest";
-import {
-  CATEGORIES,
-  CATEGORY_ICONS,
-  DIFFICULTIES,
-  calculatePasswordStrength,
-  formatSeconds,
-  getErrorMessage,
-  timeAgo,
-} from "@/lib/recipeUtils";
+import { CATEGORIES, CATEGORY_ICONS, DIFFICULTIES } from "@/lib/constants";
+import { formatSeconds, timeAgo, getErrorMessage } from "@/lib/utils";
+import { calculatePasswordStrength } from "@/lib/auth";
 
 describe("formatSeconds", () => {
   it.each([

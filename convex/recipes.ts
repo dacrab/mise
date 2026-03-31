@@ -2,7 +2,9 @@ import { paginationOptsValidator } from "convex/server";
 import { v } from "convex/values";
 import { internalMutation, mutation, query } from "./_generated/server";
 import { getAuthUserId } from "@convex-dev/auth/server";
-import { createNotification, requireAuth, withCoverUrl, withCoverUrls } from "./lib/helpers";
+import { requireAuth } from "./lib/auth";
+import { createNotification } from "./lib/notifications";
+import { withCoverUrl, withCoverUrls } from "./lib/storage";
 
 function generateSlug(title: string): string {
   const base = title

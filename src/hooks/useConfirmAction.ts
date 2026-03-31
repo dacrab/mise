@@ -1,5 +1,5 @@
 import { useRef, useState } from "react";
-import { useToast } from "@/components/ui/toast";
+import { useToast } from "@/components/ui/Toast";
 
 /**
  * Double-tap confirmation pattern.

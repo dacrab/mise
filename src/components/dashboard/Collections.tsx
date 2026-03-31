@@ -6,7 +6,7 @@ import { useMutation, useQuery } from "convex/react";
 import { useState } from "react";
 import { RecipeCard } from "@/components/ui/RecipeCard";
 import { useConfirmAction } from "@/hooks/useConfirmAction";
-import { useToast } from "@/components/ui/toast";
+import { useToast } from "@/components/ui/Toast";
 
 export function Collections() {
   const { toast } = useToast();

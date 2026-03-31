@@ -5,7 +5,7 @@ import { act, renderHook } from "@testing-library/react";
 import { describe, expect, it, vi, beforeEach, afterEach } from "vitest";
 
 const mockToast = vi.fn();
-vi.mock("@/components/ui/toast", () => ({
+vi.mock("@/components/ui/Toast", () => ({
   useToast: () => ({ toast: mockToast }),
 }));
 
