@@ -29,7 +29,6 @@
     "isolatedModules": true,
     "noEmit": true,
     
-    "baseUrl": ".",
     "paths": {
       "@/*": ["./src/*"],
       "convex/*": ["./convex/*"]
