@@ -4,8 +4,8 @@ import { api } from "convex/_generated/api";
 import type { Id } from "convex/_generated/dataModel";
 import { useMutation, useQuery } from "convex/react";
 import { useEffect, useRef, useState } from "react";
-import { ProgressBar } from "@/components/ui/primitives";
-import { useToast } from "@/components/ui/toast";
+import { ProgressBar } from "@/components/ui/Primitives";
+import { useToast } from "@/components/ui/Toast";
 import { useAsyncAction } from "@/hooks/useAsyncAction";
 import { useFileUpload } from "@/hooks/useFileUpload";
 

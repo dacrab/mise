@@ -8,7 +8,9 @@ import { useQuery } from "convex/react";
 import { PageLayout } from "@/components/layout/PageLayout";
 import { AddToCollectionButton, MetaStat, RelatedRecipes, ShareButton } from "@/components/recipe/RecipeActions";
 import { CookingNow, CookingTimers, IngredientScaler } from "@/components/recipe/RecipeWidgets";
-import { CommentSection, ForkButton, SocialActions, StarRating } from "@/components/social/Social";
+import { CommentSection } from "@/components/social/Comments";
+import { ForkButton, SocialActions } from "@/components/social/SocialActions";
+import { StarRating } from "@/components/social/StarRating";
 import { AuthorCard } from "@/components/ui/AuthorCard";
 
 export const Route = createFileRoute("/recipe/$slug")({

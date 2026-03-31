@@ -1,7 +1,10 @@
 import { getAuthUserId } from "@convex-dev/auth/server";
 import { v } from "convex/values";
 import { mutation, query } from "./_generated/server";
-import { createNotification, requireAuth, requirePublishedRecipe, validateLength } from "./lib/helpers";
+import { requireAuth } from "./lib/auth";
+import { validateLength } from "./lib/validation";
+import { createNotification } from "./lib/notifications";
+import { requirePublishedRecipe } from "./lib/helpers";
 
 export const toggleLike = mutation({
   args: { recipeId: v.id("recipes") },

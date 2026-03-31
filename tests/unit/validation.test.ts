@@ -1,4 +1,4 @@
-import { validateLength } from "convex/lib/helpers";
+import { validateLength } from "convex/lib/validation";
 import { describe, expect, it } from "vitest";
 
 describe("validateLength", () => {

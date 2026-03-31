@@ -1,41 +1,6 @@
 /**
- * Pure recipe utility functions — importable by both components and tests.
- * No React, no Convex, no side effects.
+ * Pure utility functions — no React, no Convex, no side effects.
  */
-
-export const CATEGORIES = [
-  "Breakfast",
-  "Lunch",
-  "Dinner",
-  "Dessert",
-  "Vegan",
-  "Quick & Easy",
-  "Baking",
-  "Italian",
-  "Asian",
-  "Mexican",
-] as const;
-
-export type Category = (typeof CATEGORIES)[number];
-
-/** Emoji icons for each recipe category — single source of truth. */
-export const CATEGORY_ICONS: Record<string, string> = {
-  Breakfast: "☀️",
-  Lunch: "🥗",
-  Dinner: "🍽️",
-  Dessert: "🍰",
-  Vegan: "🌱",
-  "Quick & Easy": "⚡",
-  Baking: "🥐",
-  Italian: "🍝",
-  Asian: "🍜",
-  Mexican: "🌮",
-};
-
-/** Difficulty levels for recipes — single source of truth. */
-export const DIFFICULTIES = ["Easy", "Medium", "Hard", "Expert"] as const;
-
-export type Difficulty = (typeof DIFFICULTIES)[number];
 
 const FRACTIONS: Array<[number, string]> = [
   [0.125, "⅛"],
@@ -46,7 +11,7 @@ const FRACTIONS: Array<[number, string]> = [
   [0.75, "¾"],
 ];
 
-/** Format a number as a human-readable quantity, using vulgar fraction symbols where appropriate. */
+/** Format a number as a human-readable quantity using vulgar fraction symbols where appropriate. */
 export function formatNumber(n: number): string {
   if (n === 0) return "0";
   if (n === Math.floor(n)) return n.toString();
@@ -94,17 +59,6 @@ export function timeAgo(ms: number): string {
   const days = Math.floor(hrs / 24);
   if (days < 7) return `${days}d ago`;
   return new Date(ms).toLocaleDateString();
-}
-
-/** Score password strength 0–4. */
-export function calculatePasswordStrength(password: string): number {
-  let score = 0;
-  if (password.length >= 8) score++;
-  if (password.length >= 12) score++;
-  if (/[A-Z]/.test(password)) score++;
-  if (/[0-9]/.test(password)) score++;
-  if (/[^A-Za-z0-9]/.test(password)) score++;
-  return Math.min(score, 4);
 }
 
 /** Extract a human-readable message from an unknown error value. */

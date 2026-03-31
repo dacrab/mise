@@ -18,7 +18,7 @@ export function RecipeImporter({ onImport }: { onImport: (recipe: ImportedRecipe
   const [url, setUrl] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
-  const importRecipe = useAction(api.import.importFromUrl);
+  const importRecipe = useAction(api["recipeImport"].importFromUrl);
 
   const handleImport = async () => {
     if (!url.trim()) return;

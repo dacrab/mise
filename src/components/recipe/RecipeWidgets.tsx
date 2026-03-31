@@ -4,7 +4,7 @@ import type { Id } from "convex/_generated/dataModel";
 import { useMutation, useQuery } from "convex/react";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { RecipeCard } from "@/components/ui/RecipeCard";
-import { formatSeconds, scaleIngredient } from "@/lib/recipeUtils";
+import { formatSeconds, scaleIngredient } from "@/lib/utils";
 
 // ── Ingredient Scaler ─────────────────────────────────────────────────────────
 

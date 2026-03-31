@@ -6,11 +6,11 @@ import { useMutation, useQuery } from "convex/react";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Controller, useFieldArray, useForm } from "react-hook-form";
 import { z } from "zod";
-import { ProgressBar } from "@/components/ui/primitives";
+import { ProgressBar } from "@/components/ui/Primitives";
 import { Select } from "@/components/ui/Select";
-import { useToast } from "@/components/ui/toast";
+import { useToast } from "@/components/ui/Toast";
 import { useFileUpload } from "@/hooks/useFileUpload";
-import { CATEGORIES as BASE_CATEGORIES, DIFFICULTIES } from "@/lib/recipeUtils";
+import { CATEGORIES as BASE_CATEGORIES, DIFFICULTIES } from "@/lib/constants";
 
 import { RecipeImporter } from "@/components/recipe/RecipeImporter";
 

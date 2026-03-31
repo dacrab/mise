@@ -2,7 +2,7 @@ import { getAuthUserId } from "@convex-dev/auth/server";
 import { v } from "convex/values";
 import type { Id } from "./_generated/dataModel";
 import { query } from "./_generated/server";
-import { withCoverUrls } from "./lib/helpers";
+import { withCoverUrls } from "./lib/storage";
 
 // Uses the by_timestamp index to only scan recent likes — no full table scan
 export const trending = query({

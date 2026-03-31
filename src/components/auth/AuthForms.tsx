@@ -2,10 +2,10 @@ import { useAuthActions } from "@convex-dev/auth/react";
 import { ArrowLeftIcon, EyeIcon, EyeSlashIcon } from "@heroicons/react/24/outline";
 import { Link, useRouter } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
-import { Spinner } from "@/components/ui/primitives";
-import { useToast } from "@/components/ui/toast";
+import { Spinner } from "@/components/ui/Primitives";
+import { useToast } from "@/components/ui/Toast";
 import { useAsyncAction } from "@/hooks/useAsyncAction";
-import { calculatePasswordStrength } from "@/lib/recipeUtils";
+import { calculatePasswordStrength } from "@/lib/auth";
 
 
 function FormField({

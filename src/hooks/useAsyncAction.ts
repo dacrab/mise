@@ -1,5 +1,5 @@
 import { useCallback, useRef, useState } from "react";
-import { useToast } from "@/components/ui/toast";
+import { useToast } from "@/components/ui/Toast";
 
 type AsyncFunction = (...args: never[]) => Promise<unknown>;
 

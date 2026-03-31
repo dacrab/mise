@@ -13,8 +13,8 @@ import { Link, useRouter } from "@tanstack/react-router";
 import { api } from "convex/_generated/api";
 import { useQuery } from "convex/react";
 import { useCallback, useEffect, useRef, useState } from "react";
-import { NotificationBell } from "@/components/social/Social";
-import { Avatar } from "@/components/ui/primitives";
+import { NotificationBell } from "@/components/social/Notifications";
+import { Avatar } from "@/components/ui/Primitives";
 
 export function Header() {
   const user = useQuery(api.users.currentUser);
@@ -59,7 +59,7 @@ export function Header() {
                 <NotificationBell />
                 <Menu.Root>
                   <Menu.Trigger className="btn-ghost text-sm flex items-center gap-2">
-                    <Avatar src={user.profileImageUrl || user.image} name={user.name} size="xs" />
+                    <Avatar src={user.profileImageUrl || user.image} name={user.name} size="sm" />
                     <span className="hidden sm:inline">{user.name?.split(" ")[0] ?? "Menu"}</span>
                     <ChevronDownIcon className="w-4 h-4" />
                   </Menu.Trigger>

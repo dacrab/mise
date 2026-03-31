@@ -3,7 +3,7 @@ import { ConvexQueryClient } from "@convex-dev/react-query";
 import { QueryClient } from "@tanstack/react-query";
 import { createRouter } from "@tanstack/react-router";
 import { routerWithQueryClient } from "@tanstack/react-router-with-query";
-import { ToastProvider } from "./components/ui/toast";
+import { ToastProvider } from "@/components/ui/Toast";
 import { routeTree } from "./routeTree.gen";
 
 // Create a single shared router instance. Calling getRouter() inside a render

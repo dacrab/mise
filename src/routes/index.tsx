@@ -8,8 +8,8 @@ import { PageLayout } from "@/components/layout/PageLayout";
 import { TrendingRecipes } from "@/components/recipe/RecipeWidgets";
 import { RecipeCard } from "@/components/ui/RecipeCard";
 import { Select } from "@/components/ui/Select";
-import { Spinner } from "@/components/ui/primitives";
-import { CATEGORIES, CATEGORY_ICONS } from "@/lib/recipeUtils";
+import { Spinner } from "@/components/ui/Primitives";
+import { CATEGORIES, CATEGORY_ICONS } from "@/lib/constants";
 
 const searchSchema = z.object({ q: z.string().optional(), category: z.string().optional() });
 
