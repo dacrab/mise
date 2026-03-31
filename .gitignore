@@ -34,3 +34,5 @@ Thumbs.db
 # Cloudflare
 .wrangler/
 .dev.vars
+.vercel
+.env*.local
