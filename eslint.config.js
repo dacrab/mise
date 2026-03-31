@@ -1,6 +1,5 @@
 import eslint from "@eslint/js";
-import tseslint from "@typescript-eslint/eslint-plugin";
-import tsparser from "@typescript-eslint/parser";
+import tseslint from "typescript-eslint";
 import reactHooks from "eslint-plugin-react-hooks";
 import pluginRouter from "@tanstack/eslint-plugin-router";
 import pluginQuery from "@tanstack/eslint-plugin-query";
@@ -86,7 +85,7 @@ const srcTsxOverride = {
 const srcConfig = {
   files: ["src/**/*.{ts,tsx}"],
   languageOptions: {
-    parser: tsparser,
+    parser: tseslint.parser,
     parserOptions: {
       ecmaVersion: "latest",
       sourceType: "module",
@@ -99,7 +98,7 @@ const srcConfig = {
     },
   },
   plugins: {
-    "@typescript-eslint": tseslint,
+    "@typescript-eslint": tseslint.plugin,
     "react-hooks": reactHooks,
   },
   rules: {
@@ -144,11 +143,11 @@ const srcConfig = {
 const convexConfig = {
   files: ["convex/**/*.ts"],
   languageOptions: {
-    parser: tsparser,
+    parser: tseslint.parser,
     parserOptions: { ecmaVersion: "latest", sourceType: "module" },
     globals: { ...globals.node, ...globals.es2022 },
   },
-  plugins: { "@typescript-eslint": tseslint },
+  plugins: { "@typescript-eslint": tseslint.plugin },
   rules: {
     ...tsBase,
     ...generalSafety,
@@ -170,7 +169,7 @@ const convexConfig = {
 const unitTestConfig = {
   files: ["tests/unit/**/*.test.{ts,tsx}", "src/**/*.test.{ts,tsx}"],
   languageOptions: {
-    parser: tsparser,
+    parser: tseslint.parser,
     parserOptions: { ecmaVersion: "latest", sourceType: "module" },
     globals: {
       ...globals.browser,
@@ -179,7 +178,7 @@ const unitTestConfig = {
     },
   },
   plugins: {
-    "@typescript-eslint": tseslint,
+    "@typescript-eslint": tseslint.plugin,
     vitest: pluginVitest,
   },
   rules: {
@@ -220,11 +219,11 @@ const unitTestConfig = {
 const e2eTestConfig = {
   files: ["tests/e2e/**/*.spec.ts"],
   languageOptions: {
-    parser: tsparser,
+    parser: tseslint.parser,
     parserOptions: { ecmaVersion: "latest", sourceType: "module" },
     globals: { ...globals.node, ...globals.es2022 },
   },
-  plugins: { "@typescript-eslint": tseslint },
+  plugins: { "@typescript-eslint": tseslint.plugin },
   rules: {
     ...tsBase,
     ...generalSafety,
@@ -251,11 +250,11 @@ const e2eTestConfig = {
 const fixturesConfig = {
   files: ["tests/fixtures/**/*.ts", "tests/setup.ts"],
   languageOptions: {
-    parser: tsparser,
+    parser: tseslint.parser,
     parserOptions: { ecmaVersion: "latest", sourceType: "module" },
     globals: { ...globals.node, ...globals.es2022 },
   },
-  plugins: { "@typescript-eslint": tseslint },
+  plugins: { "@typescript-eslint": tseslint.plugin },
   rules: {
     ...tsBase,
     ...generalSafety,
