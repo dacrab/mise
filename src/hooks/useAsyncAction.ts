@@ -27,9 +27,12 @@ export function useAsyncAction<T extends AsyncFunction>(
   const optionsRef = useRef(options);
   optionsRef.current = options;
 
+  const isPendingRef = useRef(false);
+
   const execute = useCallback(
     async (...args: Parameters<T>): Promise<Awaited<ReturnType<T>> | undefined> => {
-      if (isPending) return undefined;
+      if (isPendingRef.current) return undefined;
+      isPendingRef.current = true;
       setIsPending(true);
       try {
         const result = await (actionRef.current as (...args: Parameters<T>) => Promise<unknown>)(...args);
@@ -44,10 +47,11 @@ export function useAsyncAction<T extends AsyncFunction>(
         opts?.onError?.(error);
         return undefined;
       } finally {
+        isPendingRef.current = false;
         setIsPending(false);
       }
     },
-    [isPending, toast]
+    [toast]
   );
 
   return { execute, isPending };
