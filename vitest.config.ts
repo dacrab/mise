@@ -4,10 +4,11 @@ import { resolve } from "path";
 
 export default defineConfig({
   plugins: [react()],
+  // Aliases must be defined here since vitest runs outside of vite's build pipeline
   resolve: {
     alias: {
       "@": resolve(__dirname, "./src"),
-      "convex": resolve(__dirname, "./convex"),
+      convex: resolve(__dirname, "./convex"),
     },
   },
   test: {
