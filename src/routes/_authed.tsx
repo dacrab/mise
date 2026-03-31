@@ -14,10 +14,8 @@ export const Route = createFileRoute("/_authed")({
 });
 
 function AuthedLayout() {
-  // Data is guaranteed to exist (loader throws redirect if null)
-  const { data: user } = useSuspenseQuery(convexQuery(api.users.currentUser, {}));
-
-  if (!user) return null;
+  // Loader guarantees user exists (throws redirect if null)
+  useSuspenseQuery(convexQuery(api.users.currentUser, {}));
 
   return (
     <>

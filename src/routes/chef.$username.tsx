@@ -3,6 +3,7 @@ import { useSuspenseQuery } from "@tanstack/react-query";
 import { createFileRoute, notFound } from "@tanstack/react-router";
 import { api } from "convex/_generated/api";
 import { useQuery } from "convex/react";
+
 import { PageLayout } from "@/components/layout/PageLayout";
 import { FollowButton, FollowStats } from "@/components/social/Social";
 import { RecipeCard } from "@/components/ui/RecipeCard";
