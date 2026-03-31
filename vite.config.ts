@@ -10,6 +10,17 @@ export default defineConfig({
   server: {
     port: 3000,
   },
+  build: {
+    rollupOptions: {
+      onwarn(warning, warn) {
+        // "use client" directives from RSC-compatible packages are harmless in TanStack Start
+        if (warning.code === "MODULE_LEVEL_DIRECTIVE") return;
+        // Unused imports in TanStack Start's internal SSR packages — not our code
+        if (warning.code === "UNUSED_EXTERNAL_IMPORT") return;
+        warn(warning);
+      },
+    },
+  },
   plugins: [
     tsConfigPaths(),
     tanstackStart(),
