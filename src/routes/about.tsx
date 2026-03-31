@@ -1,5 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { StaticPage } from "@/components/ui/StaticPage";
+import { SimpleLayout } from "@/components/layout/PageLayout";
 
 export const Route = createFileRoute("/about")({
   head: () => ({
@@ -13,7 +13,9 @@ export const Route = createFileRoute("/about")({
 
 function AboutPage() {
   return (
-    <StaticPage title="A place for home cooks">
+    <SimpleLayout>
+      <article className="wrapper max-w-2xl py-12 md:py-16">
+      <h1 className="font-serif text-4xl font-medium mb-4">A place for home cooks</h1>
       <p className="font-hand text-xl text-sage mb-3">our story</p>
       <p className="body-large mb-12">
         Mise is a platform born from the love of home cooking and the desire to share culinary secrets with a global
@@ -38,6 +40,7 @@ function AboutPage() {
           No algorithms pushing viral content. No ads interrupting your flow. Just good food, shared with intention.
         </p>
       </div>
-    </StaticPage>
+      </article>
+    </SimpleLayout>
   );
 }
