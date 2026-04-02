@@ -58,12 +58,11 @@ const createTsConfig = (files, overrides = {}) => ({
   files,
   languageOptions: {
     parser: tseslint.parser,
-    parserOptions: { ecmaVersion: "latest", sourceType: "module" },
+    parserOptions: { ecmaVersion: "latest", sourceType: "module", ...overrides.parserOptions },
     globals: { ...globals.es2022, ...overrides.globals },
   },
   plugins: { "@typescript-eslint": tseslint.plugin, ...overrides.plugins },
   rules: { ...tsBase, ...generalSafety, ...overrides.rules },
-  ...overrides.extra,
 });
 
 // ─── Config objects ─────────────────────────────────────────────────────────
@@ -86,12 +85,7 @@ const srcConfig = createTsConfig(
         { selector: "CallExpression[callee.name='prompt']", message: "Use a proper form input instead of prompt()." },
       ],
     },
-    extra: {
-      languageOptions: {
-        ecmaFeatures: { jsx: true },
-        globals: { React: "readonly" },
-      },
-    },
+    parserOptions: { ecmaFeatures: { jsx: true } },
   }
 );
 
