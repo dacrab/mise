@@ -74,7 +74,7 @@ export const importFromUrl = action({
           const data = JSON.parse(json);
           let recipe = null;
           if (Array.isArray(data)) {
-            recipe = data.find((d: { "@type"?: string }) => d["@type"] === "Recipe") ?? null;
+            recipe = data.find((d: { "@type"?: string }) => d["@type"] === "Recipe");
           } else if (data["@type"] === "Recipe") {
             recipe = data;
           }
@@ -83,9 +83,9 @@ export const importFromUrl = action({
             return {
               title: recipe.name || "",
               description: recipe.description || "",
-              ingredients: (recipe.recipeIngredient || []).map((i: string) => i.trim()),
-              steps: (recipe.recipeInstructions || [])
-                .map((s: { text?: string } | string) => (typeof s === "string" ? s.trim() : s.text?.trim() || ""))
+              ingredients: (recipe.recipeIngredient ?? []).map((i: string) => i.trim()),
+              steps: (recipe.recipeInstructions ?? [])
+                .map((s: { text?: string } | string) => (typeof s === "string" ? s.trim() : s.text?.trim() ?? ""))
                 .filter(Boolean),
               prepTime: parseTime(recipe.prepTime),
               cookTime: parseTime(recipe.cookTime),
@@ -108,5 +108,5 @@ function parseTime(iso?: string): number | undefined {
   if (!iso) return undefined;
   const match = iso.match(/PT(?:(\d+)H)?(?:(\d+)M)?/);
   if (!match) return undefined;
-  return parseInt(match[1] || "0", 10) * 60 + parseInt(match[2] || "0", 10);
+  return parseInt(match[1] ?? "0", 10) * 60 + parseInt(match[2] ?? "0", 10);
 }

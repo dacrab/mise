@@ -1,8 +1,9 @@
 import type { Id } from "../_generated/dataModel";
-import type { QueryCtx } from "../_generated/server";
+import type { MutationCtx, QueryCtx } from "../_generated/server";
+import { requireAuth } from "./auth";
 
-export async function withProfileImageUrl<T extends { profileImage?: string | null }>(
-  ctx: { storage: { getUrl: (id: string) => Promise<string | null> } },
+export async function withProfileImageUrl<T extends { profileImage?: Id<"_storage"> | null }>(
+  ctx: { storage: { getUrl: (id: Id<"_storage">) => Promise<string | null> } },
   user: T
 ): Promise<T & { profileImageUrl: string | null }> {
   return {
@@ -26,4 +27,9 @@ export async function withCoverUrls<T extends { coverImage?: Id<"_storage"> | nu
   items: T[]
 ): Promise<Array<T & { coverImageUrl: string | null }>> {
   return Promise.all(items.map((item) => withCoverUrl(ctx, item)));
+}
+
+export async function generateAuthenticatedUploadUrl(ctx: MutationCtx) {
+  await requireAuth(ctx);
+  return ctx.storage.generateUploadUrl();
 }

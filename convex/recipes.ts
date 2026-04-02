@@ -1,10 +1,9 @@
 import { paginationOptsValidator } from "convex/server";
 import { v } from "convex/values";
 import { internalMutation, mutation, query } from "./_generated/server";
-import { getAuthUserId } from "@convex-dev/auth/server";
-import { requireAuth } from "./lib/auth";
+import { getAuthUserId, requireAuth } from "./lib/auth";
 import { createNotification } from "./lib/notifications";
-import { withCoverUrl, withCoverUrls } from "./lib/storage";
+import { generateAuthenticatedUploadUrl, withCoverUrl, withCoverUrls } from "./lib/storage";
 
 function generateSlug(title: string): string {
   const base = title
@@ -238,10 +237,7 @@ export const remove = mutation({
 
 export const generateUploadUrl = mutation({
   args: {},
-  handler: async (ctx) => {
-    await requireAuth(ctx);
-    return ctx.storage.generateUploadUrl();
-  },
+  handler: generateAuthenticatedUploadUrl,
 });
 
 export const fork = mutation({

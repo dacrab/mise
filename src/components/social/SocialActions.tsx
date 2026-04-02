@@ -4,38 +4,10 @@ import { BookmarkIcon, HeartIcon } from "@heroicons/react/24/outline";
 import { BookmarkIcon as BookmarkSolidIcon, HeartIcon as HeartSolidIcon } from "@heroicons/react/24/solid";
 import { api } from "convex/_generated/api";
 import type { Id } from "convex/_generated/dataModel";
+import { ActionButton } from "@/components/ui/ActionButton";
 import { useAsyncAction } from "@/hooks/useAsyncAction";
+import { useBookmarkToggle } from "@/hooks/useBookmarkToggle";
 import { useConfirmAction } from "@/hooks/useConfirmAction";
-
-interface ActionButtonProps {
-  onClick: () => void;
-  isActive?: boolean;
-  isPending?: boolean;
-  activeClass?: string;
-  inactiveClass?: string;
-  children: React.ReactNode;
-  ariaLabel: string;
-  disabled?: boolean;
-}
-
-function ActionButton({
-  onClick, isActive = false, isPending = false,
-  activeClass = "bg-sage/10 border-sage/30 text-sage",
-  inactiveClass = "bg-warm-white border-cream-dark text-charcoal-light hover:border-sage/30 hover:text-sage",
-  children, ariaLabel, disabled = false,
-}: ActionButtonProps) {
-  return (
-    <button
-      onClick={onClick}
-      disabled={disabled || isPending}
-      aria-label={ariaLabel}
-      aria-pressed={isActive}
-      className={`flex items-center gap-2 px-4 py-2 rounded-lg border text-sm font-medium transition-all ${isActive ? activeClass : inactiveClass} ${isPending ? "opacity-50 cursor-not-allowed" : ""}`}
-    >
-      {children}
-    </button>
-  );
-}
 
 function ForkIcon({ className }: { className?: string }) {
   return (
@@ -92,24 +64,15 @@ export function SocialActions({ recipeId, slug }: { recipeId: Id<"recipes">; slu
     }
   });
 
-  const toggleBookmarkMutation = useMutation(api.social.toggleBookmark).withOptimisticUpdate((localStore) => {
-    const current = localStore.getQuery(api.recipes.getBySlug, { slug });
-    if (current) {
-      localStore.setQuery(api.recipes.getBySlug, { slug }, { ...current, isBookmarked: !current.isBookmarked });
-    }
-  });
-
   const { execute: handleLike, isPending: isLiking } = useAsyncAction(
     () => toggleLikeMutation({ recipeId }),
     { errorMessage: "Sign in to like recipes" }
   );
-  const { execute: handleBookmark, isPending: isBookmarking } = useAsyncAction(
-    () => toggleBookmarkMutation({ recipeId }),
-    { errorMessage: "Sign in to save recipes" }
-  );
+  const { isBookmarked, isPending: isBookmarking, toggleBookmark: handleBookmark } = useBookmarkToggle(recipeId, {
+    errorMessage: "Sign in to save recipes",
+  });
 
   const isLiked = recipe?.isLiked ?? false;
-  const isBookmarked = recipe?.isBookmarked ?? false;
   const count = recipe?.likesCount ?? 0;
 
   return (

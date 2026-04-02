@@ -67,6 +67,24 @@ export function SimpleLayout({
   );
 }
 
+export function StaticPage({
+  children,
+  backTo,
+  backLabel,
+  className = "",
+}: {
+  children: React.ReactNode;
+  backTo?: string;
+  backLabel?: string;
+  className?: string;
+}) {
+  return (
+    <SimpleLayout backTo={backTo} backLabel={backLabel}>
+      <article className={`wrapper max-w-2xl py-12 md:py-16 ${className}`}>{children}</article>
+    </SimpleLayout>
+  );
+}
+
 export function AuthLayout({
   children,
   variant,

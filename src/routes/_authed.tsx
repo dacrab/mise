@@ -1,5 +1,4 @@
 import { convexQuery } from "@convex-dev/react-query";
-import { useSuspenseQuery } from "@tanstack/react-query";
 import { createFileRoute, Outlet, redirect } from "@tanstack/react-router";
 import { api } from "convex/_generated/api";
 import { Header } from "@/components/layout/Header";
@@ -14,9 +13,6 @@ export const Route = createFileRoute("/_authed")({
 });
 
 function AuthedLayout() {
-  // Loader guarantees user exists (throws redirect if null)
-  useSuspenseQuery(convexQuery(api.users.currentUser, {}));
-
   return (
     <>
       <Header />

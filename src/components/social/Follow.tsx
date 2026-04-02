@@ -2,6 +2,7 @@ import { useMutation, useQuery } from "convex/react";
 import { api } from "convex/_generated/api";
 import type { Id } from "convex/_generated/dataModel";
 import { Spinner } from "@/components/ui/Primitives";
+import { ActionButton } from "@/components/ui/ActionButton";
 import { useAsyncAction } from "@/hooks/useAsyncAction";
 
 export function FollowButton({ userId }: { userId: Id<"users"> }) {
@@ -18,15 +19,18 @@ export function FollowButton({ userId }: { userId: Id<"users"> }) {
   }
 
   return (
-    <button
+    <ActionButton
       onClick={() => void handleClick()}
-      disabled={isPending}
-      aria-label={isFollowing ? "Unfollow this chef" : "Follow this chef"}
-      className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-colors disabled:opacity-60 ${isFollowing ? "bg-cream-dark text-charcoal-light hover:bg-stone-light/50" : "bg-charcoal text-cream hover:bg-charcoal-light"}`}
+      isActive={isFollowing}
+      isPending={isPending}
+      ariaLabel={isFollowing ? "Unfollow this chef" : "Follow this chef"}
+      activeClass="bg-cream-dark border-cream-dark text-charcoal-light hover:bg-stone-light/50"
+      inactiveClass="bg-charcoal border-charcoal text-cream hover:bg-charcoal-light"
+      className="flex items-center gap-2 px-4 py-2 rounded-lg border text-sm font-medium transition-colors disabled:opacity-60"
     >
       {isPending && <Spinner className="w-3.5 h-3.5" />}
       {isFollowing ? "Following" : "Follow"}
-    </button>
+    </ActionButton>
   );
 }
 

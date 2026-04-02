@@ -1,26 +1,18 @@
 import { BookmarkIcon, CakeIcon } from "@heroicons/react/24/outline";
 import { BookmarkIcon as BookmarkSolidIcon } from "@heroicons/react/24/solid";
 import { Link } from "@tanstack/react-router";
-import { api } from "convex/_generated/api";
 import type { Id } from "convex/_generated/dataModel";
-import { useMutation, useQuery } from "convex/react";
-import { useAsyncAction } from "@/hooks/useAsyncAction";
+import { useBookmarkToggle } from "@/hooks/useBookmarkToggle";
 
 function QuickBookmark({ recipeId }: { recipeId: Id<"recipes"> }) {
-  const currentUser = useQuery(api.users.currentUser);
-  const bookmarks = useQuery(api.recipes.myBookmarks);
-  const toggleBookmark = useMutation(api.social.toggleBookmark);
+  const { currentUser, isBookmarked, isPending, toggleBookmark } = useBookmarkToggle(recipeId);
 
-  const isBookmarked = bookmarks?.some((r) => r !== null && r._id === recipeId) ?? false;
-
-  const { execute: handleClick, isPending } = useAsyncAction(
-    async (e: React.MouseEvent) => {
-      e.preventDefault();
-      e.stopPropagation();
-      if (!currentUser) return;
-      await toggleBookmark({ recipeId, collectionId: undefined });
-    }
-  );
+  const handleClick = async (event: React.MouseEvent) => {
+    event.preventDefault();
+    event.stopPropagation();
+    if (!currentUser) return;
+    await toggleBookmark();
+  };
 
   if (currentUser === null) return null;
 

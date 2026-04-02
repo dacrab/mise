@@ -1,20 +1,15 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { SimpleLayout } from "@/components/layout/PageLayout";
+import { StaticPage } from "@/components/layout/PageLayout";
+import { buildPageHead } from "@/lib/pageMeta";
 
 export const Route = createFileRoute("/about")({
-  head: () => ({
-    meta: [
-      { title: "About | Mise" },
-      { name: "description", content: "Mise — a place for home cooks to share recipes." },
-    ],
-  }),
+  head: () => buildPageHead("About | Mise", "Mise — a place for home cooks to share recipes."),
   component: AboutPage,
 });
 
 function AboutPage() {
   return (
-    <SimpleLayout>
-      <article className="wrapper max-w-2xl py-12 md:py-16">
+    <StaticPage>
       <h1 className="font-serif text-4xl font-medium mb-4">A place for home cooks</h1>
       <p className="font-hand text-xl text-sage mb-3">our story</p>
       <p className="body-large mb-12">
@@ -40,7 +35,6 @@ function AboutPage() {
           No algorithms pushing viral content. No ads interrupting your flow. Just good food, shared with intention.
         </p>
       </div>
-      </article>
-    </SimpleLayout>
+    </StaticPage>
   );
 }
