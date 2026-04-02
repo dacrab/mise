@@ -1,9 +1,8 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { StaticPage } from "@/components/layout/PageLayout";
-import { buildPageHead } from "@/lib/pageMeta";
 
 export const Route = createFileRoute("/privacy")({
-  head: () => buildPageHead("Privacy Policy | Mise", "How Mise handles your personal data."),
+  head: () => ({ meta: [{ title: "Privacy Policy | Mise" }, { name: "description", content: "How Mise handles your personal data." }] }),
   component: PrivacyPage,
 });
 

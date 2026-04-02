@@ -98,14 +98,6 @@ export default defineSchema({
     isDefault: v.optional(v.boolean()),
   }).index("by_user", ["userId"]),
 
-  recipeViews: defineTable({
-    recipeId: v.id("recipes"),
-    timestamp: v.float64(),
-  })
-    .index("by_recipe", ["recipeId"])
-    .index("by_timestamp", ["timestamp"])
-    .index("by_recipe_timestamp", ["recipeId", "timestamp"]),
-
   presence: defineTable({
     recipeId: v.id("recipes"),
     userId: v.id("users"),

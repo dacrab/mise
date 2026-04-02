@@ -34,15 +34,14 @@ export default defineConfig({
             // Split vendor chunks for better long-term caching.
             // Only applied to client build — SSR externalizes these modules.
             manualChunks: {
-              "vendor-react": ["react", "react-dom"],
-              "vendor-tanstack": [
+              react: ["react", "react-dom"],
+              vendor: [
                 "@tanstack/react-router",
                 "@tanstack/react-query",
                 "@tanstack/react-router-with-query",
+                "convex",
+                "@convex-dev/react-query",
               ],
-              // @convex-dev/auth has no root export (subpaths only) — excluded
-              "vendor-convex": ["convex", "@convex-dev/react-query"],
-              "vendor-ui": ["@base-ui-components/react", "@heroicons/react"],
             },
           },
         },

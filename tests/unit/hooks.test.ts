@@ -170,7 +170,6 @@ describe("useAsyncAction", () => {
   });
 
   it("uses latest action reference without recreating execute", async () => {
-    let counter = 0;
     const { result, rerender } = renderHook(({ n }) =>
       useAsyncAction(async () => n), { initialProps: { n: 1 } }
     );
@@ -183,8 +182,6 @@ describe("useAsyncAction", () => {
     // but it should use the latest action value
     const val = await act(async () => result.current.execute());
     expect(val).toBe(2);
-    counter++;
-    expect(counter).toBe(1);
   });
 });
 

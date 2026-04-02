@@ -23,7 +23,7 @@ function CommentItem({ comment, currentUserId }: { comment: Comment; currentUser
   const editRef = useRef<HTMLTextAreaElement>(null);
   const isOwner = !!currentUserId && currentUserId === comment.userId;
 
-  const { execute: handleSaveEdit, isPending: savePending } = useAsyncAction(async () => {
+  const { execute: handleSaveEdit, isPending } = useAsyncAction(async () => {
     const trimmed = editText.trim();
     if (!trimmed || trimmed === comment.content) { handleCancelEdit(); return; }
     await updateComment({ id: comment._id, content: trimmed });
@@ -34,8 +34,6 @@ function CommentItem({ comment, currentUserId }: { comment: Comment; currentUser
     async () => { await deleteComment({ id: comment._id }); },
     { confirmMessage: "Tap again to confirm delete", errorMessage: "Could not delete comment" }
   );
-
-  const isPending = savePending;
 
   const handleEdit = () => {
     setEditText(comment.content);

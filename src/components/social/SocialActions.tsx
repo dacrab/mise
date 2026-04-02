@@ -4,7 +4,6 @@ import { BookmarkIcon, HeartIcon } from "@heroicons/react/24/outline";
 import { BookmarkIcon as BookmarkSolidIcon, HeartIcon as HeartSolidIcon } from "@heroicons/react/24/solid";
 import { api } from "convex/_generated/api";
 import type { Id } from "convex/_generated/dataModel";
-import { ActionButton } from "@/components/ui/ActionButton";
 import { useAsyncAction } from "@/hooks/useAsyncAction";
 import { useBookmarkToggle } from "@/hooks/useBookmarkToggle";
 import { useConfirmAction } from "@/hooks/useConfirmAction";
@@ -77,22 +76,26 @@ export function SocialActions({ recipeId, slug }: { recipeId: Id<"recipes">; slu
 
   return (
     <div className="flex items-center gap-3" role="group" aria-label="Recipe actions">
-      <ActionButton
-        onClick={handleLike} isActive={isLiked} isPending={isLiking}
-        activeClass="bg-terracotta/10 border-terracotta/30 text-terracotta"
-        inactiveClass="bg-warm-white border-cream-dark text-charcoal-light hover:border-terracotta/30 hover:text-terracotta"
-        ariaLabel={isLiked ? `Unlike recipe (${count} likes)` : `Like recipe (${count} likes)`}
+      <button
+        onClick={handleLike}
+        disabled={isLiking}
+        aria-label={isLiked ? `Unlike recipe (${count} likes)` : `Like recipe (${count} likes)`}
+        aria-pressed={isLiked}
+        className={`flex items-center gap-2 px-4 py-2 rounded-lg border text-sm font-medium transition-all ${isLiked ? "bg-terracotta/10 border-terracotta/30 text-terracotta" : "bg-warm-white border-cream-dark text-charcoal-light hover:border-terracotta/30 hover:text-terracotta"} ${isLiking ? "opacity-50 cursor-not-allowed" : ""}`}
       >
         {isLiked ? <HeartSolidIcon className="w-4 h-4" /> : <HeartIcon className="w-4 h-4" />}
         {count}
-      </ActionButton>
-      <ActionButton
-        onClick={handleBookmark} isActive={isBookmarked} isPending={isBookmarking}
-        ariaLabel={isBookmarked ? "Remove from saved" : "Save recipe"}
+      </button>
+      <button
+        onClick={() => void handleBookmark()}
+        disabled={isBookmarking}
+        aria-label={isBookmarked ? "Remove from saved" : "Save recipe"}
+        aria-pressed={isBookmarked}
+        className={`flex items-center gap-2 px-4 py-2 rounded-lg border text-sm font-medium transition-all ${isBookmarked ? "bg-sage/10 border-sage/30 text-sage" : "bg-warm-white border-cream-dark text-charcoal-light hover:border-sage/30 hover:text-sage"} ${isBookmarking ? "opacity-50 cursor-not-allowed" : ""}`}
       >
         {isBookmarked ? <BookmarkSolidIcon className="w-4 h-4" /> : <BookmarkIcon className="w-4 h-4" />}
         {isBookmarked ? "Saved" : "Save"}
-      </ActionButton>
+      </button>
     </div>
   );
 }

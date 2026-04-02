@@ -37,7 +37,6 @@ function HomePage() {
   const navigate = useNavigate();
   const hasSearch = !!q;
   const [selectedCategory, setSelectedCategory] = useState(category ?? "");
-  const [isLoadingMore, setIsLoadingMore] = useState(false);
 
   const handleSearch = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -62,11 +61,8 @@ function HomePage() {
 
   const recipes = hasSearch ? (searchResults ?? []) : paginatedQuery.results;
   const hasMore = !hasSearch && paginatedQuery.status === "CanLoadMore";
-  const loadMore = () => {
-    setIsLoadingMore(true);
-    paginatedQuery.loadMore(20);
-    setTimeout(() => setIsLoadingMore(false), 1500);
-  };
+  const isLoadingMore = paginatedQuery.status === "LoadingMore";
+  const loadMore = () => paginatedQuery.loadMore(20);
 
   const hasFilters = q || category;
   const featured = !hasFilters && recipes.length > 0 ? recipes[0] : undefined;

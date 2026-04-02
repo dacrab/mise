@@ -4,15 +4,12 @@ import { api } from "convex/_generated/api";
 import type { Id } from "convex/_generated/dataModel";
 import { useMutation, useQuery } from "convex/react";
 import { useEffect, useRef, useState } from "react";
-import { ProgressBar } from "@/components/ui/Primitives";
 import { useToast } from "@/components/ui/Toast";
 import { useAsyncAction } from "@/hooks/useAsyncAction";
 import { useFileUpload } from "@/hooks/useFileUpload";
 
-import { buildPageHead } from "@/lib/pageMeta";
-
 export const Route = createFileRoute("/_authed/settings")({
-  head: () => buildPageHead("Settings | Mise", "Update your profile, username, bio, and profile image."),
+  head: () => ({ meta: [{ title: "Settings | Mise" }, { name: "description", content: "Update your profile, username, bio, and profile image." }] }),
   component: Settings,
 });
 
@@ -176,7 +173,6 @@ function Settings() {
               >
                 {uploading ? `Uploading… ${uploadProgress}%` : "Change photo"}
               </button>
-              {uploading && <ProgressBar value={uploadProgress} label="Uploading" className="mt-2 w-36" />}
             </div>
           </div>
 
