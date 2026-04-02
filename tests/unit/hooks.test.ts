@@ -2,7 +2,7 @@
  * Unit tests for useAsyncAction and useConfirmAction hooks.
  */
 import { act, renderHook } from "@testing-library/react";
-import { describe, expect, it, vi, beforeEach, afterEach } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 const mockToast = vi.fn();
 vi.mock("@/components/ui/Toast", () => ({
@@ -93,6 +93,28 @@ describe("useAsyncAction", () => {
     await act(async () => { await result.current.execute(); });
     expect(onError).toHaveBeenCalledWith(expect.any(Error));
     expect(onError.mock.calls[0]?.[0]?.message).toBe("oops");
+  });
+
+  it("calls onErrorMessage with the resolved message and error", async () => {
+    const onErrorMessage = vi.fn();
+    const { result } = renderHook(() =>
+      useAsyncAction(
+        async () => {
+          throw new Error("oops");
+        },
+        {
+          getErrorMessage: (error) => `Mapped: ${error.message}`,
+          onErrorMessage,
+        }
+      )
+    );
+
+    await act(async () => {
+      await result.current.execute();
+    });
+
+    expect(onErrorMessage).toHaveBeenCalledWith("Mapped: oops", expect.any(Error));
+    expect(mockToast).toHaveBeenCalledWith("Mapped: oops", "error");
   });
 
   it("passes arguments through to the action", async () => {

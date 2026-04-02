@@ -3,21 +3,25 @@ import { expect, test } from "@playwright/test";
 test.describe("Home page", () => {
   test.beforeEach(async ({ page }) => {
     await page.goto("/");
-    await page.waitForLoadState("networkidle");
   });
 
-  test("loads and shows recipe grid", async ({ page }) => {
+  test("renders the hero and search controls", async ({ page }) => {
     await expect(page.getByRole("main")).toBeVisible();
+    await expect(page.getByRole("heading", { level: 1, name: /recipes made/i })).toBeVisible();
+    await expect(page.getByPlaceholder(/what are you craving\?/i)).toBeVisible();
+    await expect(page.getByRole("button", { name: /search/i })).toBeVisible();
   });
 
-  test("search input is present", async ({ page }) => {
-    await expect(page.getByPlaceholder(/craving/i)).toBeVisible();
+  test("can navigate to the about page from the footer", async ({ page }) => {
+    await page.getByRole("link", { name: /^about$/i }).last().click();
+    await expect(page).toHaveURL(/\/about$/);
+    await expect(page.getByRole("heading", { level: 1, name: /a place for home cooks/i })).toBeVisible();
   });
 
-  test("navigates to recipe page on card click", async ({ page }) => {
-    const firstCard = page.locator("a[href^='/recipe/']").first();
-    await firstCard.waitFor({ state: "visible" });
-    await firstCard.click();
-    await expect(page).toHaveURL(/\/recipe\//);
+  test("shows an empty-state message for a unique search with no matches", async ({ page }) => {
+    await page.getByPlaceholder(/what are you craving\?/i).fill("zzqv-no-match-unique-query");
+    await page.getByRole("button", { name: /search/i }).click();
+    await expect(page.getByRole("heading", { level: 2, name: /no recipes found/i })).toBeVisible();
+    await expect(page.getByRole("link", { name: /clear search/i })).toBeVisible();
   });
 });
