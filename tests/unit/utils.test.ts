@@ -1,4 +1,4 @@
-import { describe, expect, it } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { CATEGORIES, CATEGORY_ICONS, DIFFICULTIES } from "@/lib/constants";
 import { formatSeconds, timeAgo, getErrorMessage } from "@/lib/utils";
 import { calculatePasswordStrength } from "@/lib/auth";
@@ -62,6 +62,17 @@ describe("formatSeconds — boundary cases", () => {
 });
 
 describe("timeAgo", () => {
+  const NOW = new Date("2026-01-10T12:00:00Z").getTime();
+
+  beforeEach(() => {
+    vi.useFakeTimers();
+    vi.setSystemTime(NOW);
+  });
+
+  afterEach(() => {
+    vi.useRealTimers();
+  });
+
   it("returns 'just now' for timestamps under 1 minute ago", () => {
     expect(timeAgo(Date.now() - 30_000)).toBe("just now");
     expect(timeAgo(Date.now())).toBe("just now");
