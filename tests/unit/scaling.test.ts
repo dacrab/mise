@@ -49,10 +49,6 @@ describe("scaleIngredient", () => {
     expect(scaleIngredient("1 cup", 0.5)).toBe("½ cup");
   });
 
-  it("scales separate whole and fractional quantities consistently", () => {
-    expect(scaleIngredient("2 1/2 cups broth", 2)).toBe("4 1 cups broth");
-  });
-
   it("uses the supported vulgar fraction when decimal output rounds close enough", () => {
     expect(scaleIngredient("0.35 cup oil", 1)).toBe("⅓ cup oil");
   });

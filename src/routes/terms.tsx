@@ -1,9 +1,8 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { StaticPage } from "@/components/layout/PageLayout";
-import { buildPageHead } from "@/lib/pageMeta";
 
 export const Route = createFileRoute("/terms")({
-  head: () => buildPageHead("Terms of Service | Mise", "Mise terms of service."),
+  head: () => ({ meta: [{ title: "Terms of Service | Mise" }, { name: "description", content: "Mise terms of service." }] }),
   component: TermsPage,
 });
 

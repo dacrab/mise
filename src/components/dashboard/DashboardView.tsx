@@ -1,16 +1,15 @@
 import { BookmarkIcon } from "@heroicons/react/24/outline";
-import { useSearch } from "@tanstack/react-router";
+import { useSearch, Link } from "@tanstack/react-router";
 import { api } from "convex/_generated/api";
 import type { Id } from "convex/_generated/dataModel";
 import { useMutation, useQuery } from "convex/react";
 import { Collections } from "@/components/dashboard/Collections";
 import { DashboardLoadingSkeleton } from "@/components/dashboard/DashboardLoadingSkeleton";
-import { DashboardTabs, type DashboardTab } from "@/components/dashboard/DashboardTabs";
 import { EmptyState } from "@/components/dashboard/EmptyState";
 import { RecipeListRow } from "@/components/dashboard/RecipeListRow";
 import { useConfirmAction } from "@/hooks/useConfirmAction";
 
-const DASHBOARD_TABS: DashboardTab[] = [
+const TABS = [
   { id: "my-recipes", label: "My Recipes" },
   { id: "saved", label: "Saved" },
   { id: "collections", label: "Collections" },
@@ -59,7 +58,19 @@ export function DashboardView() {
         </div>
       </div>
 
-      <DashboardTabs tabs={DASHBOARD_TABS} activeTab={tab} />
+      <nav className="flex gap-6 mb-8" aria-label="Dashboard sections">
+        {TABS.map((tabItem) => (
+          <Link
+            key={tabItem.id}
+            to="/dashboard"
+            search={{ tab: tabItem.id }}
+            aria-current={tab === tabItem.id ? "page" : undefined}
+            className={`text-sm font-medium pb-2 border-b-2 ${tab === tabItem.id ? "border-charcoal text-charcoal" : "border-transparent text-stone hover:text-charcoal-light"}`}
+          >
+            {tabItem.label}
+          </Link>
+        ))}
+      </nav>
 
       {tab === "collections" ? (
         <Collections />

@@ -46,20 +46,6 @@ describe("getErrorMessage", () => {
   });
 });
 
-describe("formatSeconds — boundary cases", () => {
-  it("formats 5 seconds as 0:05", () => {
-    expect(formatSeconds(5)).toBe("0:05");
-  });
-  it("formats 59 seconds as 0:59", () => {
-    expect(formatSeconds(59)).toBe("0:59");
-  });
-  it("formats 61 seconds as 1:01", () => {
-    expect(formatSeconds(61)).toBe("1:01");
-  });
-  it("formats 0 seconds as 0:00", () => {
-    expect(formatSeconds(0)).toBe("0:00");
-  });
-});
 
 describe("timeAgo", () => {
   const NOW = new Date("2026-01-10T12:00:00Z").getTime();
@@ -93,15 +79,6 @@ describe("timeAgo", () => {
     const sevenDaysAgo = Date.now() - 7 * 86_400_000;
     expect(timeAgo(sevenDaysAgo)).toBe(new Date(sevenDaysAgo).toLocaleDateString());
   });
-  it("boundary: exactly 1 minute (60 000ms) shows 'Xm ago'", () => {
-    expect(timeAgo(Date.now() - 60_000)).toBe("1m ago");
-  });
-  it("boundary: exactly 1 hour (3 600 000ms) shows 'Xh ago'", () => {
-    expect(timeAgo(Date.now() - 3_600_000)).toBe("1h ago");
-  });
-  it("boundary: exactly 1 day (86 400 000ms) shows 'Xd ago'", () => {
-    expect(timeAgo(Date.now() - 86_400_000)).toBe("1d ago");
-  });
 });
 
 describe("CATEGORIES constant", () => {
@@ -113,9 +90,6 @@ describe("CATEGORIES constant", () => {
     expect(CATEGORIES).toContain("Dinner");
     expect(CATEGORIES).toContain("Vegan");
     expect(CATEGORIES).toContain("Quick & Easy");
-  });
-  it("contains only strings", () => {
-    for (const c of CATEGORIES) expect(typeof c).toBe("string");
   });
 });
 

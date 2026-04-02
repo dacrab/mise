@@ -44,14 +44,10 @@ export const recommendations = query({
   handler: async (ctx, { limit = 10 }) => {
     const userId = await getAuthUserId(ctx);
 
-    if (!userId) {
-      const recipes = await ctx.db
-        .query("recipes")
-        .withIndex("by_status", (q) => q.eq("status", "published"))
-        .order("desc")
-        .take(limit);
-      return withCoverUrls(ctx, recipes);
-    }
+    const latestPublished = () =>
+      ctx.db.query("recipes").withIndex("by_status", (q) => q.eq("status", "published")).order("desc").take(limit);
+
+    if (!userId) return withCoverUrls(ctx, await latestPublished());
 
     const userLikes = await ctx.db
       .query("likes")
@@ -59,14 +55,7 @@ export const recommendations = query({
       .collect();
     const likedRecipeIds = new Set(userLikes.map((l) => l.recipeId));
 
-    if (likedRecipeIds.size === 0) {
-      const recipes = await ctx.db
-        .query("recipes")
-        .withIndex("by_status", (q) => q.eq("status", "published"))
-        .order("desc")
-        .take(limit);
-      return withCoverUrls(ctx, recipes);
-    }
+    if (likedRecipeIds.size === 0) return withCoverUrls(ctx, await latestPublished());
 
     const likedRecipes = await Promise.all([...likedRecipeIds].slice(0, 10).map((id) => ctx.db.get(id)));
     const categories = [...new Set(likedRecipes.flatMap((r) => (r ? [r.category] : [])))];

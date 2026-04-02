@@ -141,8 +141,6 @@ export function CookingTimers() {
     setNewLabel("");
   };
 
-  const fmt = formatSeconds;
-
   return (
     <div className="card p-5">
       <h3 className="font-serif text-lg font-medium mb-4">Cooking Timers</h3>
@@ -190,7 +188,7 @@ export function CookingTimers() {
             <div className="flex-1">
               <p className="text-sm font-medium text-charcoal">{t.label}</p>
               <p className={`text-xl font-mono ${t.remaining === 0 ? "text-terracotta" : "text-charcoal"}`}>
-                {fmt(t.remaining)}
+                {formatSeconds(t.remaining)}
               </p>
             </div>
             <button

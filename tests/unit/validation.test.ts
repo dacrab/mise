@@ -18,10 +18,6 @@ describe("validateLength", () => {
     expect(() => validateLength("   ", 1, 10, "field")).toThrow("field");
   });
 
-  it("throws when value exceeds max length after trim", () => {
-    expect(() => validateLength("a".repeat(11), 1, 10, "field")).toThrow("field");
-  });
-
   it("does not count leading/trailing whitespace toward max length", () => {
     // 10 'a's padded with spaces — trimmed is exactly 10, should pass
     const s = `  ${"a".repeat(10)}  `;

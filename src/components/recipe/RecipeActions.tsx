@@ -3,7 +3,6 @@ import { api } from "convex/_generated/api";
 import type { Id } from "convex/_generated/dataModel";
 import { useQuery } from "convex/react";
 import { useState } from "react";
-import { RecipeMenuItem } from "@/components/recipe/RecipeMenuItem";
 import { RecipeCard } from "@/components/ui/RecipeCard";
 import { useToast } from "@/components/ui/Toast";
 import { useBookmarkToggle } from "@/hooks/useBookmarkToggle";
@@ -50,22 +49,25 @@ export function AddToCollectionButton({ recipeId }: AddToCollectionButtonProps) 
       {open && (
         <div className="absolute bottom-full mb-2 right-0 w-56 bg-warm-white rounded-xl shadow-hover border border-cream-dark py-1 z-20 animate-scale-in origin-bottom-right">
           <p className="px-3 py-2 text-xs font-medium text-stone uppercase tracking-wide">Save to…</p>
-          <RecipeMenuItem
+          <button
             onClick={() => void handleToggle(undefined)}
             disabled={!!pending}
-            leading={isBookmarked ? <CheckIcon className="w-4 h-4 text-sage shrink-0" /> : undefined}
+            className="w-full flex items-center gap-2 px-3 py-2 text-sm text-charcoal hover:bg-cream-dark transition-colors text-left disabled:opacity-50"
           >
+            {isBookmarked ? <CheckIcon className="w-4 h-4 text-sage shrink-0" /> : <div className="w-4" />}
             Bookmarks
-          </RecipeMenuItem>
+          </button>
           {collections?.map((col) => (
-            <RecipeMenuItem
+            <button
               key={col._id}
               onClick={() => void handleToggle(col._id)}
               disabled={!!pending}
-              trailing={<span className="ml-auto text-xs text-stone">{col.count}</span>}
+              className="w-full flex items-center gap-2 px-3 py-2 text-sm text-charcoal hover:bg-cream-dark transition-colors text-left disabled:opacity-50"
             >
+              <div className="w-4" />
               {col.name}
-            </RecipeMenuItem>
+              <span className="ml-auto text-xs text-stone">{col.count}</span>
+            </button>
           ))}
           {collections?.length === 0 && (
             <p className="px-3 py-2 text-xs text-stone">No collections yet. Create one in your dashboard.</p>

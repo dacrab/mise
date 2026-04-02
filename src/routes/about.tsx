@@ -1,9 +1,8 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { StaticPage } from "@/components/layout/PageLayout";
-import { buildPageHead } from "@/lib/pageMeta";
 
 export const Route = createFileRoute("/about")({
-  head: () => buildPageHead("About | Mise", "Mise — a place for home cooks to share recipes."),
+  head: () => ({ meta: [{ title: "About | Mise" }, { name: "description", content: "Mise — a place for home cooks to share recipes." }] }),
   component: AboutPage,
 });
 

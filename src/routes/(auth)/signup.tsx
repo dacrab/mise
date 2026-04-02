@@ -1,10 +1,9 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { SignupForm } from "@/components/auth/AuthForms";
 import { AuthLayout } from "@/components/layout/PageLayout";
-import { buildPageHead } from "@/lib/pageMeta";
 
 export const Route = createFileRoute("/(auth)/signup")({
-  head: () => buildPageHead("Create account | Mise", "Create your Mise account to save, share, and manage recipes."),
+  head: () => ({ meta: [{ title: "Create account | Mise" }, { name: "description", content: "Create your Mise account to save, share, and manage recipes." }] }),
   component: SignupPage,
 });
 
