@@ -1,4 +1,4 @@
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useToast } from "@/components/ui/Toast";
 
 /**
@@ -25,6 +25,12 @@ export function useConfirmAction<T>(
   const [pendingId, setPendingId] = useState<T | null>(null);
   const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const { toast } = useToast();
+
+  useEffect(() => {
+    return () => {
+      if (timer.current) clearTimeout(timer.current);
+    };
+  }, []);
 
   const trigger = async (id: T) => {
     if (pendingId !== id) {

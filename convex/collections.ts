@@ -1,7 +1,6 @@
 import { v } from "convex/values";
 import { mutation, query } from "./_generated/server";
-import { getAuthUserId } from "@convex-dev/auth/server";
-import { requireAuth } from "./lib/auth";
+import { getAuthUserId, requireAuth } from "./lib/auth";
 import { validateLength } from "./lib/validation";
 import { withCoverUrls } from "./lib/storage";
 

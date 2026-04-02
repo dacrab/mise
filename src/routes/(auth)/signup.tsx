@@ -1,9 +1,15 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { SignupForm } from "@/components/auth/AuthForms";
 import { AuthLayout } from "@/components/layout/PageLayout";
+import { buildPageHead } from "@/lib/pageMeta";
 
 export const Route = createFileRoute("/(auth)/signup")({
-  component: () => (
+  head: () => buildPageHead("Create account | Mise", "Create your Mise account to save, share, and manage recipes."),
+  component: SignupPage,
+});
+
+function SignupPage() {
+  return (
     <AuthLayout
       variant="signup"
       tagline="join the kitchen"
@@ -18,5 +24,5 @@ export const Route = createFileRoute("/(auth)/signup")({
       </p>
       <SignupForm />
     </AuthLayout>
-  ),
-});
+  );
+}

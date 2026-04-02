@@ -1,7 +1,7 @@
-import { getAuthUserId } from "@convex-dev/auth/server";
 import { v } from "convex/values";
 import { mutation, query } from "./_generated/server";
-import { withProfileImageUrl } from "./lib/storage";
+import { getAuthUserId, requireAuth } from "./lib/auth";
+import { generateAuthenticatedUploadUrl, withProfileImageUrl } from "./lib/storage";
 
 export const currentUser = query({
   args: {},
@@ -34,8 +34,7 @@ export const updateProfile = mutation({
     profileImage: v.optional(v.id("_storage")),
   },
   handler: async (ctx, args) => {
-    const userId = await getAuthUserId(ctx);
-    if (!userId) throw new Error("Unauthorized");
+    const userId = await requireAuth(ctx);
 
     if (args.username) {
       const existing = await ctx.db
@@ -53,9 +52,5 @@ export const updateProfile = mutation({
 
 export const generateUploadUrl = mutation({
   args: {},
-  handler: async (ctx) => {
-    const userId = await getAuthUserId(ctx);
-    if (!userId) throw new Error("Unauthorized");
-    return await ctx.storage.generateUploadUrl();
-  },
+  handler: generateAuthenticatedUploadUrl,
 });

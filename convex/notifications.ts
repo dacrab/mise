@@ -1,7 +1,6 @@
-import { getAuthUserId } from "@convex-dev/auth/server";
 import { v } from "convex/values";
 import { mutation, query } from "./_generated/server";
-import { requireAuth } from "./lib/auth";
+import { getAuthUserId, requireAuth } from "./lib/auth";
 
 export const list = query({
   args: { limit: v.optional(v.number()) },

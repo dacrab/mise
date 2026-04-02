@@ -1,7 +1,6 @@
-import { getAuthUserId } from "@convex-dev/auth/server";
 import { v } from "convex/values";
 import { mutation, query } from "./_generated/server";
-import { requireAuth } from "./lib/auth";
+import { getAuthUserId, requireAuth } from "./lib/auth";
 import { validateLength } from "./lib/validation";
 import { createNotification } from "./lib/notifications";
 import { requirePublishedRecipe } from "./lib/helpers";
@@ -145,9 +144,7 @@ export const updateComment = mutation({
     const userId = await requireAuth(ctx);
     const comment = await ctx.db.get(id);
     if (!comment || comment.userId !== userId) throw new Error("Not found");
-    const trimmed = content.trim();
-    if (!trimmed) throw new Error("Comment cannot be empty");
-    await ctx.db.patch(id, { content: trimmed });
+    await ctx.db.patch(id, { content: validateLength(content, 1, 500, "Comment") });
   },
 });
 
@@ -182,14 +179,27 @@ export const rateRecipe = mutation({
 export const ratingStats = query({
   args: { recipeId: v.id("recipes") },
   handler: async (ctx, { recipeId }) => {
-    const ratings = await ctx.db
-      .query("ratings")
-      .withIndex("by_recipe", (q) => q.eq("recipeId", recipeId))
-      .collect();
-    if (ratings.length === 0) return { average: 0, count: 0, userRating: null };
-    const average = ratings.reduce((sum, r) => sum + r.value, 0) / ratings.length;
     const userId = await getAuthUserId(ctx);
-    const userRating = userId ? (ratings.find((r) => r.userId === userId)?.value ?? null) : null;
-    return { average: Math.round(average * 10) / 10, count: ratings.length, userRating };
+    const [ratings, userRatingDoc] = await Promise.all([
+      ctx.db
+        .query("ratings")
+        .withIndex("by_recipe", (q) => q.eq("recipeId", recipeId))
+        .collect(),
+      userId
+        ? ctx.db
+            .query("ratings")
+            .withIndex("by_user_recipe", (q) => q.eq("userId", userId).eq("recipeId", recipeId))
+            .first()
+        : Promise.resolve(null),
+    ]);
+
+    if (ratings.length === 0) return { average: 0, count: 0, userRating: null };
+
+    const average = ratings.reduce((sum, rating) => sum + rating.value, 0) / ratings.length;
+    return {
+      average: Math.round(average * 10) / 10,
+      count: ratings.length,
+      userRating: userRatingDoc?.value ?? null,
+    };
   },
 });

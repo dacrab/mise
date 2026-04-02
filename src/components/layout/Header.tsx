@@ -16,6 +16,17 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { NotificationBell } from "@/components/social/Notifications";
 import { Avatar } from "@/components/ui/Primitives";
 
+const FOOTER_LINKS = [
+  { to: "/about", label: "About" },
+  { to: "/privacy", label: "Privacy" },
+  { to: "/terms", label: "Terms" },
+] as const;
+
+const USER_MENU_LINKS = [
+  { to: "/dashboard", label: "Dashboard", icon: HomeIcon },
+  { to: "/settings", label: "Settings", icon: Cog6ToothIcon },
+] as const;
+
 export function Header() {
   const user = useQuery(api.users.currentUser);
   const { signOut } = useAuthActions();
@@ -66,18 +77,15 @@ export function Header() {
                   <Menu.Portal>
                     <Menu.Positioner className="z-50" sideOffset={8} align="end">
                       <Menu.Popup className="min-w-[180px] bg-warm-white rounded-lg shadow-card border border-cream-dark py-1">
-                        <Menu.Item
-                          className="flex items-center gap-2 px-4 py-2 text-sm text-charcoal hover:bg-cream-dark outline-none cursor-pointer data-[highlighted]:bg-cream-dark"
-                          render={<Link to="/dashboard" />}
-                        >
-                          <HomeIcon className="w-4 h-4" /> Dashboard
-                        </Menu.Item>
-                        <Menu.Item
-                          className="flex items-center gap-2 px-4 py-2 text-sm text-charcoal hover:bg-cream-dark outline-none cursor-pointer data-[highlighted]:bg-cream-dark"
-                          render={<Link to="/settings" />}
-                        >
-                          <Cog6ToothIcon className="w-4 h-4" /> Settings
-                        </Menu.Item>
+                        {USER_MENU_LINKS.map(({ to, label, icon: Icon }) => (
+                          <Menu.Item
+                            key={to}
+                            className="flex items-center gap-2 px-4 py-2 text-sm text-charcoal hover:bg-cream-dark outline-none cursor-pointer data-[highlighted]:bg-cream-dark"
+                            render={<Link to={to} />}
+                          >
+                            <Icon className="w-4 h-4" /> {label}
+                          </Menu.Item>
+                        ))}
                         <Menu.Separator className="h-px bg-cream-dark my-1" />
                         <Menu.Item
                           onClick={handleSignOut}
@@ -155,18 +163,15 @@ export function Header() {
               <Link to="/dashboard/create" className="btn-primary w-full justify-center mb-3">
                 <PlusIcon className="w-4 h-4" /> New Recipe
               </Link>
-              <Link
-                to="/dashboard"
-                className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-charcoal hover:bg-cream-dark transition-colors"
-              >
-                <HomeIcon className="w-5 h-5 text-stone" /> Dashboard
-              </Link>
-              <Link
-                to="/settings"
-                className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-charcoal hover:bg-cream-dark transition-colors"
-              >
-                <Cog6ToothIcon className="w-5 h-5 text-stone" /> Settings
-              </Link>
+              {USER_MENU_LINKS.map(({ to, label, icon: Icon }) => (
+                <Link
+                  key={to}
+                  to={to}
+                  className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-charcoal hover:bg-cream-dark transition-colors"
+                >
+                  <Icon className="w-5 h-5 text-stone" /> {label}
+                </Link>
+              ))}
               <div className="pt-3 mt-3 border-t border-cream-dark">
                 <button
                   onClick={handleSignOut}
@@ -190,15 +195,11 @@ export function Header() {
 
         <div className="p-5 border-t border-cream-dark">
           <nav className="flex gap-4 text-sm text-stone">
-            <Link to="/about" className="hover:text-charcoal transition-colors">
-              About
-            </Link>
-            <Link to="/privacy" className="hover:text-charcoal transition-colors">
-              Privacy
-            </Link>
-            <Link to="/terms" className="hover:text-charcoal transition-colors">
-              Terms
-            </Link>
+            {FOOTER_LINKS.map(({ to, label }) => (
+              <Link key={to} to={to} className="hover:text-charcoal transition-colors">
+                {label}
+              </Link>
+            ))}
           </nav>
         </div>
       </div>

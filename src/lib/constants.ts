@@ -15,7 +15,7 @@ export const CATEGORIES = [
 export type Category = (typeof CATEGORIES)[number];
 
 /** Emoji icon for each recipe category. */
-export const CATEGORY_ICONS: Record<string, string> = {
+export const CATEGORY_ICONS: Record<Category, string> = {
   Breakfast: "☀️",
   Lunch: "🥗",
   Dinner: "🍽️",

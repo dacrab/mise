@@ -1,16 +1,16 @@
-import { getAuthUserId } from "@convex-dev/auth/server";
 import { v } from "convex/values";
 import type { Id } from "./_generated/dataModel";
 import { query } from "./_generated/server";
+import { getAuthUserId } from "./lib/auth";
 import { withCoverUrls } from "./lib/storage";
 
-// Uses the by_timestamp index to only scan recent likes — no full table scan
+// Scans recent likes with a capped query to keep trending computation bounded.
 export const trending = query({
   args: { limit: v.optional(v.number()) },
   handler: async (ctx, { limit = 10 }) => {
     const weekAgo = Date.now() - 7 * 24 * 60 * 60 * 1000;
 
-    // Use _creationTime index to only read likes from the last 7 days
+    // Filter to the recent window, then cap the read size to keep the ranking work bounded.
     const recentLikes = await ctx.db
       .query("likes")
       .filter((q) => q.gt(q.field("_creationTime"), weekAgo))

@@ -6,7 +6,8 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { RecipeCard } from "@/components/ui/RecipeCard";
 import { formatSeconds, scaleIngredient } from "@/lib/utils";
 
-// ── Ingredient Scaler ─────────────────────────────────────────────────────────
+const SERVINGS_MIN = 1;
+const SERVINGS_MAX = 100;
 
 export function IngredientScaler({ ingredients, defaultServings = 4 }: { ingredients: string[]; defaultServings?: number }) {
   const [servings, setServings] = useState(defaultServings);
@@ -17,14 +18,14 @@ export function IngredientScaler({ ingredients, defaultServings = 4 }: { ingredi
     <div>
       <div className="flex items-center gap-3 mb-4">
         <label htmlFor="servings-input" className="text-sm font-medium text-charcoal-light">Servings:</label>
-        <button onClick={() => setServings(Math.max(1, servings - 1))} className="w-8 h-8 rounded-lg bg-cream-dark hover:bg-stone-light/50 flex items-center justify-center text-charcoal transition-colors" aria-label="Decrease servings">−</button>
+        <button onClick={() => setServings(Math.max(SERVINGS_MIN, servings - 1))} className="w-8 h-8 rounded-lg bg-cream-dark hover:bg-stone-light/50 flex items-center justify-center text-charcoal transition-colors" aria-label="Decrease servings">−</button>
         <input
           id="servings-input"
           type="number"
-          min={1}
-          max={100}
+          min={SERVINGS_MIN}
+          max={SERVINGS_MAX}
           value={servings}
-          onChange={(e) => { const v = parseInt(e.target.value, 10); if (!Number.isNaN(v) && v >= 1 && v <= 100) setServings(v); }}
+          onChange={(e) => { const v = parseInt(e.target.value, 10); if (!Number.isNaN(v) && v >= SERVINGS_MIN && v <= SERVINGS_MAX) setServings(v); }}
           className="w-12 text-center font-medium text-charcoal bg-transparent border-b border-stone-light focus:outline-none focus:border-sage"
           aria-label="Number of servings"
         />
@@ -42,8 +43,6 @@ export function IngredientScaler({ ingredients, defaultServings = 4 }: { ingredi
     </div>
   );
 }
-
-// ── Presence ──────────────────────────────────────────────────────────────────
 
 export function CookingNow({ recipeId }: { recipeId: Id<"recipes"> }) {
   const cooking = useQuery(api.presence.getCooking, { recipeId });
@@ -94,25 +93,38 @@ export function CookingTimers() {
   const [timers, setTimers] = useState<Timer[]>([]);
   const [newLabel, setNewLabel] = useState("");
   const [newMinutes, setNewMinutes] = useState(5);
+  const audioRef = useRef<HTMLAudioElement | null>(null);
+  const hasRunningTimers = timers.some((timer) => timer.running && timer.remaining > 0);
 
   useEffect(() => {
+    audioRef.current = new Audio("/timer-done.mp3");
+    return () => {
+      audioRef.current?.pause();
+      audioRef.current = null;
+    };
+  }, []);
+
+  useEffect(() => {
+    if (!hasRunningTimers) return;
+
     const interval = setInterval(() => {
       setTimers((prev) =>
-        prev.map((t) => {
-          if (!t.running || t.remaining <= 0) return t;
-          const remaining = t.remaining - 1;
+        prev.map((timer) => {
+          if (!timer.running || timer.remaining <= 0) return timer;
+          const remaining = timer.remaining - 1;
           if (remaining === 0) {
-            new Audio("/timer-done.mp3").play().catch(() => {});
+            audioRef.current?.play().catch(() => {});
             if (typeof Notification !== "undefined" && Notification.permission === "granted") {
-              new Notification(`Timer done: ${t.label}`);
+              new Notification(`Timer done: ${timer.label}`);
             }
           }
-          return { ...t, remaining };
+          return { ...timer, remaining };
         })
       );
     }, 1000);
+
     return () => clearInterval(interval);
-  }, []);
+  }, [hasRunningTimers]);
 
   const addTimer = () => {
     if (!newLabel.trim()) return;
@@ -154,7 +166,7 @@ export function CookingTimers() {
           id="timer-minutes"
           type="number"
           value={newMinutes}
-          onChange={(e) => setNewMinutes(Number(e.target.value))}
+          onChange={(e) => setNewMinutes(Math.min(180, Math.max(1, Number(e.target.value) || 1)))}
           min={1}
           max={180}
           className="input-field w-16 py-2 text-sm text-center"

@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 interface UploadOptions {
   onSuccess?: (storageId: string, previewUrl: string) => void;
@@ -8,39 +8,72 @@ interface UploadOptions {
 export function useFileUpload(getUploadUrl: () => Promise<string>, options: UploadOptions = {}) {
   const [uploading, setUploading] = useState(false);
   const [progress, setProgress] = useState(0);
+  const xhrRef = useRef<XMLHttpRequest | null>(null);
+  const mountedRef = useRef(true);
+  const getUploadUrlRef = useRef(getUploadUrl);
+  const optionsRef = useRef(options);
+
+  getUploadUrlRef.current = getUploadUrl;
+  optionsRef.current = options;
+
+  useEffect(() => {
+    return () => {
+      mountedRef.current = false;
+      xhrRef.current?.abort();
+    };
+  }, []);
 
   const upload = async (file: File): Promise<{ storageId: string; previewUrl: string } | null> => {
-    setUploading(true);
-    setProgress(0);
+    xhrRef.current?.abort();
+    if (mountedRef.current) {
+      setUploading(true);
+      setProgress(0);
+    }
+
     try {
-      const url = await getUploadUrl();
+      const url = await getUploadUrlRef.current();
       const storageId = await new Promise<string>((resolve, reject) => {
         const xhr = new XMLHttpRequest();
+        xhrRef.current = xhr;
         xhr.open("POST", url);
+        xhr.timeout = 60_000;
         xhr.setRequestHeader("Content-Type", file.type);
-        xhr.upload.addEventListener("progress", (e) => {
-          if (e.lengthComputable) setProgress(Math.round((e.loaded / e.total) * 100));
+        xhr.upload.addEventListener("progress", (event) => {
+          if (event.lengthComputable && mountedRef.current) {
+            setProgress(Math.round((event.loaded / event.total) * 100));
+          }
         });
         xhr.addEventListener("load", () => {
+          xhrRef.current = null;
           if (xhr.status >= 200 && xhr.status < 300) {
             resolve((JSON.parse(xhr.responseText) as { storageId: string }).storageId);
           } else {
             reject(new Error(`Upload failed: ${xhr.status}`));
           }
         });
-        xhr.addEventListener("error", () => reject(new Error("Network error")));
-        xhr.addEventListener("abort", () => reject(new Error("Upload aborted")));
+        xhr.addEventListener("error", () => {
+          xhrRef.current = null;
+          reject(new Error("Network error"));
+        });
+        xhr.addEventListener("abort", () => {
+          xhrRef.current = null;
+          reject(new Error("Upload aborted"));
+        });
+        xhr.addEventListener("timeout", () => {
+          xhrRef.current = null;
+          reject(new Error("Upload timed out"));
+        });
         xhr.send(file);
       });
       const previewUrl = URL.createObjectURL(file);
-      options.onSuccess?.(storageId, previewUrl);
+      optionsRef.current.onSuccess?.(storageId, previewUrl);
       return { storageId, previewUrl };
     } catch (err) {
-      options.onError?.(err instanceof Error ? err : new Error(String(err)));
-      setProgress(0);
+      if (mountedRef.current) setProgress(0);
+      optionsRef.current.onError?.(err instanceof Error ? err : new Error(String(err)));
       return null;
     } finally {
-      setUploading(false);
+      if (mountedRef.current) setUploading(false);
     }
   };
 

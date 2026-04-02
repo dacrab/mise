@@ -9,8 +9,10 @@ import { useToast } from "@/components/ui/Toast";
 import { useAsyncAction } from "@/hooks/useAsyncAction";
 import { useFileUpload } from "@/hooks/useFileUpload";
 
+import { buildPageHead } from "@/lib/pageMeta";
+
 export const Route = createFileRoute("/_authed/settings")({
-  head: () => ({ meta: [{ title: "Settings | Mise" }] }),
+  head: () => buildPageHead("Settings | Mise", "Update your profile, username, bio, and profile image."),
   component: Settings,
 });
 

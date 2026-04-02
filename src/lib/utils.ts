@@ -18,7 +18,7 @@ export function formatNumber(n: number): string {
   const whole = Math.floor(n);
   const decimal = n - whole;
   for (const [val, symbol] of FRACTIONS) {
-    if (Math.abs(decimal - val) < 0.05) {
+    if (Math.abs(decimal - val) < 0.03) {
       return whole > 0 ? `${whole}${symbol}` : symbol;
     }
   }
@@ -32,9 +32,9 @@ export function formatNumber(n: number): string {
 export function scaleIngredient(ingredient: string, scale: number): string {
   return ingredient.replace(/(\d+\/\d+|\d+\.?\d*)/g, (match) => {
     if (match.includes("/")) {
-      const [numStr, denStr] = match.split("/");
-      const num = parseFloat(numStr ?? "0");
-      const den = parseFloat(denStr ?? "1");
+      const [numStr, denStr] = match.split("/") as [string, string];
+      const num = parseFloat(numStr);
+      const den = parseFloat(denStr);
       return formatNumber((num / den) * scale);
     }
     return formatNumber(parseFloat(match) * scale);

@@ -1,33 +1,18 @@
+import { convexQuery } from "@convex-dev/react-query";
 import { PrinterIcon } from "@heroicons/react/24/outline";
+import { useSuspenseQuery } from "@tanstack/react-query";
 import { createFileRoute, notFound } from "@tanstack/react-router";
 import { api } from "convex/_generated/api";
-import { useQuery } from "convex/react";
 
 export const Route = createFileRoute("/recipe/$slug/print")({
+  loader: ({ params, context: { queryClient } }) =>
+    queryClient.ensureQueryData(convexQuery(api.recipes.getBySlug, { slug: params.slug })),
   component: PrintRecipe,
 });
 
 function PrintRecipe() {
   const { slug } = Route.useParams();
-  const recipe = useQuery(api.recipes.getBySlug, { slug });
-
-  if (recipe === undefined) {
-    return (
-      <div className="max-w-2xl mx-auto p-8 animate-pulse">
-        <div className="h-8 w-3/4 bg-gray-200 rounded mb-3" />
-        <div className="h-4 w-full bg-gray-200 rounded mb-2" />
-        <div className="h-4 w-1/2 bg-gray-200 rounded mb-8" />
-        <div className="h-6 w-32 bg-gray-200 rounded mb-4" />
-        {Array.from({ length: 6 }).map((_, i) => (
-          <div key={i} className="h-4 bg-gray-200 rounded mb-2" />
-        ))}
-        <div className="h-6 w-32 bg-gray-200 rounded mt-8 mb-4" />
-        {Array.from({ length: 4 }).map((_, i) => (
-          <div key={i} className="h-4 bg-gray-200 rounded mb-3" />
-        ))}
-      </div>
-    );
-  }
+  const { data: recipe } = useSuspenseQuery(convexQuery(api.recipes.getBySlug, { slug }));
 
   if (!recipe) throw notFound();
 

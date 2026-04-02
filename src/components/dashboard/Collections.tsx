@@ -1,15 +1,14 @@
 import { FolderIcon, FolderPlusIcon, PlusIcon, TrashIcon } from "@heroicons/react/24/outline";
-import { Link } from "@tanstack/react-router";
 import { api } from "convex/_generated/api";
 import type { Id } from "convex/_generated/dataModel";
 import { useMutation, useQuery } from "convex/react";
 import { useState } from "react";
+import { EmptyState } from "@/components/dashboard/EmptyState";
 import { RecipeCard } from "@/components/ui/RecipeCard";
+import { useAsyncAction } from "@/hooks/useAsyncAction";
 import { useConfirmAction } from "@/hooks/useConfirmAction";
-import { useToast } from "@/components/ui/Toast";
 
 export function Collections() {
-  const { toast } = useToast();
   const collections = useQuery(api.collections.list) ?? [];
   const createCollection = useMutation(api.collections.create);
   const removeCollection = useMutation(api.collections.remove);
@@ -29,18 +28,20 @@ export function Collections() {
     useQuery(api.collections.getBookmarks, selectedId ? { collectionId: selectedId } : { collectionId: undefined }) ??
     [];
 
-  const handleCreate = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!newName.trim()) return;
-    try {
-      await createCollection({ name: newName.trim() });
+  const { execute: handleCreate, isPending: creating } = useAsyncAction(
+    async (event: React.FormEvent) => {
+      event.preventDefault();
+      const trimmed = newName.trim();
+      if (!trimmed) return;
+      await createCollection({ name: trimmed });
       setNewName("");
       setShowCreate(false);
-      toast("Collection created", "success");
-    } catch {
-      toast("Could not create collection", "error");
+    },
+    {
+      successMessage: "Collection created",
+      errorMessage: "Could not create collection",
     }
-  };
+  );
 
   return (
     <div className="grid md:grid-cols-[240px_1fr] gap-6">
@@ -77,7 +78,7 @@ export function Collections() {
         ))}
 
         {showCreate ? (
-          <form onSubmit={handleCreate} className="flex gap-2">
+          <form onSubmit={(event) => void handleCreate(event)} className="flex gap-2">
             <label htmlFor="new-collection-name" className="sr-only">
               Collection name
             </label>
@@ -88,8 +89,9 @@ export function Collections() {
               onChange={(e) => setNewName(e.target.value)}
               placeholder="Collection name"
               className="flex-1 px-3 py-2 text-sm rounded-lg border border-cream-dark focus:outline-none focus:border-sage"
+              disabled={creating}
             />
-            <button type="submit" className="btn-primary text-sm py-2 px-3">
+            <button type="submit" className="btn-primary text-sm py-2 px-3 disabled:opacity-50" disabled={creating || !newName.trim()}>
               <PlusIcon className="w-4 h-4" />
             </button>
           </form>
@@ -110,13 +112,13 @@ export function Collections() {
         </h2>
 
         {bookmarks.length === 0 ? (
-          <div className="card p-12 text-center">
-            <FolderIcon className="w-12 h-12 text-stone-light mx-auto mb-4" />
-            <p className="text-stone mb-4">No recipes in this collection</p>
-            <Link to="/" className="btn-primary text-sm">
-              Browse recipes
-            </Link>
-          </div>
+          <EmptyState
+            icon={<FolderIcon className="w-6 h-6 text-stone" />}
+            title="Nothing saved here yet"
+            message={selectedId ? "No recipes in this collection" : "Saved recipes will appear here once you bookmark them."}
+            actionLabel="Browse recipes"
+            actionTo="/"
+          />
         ) : (
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             {bookmarks.map((recipe) => (

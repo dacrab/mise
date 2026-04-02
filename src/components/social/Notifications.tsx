@@ -1,5 +1,5 @@
 import { useMutation, useQuery } from "convex/react";
-import { useEffect, useRef, useState } from "react";
+import { useState } from "react";
 import { BellIcon, CheckIcon } from "@heroicons/react/24/outline";
 import { BellAlertIcon } from "@heroicons/react/24/solid";
 import { useRouter } from "@tanstack/react-router";
@@ -7,6 +7,7 @@ import { api } from "convex/_generated/api";
 import type { Id } from "convex/_generated/dataModel";
 import { Avatar } from "@/components/ui/Primitives";
 import { useAsyncAction } from "@/hooks/useAsyncAction";
+import { useDismissableLayer } from "@/hooks/useDismissableLayer";
 import { timeAgo } from "@/lib/utils";
 
 type Notification = {
@@ -35,24 +36,8 @@ export function NotificationBell() {
   const markRead = useMutation(api.notifications.markRead);
   const markAllRead = useMutation(api.notifications.markAllRead);
   const [open, setOpen] = useState(false);
-  const containerRef = useRef<HTMLDivElement>(null);
+  const containerRef = useDismissableLayer<HTMLDivElement>(open, () => setOpen(false));
   const router = useRouter();
-
-  useEffect(() => {
-    if (!open) return;
-    const handler = (e: MouseEvent) => {
-      if (containerRef.current && !containerRef.current.contains(e.target as Node)) setOpen(false);
-    };
-    document.addEventListener("mousedown", handler);
-    return () => document.removeEventListener("mousedown", handler);
-  }, [open]);
-
-  useEffect(() => {
-    if (!open) return;
-    const handler = (e: KeyboardEvent) => { if (e.key === "Escape") setOpen(false); };
-    document.addEventListener("keydown", handler);
-    return () => document.removeEventListener("keydown", handler);
-  }, [open]);
 
   const handleNotificationClick = async (n: Notification) => {
     setOpen(false);

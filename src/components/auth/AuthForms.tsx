@@ -155,17 +155,15 @@ export function LoginForm() {
       e.preventDefault();
       if (!email || !password) return;
       setFormError("");
-      try {
-        const result = await signIn("password", { email, password, flow: "signIn" });
-        if (result.signingIn) {
-          toast("Welcome back!", "success");
-          await router.navigate({ to: "/dashboard", replace: true });
-        }
-      } catch (err) {
-        const msg = mapAuthError(LOGIN_ERRORS, err);
-        setFormError(msg);
-        throw err; // re-throw so useAsyncAction can show error toast
+      const result = await signIn("password", { email, password, flow: "signIn" });
+      if (result.signingIn) {
+        toast("Welcome back!", "success");
+        await router.navigate({ to: "/dashboard", replace: true });
       }
+    },
+    {
+      getErrorMessage: (error) => mapAuthError(LOGIN_ERRORS, error),
+      onErrorMessage: (message) => setFormError(message),
     }
   );
 
@@ -217,17 +215,15 @@ export function SignupForm() {
       e.preventDefault();
       if (!name || !email || !password || password.length < 6) return;
       setFormError("");
-      try {
-        const result = await signIn("password", { email, password, name, flow: "signUp" });
-        if (result.signingIn) {
-          toast("Account created! Welcome to Mise.", "success");
-          await router.navigate({ to: "/dashboard", replace: true });
-        }
-      } catch (err) {
-        const msg = mapAuthError(SIGNUP_ERRORS, err);
-        setFormError(msg);
-        throw err;
+      const result = await signIn("password", { email, password, name, flow: "signUp" });
+      if (result.signingIn) {
+        toast("Account created! Welcome to Mise.", "success");
+        await router.navigate({ to: "/dashboard", replace: true });
       }
+    },
+    {
+      getErrorMessage: (error) => mapAuthError(SIGNUP_ERRORS, error),
+      onErrorMessage: (message) => setFormError(message),
     }
   );
 
@@ -271,16 +267,15 @@ export function ForgotPasswordForm() {
       e.preventDefault();
       if (!email.trim()) return;
       setFormError("");
-      try {
-        const fd = new FormData();
-        fd.set("email", email); fd.set("flow", "reset");
-        await signIn("password", fd);
-        setStep("code");
-        toast("Reset code sent to your email", "success");
-      } catch (err) {
-        setFormError(err instanceof Error ? err.message : "Something went wrong");
-        throw err;
-      }
+      const fd = new FormData();
+      fd.set("email", email);
+      fd.set("flow", "reset");
+      await signIn("password", fd);
+      setStep("code");
+      toast("Reset code sent to your email", "success");
+    },
+    {
+      onErrorMessage: (message) => setFormError(message),
     }
   );
 
@@ -289,17 +284,17 @@ export function ForgotPasswordForm() {
       e.preventDefault();
       if (!code.trim() || newPassword.length < 8) return;
       setFormError("");
-      try {
-        const fd = new FormData();
-        fd.set("email", email); fd.set("code", code);
-        fd.set("newPassword", newPassword); fd.set("flow", "reset-verification");
-        await signIn("password", fd);
-        toast("Password reset successfully!", "success");
-        await router.navigate({ to: "/login", replace: true });
-      } catch (err) {
-        setFormError(err instanceof Error ? err.message : "Something went wrong");
-        throw err;
-      }
+      const fd = new FormData();
+      fd.set("email", email);
+      fd.set("code", code);
+      fd.set("newPassword", newPassword);
+      fd.set("flow", "reset-verification");
+      await signIn("password", fd);
+      toast("Password reset successfully!", "success");
+      await router.navigate({ to: "/login", replace: true });
+    },
+    {
+      onErrorMessage: (message) => setFormError(message),
     }
   );
 

@@ -1,6 +1,7 @@
 import { api } from "convex/_generated/api";
 import { useAction } from "convex/react";
 import { useState } from "react";
+import { useAsyncAction } from "@/hooks/useAsyncAction";
 
 type ImportedRecipe = {
   title: string;
@@ -16,24 +17,23 @@ type ImportedRecipe = {
 
 export function RecipeImporter({ onImport }: { onImport: (recipe: ImportedRecipe) => void }) {
   const [url, setUrl] = useState("");
-  const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const importRecipe = useAction(api["recipeImport"].importFromUrl);
 
-  const handleImport = async () => {
-    if (!url.trim()) return;
-    setLoading(true);
-    setError("");
-    try {
-      const recipe = await importRecipe({ url: url.trim() });
+  const { execute: handleImport, isPending: loading } = useAsyncAction(
+    async () => {
+      const trimmed = url.trim();
+      if (!trimmed) return;
+      setError("");
+      const recipe = await importRecipe({ url: trimmed });
       onImport(recipe);
       setUrl("");
-    } catch (e) {
-      setError(e instanceof Error ? e.message : "Import failed");
-    } finally {
-      setLoading(false);
+    },
+    {
+      getErrorMessage: (err) => err.message || "Import failed",
+      onErrorMessage: (message) => setError(message),
     }
-  };
+  );
 
   return (
     <div className="p-4 bg-cream rounded-lg border border-cream-dark">
@@ -47,11 +47,11 @@ export function RecipeImporter({ onImport }: { onImport: (recipe: ImportedRecipe
           type="url"
           value={url}
           onChange={(e) => setUrl(e.target.value)}
-          onKeyDown={(e) => e.key === "Enter" && handleImport()}
+          onKeyDown={(e) => e.key === "Enter" && void handleImport()}
           placeholder="https://example.com/recipe..."
           className="input-field flex-1 py-2 text-sm"
         />
-        <button onClick={handleImport} disabled={loading || !url.trim()} className="btn-secondary text-sm">
+        <button onClick={() => void handleImport()} disabled={loading || !url.trim()} className="btn-secondary text-sm">
           {loading ? "Importing…" : "Import"}
         </button>
       </div>
