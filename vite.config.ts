@@ -2,6 +2,7 @@ import { defineConfig } from "vite";
 import tsConfigPaths from "vite-tsconfig-paths";
 import { tanstackStart } from "@tanstack/react-start/plugin/vite";
 import tailwindcss from "@tailwindcss/vite";
+import { nitro } from "nitro/vite";
 
 // NOTE: Do NOT add @vitejs/plugin-react here.
 // tanstackStart() already includes the React plugin internally.
@@ -25,6 +26,9 @@ export default defineConfig({
     tsConfigPaths(),
     tanstackStart(),
     tailwindcss(),
+    nitro({
+      preset: "vercel",
+    }),
   ],
   environments: {
     client: {
