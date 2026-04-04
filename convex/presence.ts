@@ -2,7 +2,7 @@ import { v } from "convex/values";
 import { mutation, query } from "./_generated/server";
 import { getAuthUserId, requireAuth } from "./lib/auth";
 
-const PRESENCE_TTL = 30_000; // 30 seconds
+const PRESENCE_TTL = 30_000;
 
 export const heartbeat = mutation({
   args: { recipeId: v.id("recipes") },
@@ -52,8 +52,8 @@ export const getCooking = query({
 
     const users = await Promise.all(
       active
-        .filter((p) => p.userId !== currentUserId) // exclude self
-        .slice(0, 5) // max 5
+        .filter((p) => p.userId !== currentUserId)
+        .slice(0, 5)
         .map(async (p) => {
           const user = await ctx.db.get(p.userId);
           return user ? { name: user.name, image: user.image } : null;

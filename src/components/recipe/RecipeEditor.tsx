@@ -3,7 +3,7 @@ import { Link, useNavigate } from "@tanstack/react-router";
 import { api } from "convex/_generated/api";
 import type { Id } from "convex/_generated/dataModel";
 import { useMutation, useQuery } from "convex/react";
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Controller, useFieldArray, useForm } from "react-hook-form";
 import { z } from "zod";
 import { ProgressBar } from "@/components/ui/Primitives";
@@ -43,8 +43,8 @@ const recipeSchema = z.object({
   description: z.string(),
   category: z.string(),
   difficulty: z.string(),
-  prepTime: numericStr(0, 1440, "Prep time must be at least 0", "Prep time must be under 1440 minutes"),
-  cookTime: numericStr(0, 1440, "Cook time must be at least 0", "Cook time must be under 1440 minutes"),
+  prepTime: numericStr(0, 24 * 60, "Prep time must be at least 0", "Prep time must be under 1440 minutes"),
+  cookTime: numericStr(0, 24 * 60, "Cook time must be at least 0", "Cook time must be under 1440 minutes"),
   servings: numericStr(1, 100, "Servings must be at least 1", "Servings must be at most 100"),
   videoUrl: z
     .string()
@@ -94,7 +94,6 @@ export function RecipeEditor({ initialData, isEditing }: Props) {
     handleSubmit: rhfHandleSubmit,
     watch,
     reset,
-    setValue,
     formState: { errors, isDirty },
   } = useForm<RecipeFormData>({
     resolver: zodResolver(recipeSchema),
@@ -130,8 +129,7 @@ export function RecipeEditor({ initialData, isEditing }: Props) {
     name: "steps",
   });
 
-  // Unwrap RHF's { value } wrapper to plain string[]. Stable ref avoids useEffect churn.
-  const unwrap = useCallback((arr: Array<{ value: string }>) => arr.map((x) => x.value), []);
+  const unwrap = (arr: Array<{ value: string }>) => arr.map((x) => x.value);
 
   const watchedValues = watch();
 
@@ -147,8 +145,6 @@ export function RecipeEditor({ initialData, isEditing }: Props) {
   const generateUploadUrl = useMutation(api.recipes.generateUploadUrl);
   const createRecipe = useMutation(api.recipes.create);
   const updateRecipe = useMutation(api.recipes.update);
-  const updateRecipeRef = useRef(updateRecipe);
-  updateRecipeRef.current = updateRecipe;
 
   const {
     upload,
@@ -174,7 +170,7 @@ export function RecipeEditor({ initialData, isEditing }: Props) {
         const validIngredients = unwrap(watchedValues.ingredients).filter(Boolean);
         const validSteps = unwrap(watchedValues.steps).filter(Boolean);
 
-        await updateRecipeRef.current({
+        await updateRecipe({
           id: recipeId,
           title: watchedValues.title.trim() || "Untitled",
           description: watchedValues.description?.trim() || undefined,
@@ -195,7 +191,7 @@ export function RecipeEditor({ initialData, isEditing }: Props) {
       }
     }, 30_000);
     return () => clearInterval(interval);
-  }, [isEditing, initialData?.id, isDirty, watchedValues, coverImage, unwrap]);
+  }, [isEditing, initialData?.id, isDirty, coverImage, watchedValues, updateRecipe]);
 
   // Revoke the blob preview URL when the component unmounts to free memory.
   useEffect(
@@ -205,11 +201,9 @@ export function RecipeEditor({ initialData, isEditing }: Props) {
     [coverImageUrl]
   );
 
-  // Redirect must happen in an effect — calling navigate during render is not allowed.
-  const userIsNull = user === null;
   useEffect(() => {
-    if (userIsNull) void navigate({ to: "/login", replace: true });
-  }, [userIsNull, navigate]);
+    if (user === null) void navigate({ to: "/login", replace: true });
+  }, [user, navigate]);
 
   if (user === undefined) {
     return <div className="flex items-center justify-center min-h-[60vh] text-stone animate-pulse">Loading…</div>;
@@ -272,13 +266,8 @@ export function RecipeEditor({ initialData, isEditing }: Props) {
     }
   };
 
-  const handleDraftClick = () => {
-    pendingStatusRef.current = "draft";
-    void rhfHandleSubmit(handleSubmit)();
-  };
-
-  const handlePublishClick = () => {
-    pendingStatusRef.current = "published";
+  const triggerSubmit = (status: "draft" | "published") => {
+    pendingStatusRef.current = status;
     void rhfHandleSubmit(handleSubmit)();
   };
 
@@ -295,10 +284,10 @@ export function RecipeEditor({ initialData, isEditing }: Props) {
           <Link to="/dashboard" className="btn-ghost text-sm">
             Cancel
           </Link>
-          <button onClick={handleDraftClick} disabled={loading} className="btn-secondary text-sm">
+          <button onClick={() => triggerSubmit("draft")} disabled={loading} className="btn-secondary text-sm">
             {loading ? "Saving…" : "Save draft"}
           </button>
-          <button onClick={handlePublishClick} disabled={loading} className="btn-primary text-sm">
+          <button onClick={() => triggerSubmit("published")} disabled={loading} className="btn-primary text-sm">
             {loading ? "Saving…" : isEditing ? "Update" : "Publish"}
           </button>
         </div>
@@ -308,21 +297,17 @@ export function RecipeEditor({ initialData, isEditing }: Props) {
         <div className="mb-8">
           <RecipeImporter
             onImport={(imported) => {
-              if (imported.title) setValue("title", imported.title);
-              if (imported.description) setValue("description", imported.description);
-              if (imported.ingredients.length > 0) {
-                reset((formValues) => ({
-                  ...formValues,
-                  ingredients: imported.ingredients.map((v) => ({ value: v })),
-                }));
-              }
-              if (imported.steps.length > 0) {
-                reset((formValues) => ({ ...formValues, steps: imported.steps.map((v) => ({ value: v })) }));
-              }
+              reset((formValues) => ({
+                ...formValues,
+                title: imported.title || formValues.title,
+                description: imported.description || formValues.description,
+                ingredients: imported.ingredients.length > 0 ? imported.ingredients.map((v) => ({ value: v })) : formValues.ingredients,
+                steps: imported.steps.length > 0 ? imported.steps.map((v) => ({ value: v })) : formValues.steps,
+                prepTime: imported.prepTime ? String(imported.prepTime) : formValues.prepTime,
+                cookTime: imported.cookTime ? String(imported.cookTime) : formValues.cookTime,
+                servings: imported.servings ? String(imported.servings) : formValues.servings,
+              }));
               if (imported.imageUrl) setCoverImageUrl(imported.imageUrl);
-              if (imported.prepTime) setValue("prepTime", String(imported.prepTime));
-              if (imported.cookTime) setValue("cookTime", String(imported.cookTime));
-              if (imported.servings) setValue("servings", String(imported.servings));
               toast("Recipe imported! Review and edit before publishing.", "success");
             }}
           />

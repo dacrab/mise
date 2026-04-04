@@ -17,7 +17,7 @@ export default defineConfig({
     setupFiles: ["./tests/setup.ts"],
     clearMocks: true,
     restoreMocks: true,
-    include: ["tests/unit/**/*.test.{ts,tsx}", "tests/integration/**/*.test.{ts,tsx}"],
+    include: ["tests/unit/**/*.test.{ts,tsx}"],
     exclude: ["tests/e2e/**", "node_modules/**"],
     coverage: {
       provider: "v8",

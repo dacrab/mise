@@ -6,6 +6,7 @@ import type { Id } from "convex/_generated/dataModel";
 import { Avatar } from "@/components/ui/Primitives";
 import { useAsyncAction } from "@/hooks/useAsyncAction";
 import { useConfirmAction } from "@/hooks/useConfirmAction";
+import { timeAgo } from "@/lib/utils";
 
 type Comment = {
   _id: Id<"comments">;
@@ -46,16 +47,13 @@ function CommentItem({ comment, currentUserId }: { comment: Comment; currentUser
     setEditText(comment.content);
   };
 
-  const authorName = comment.user?.name ?? "Chef";
-  const authorImage = comment.user?.image;
-
   return (
     <div className="flex gap-3">
-      <Avatar src={authorImage} name={authorName} size="sm" />
+      <Avatar src={comment.user?.image} name={comment.user?.name ?? "Chef"} size="sm" />
       <div className="flex-1 min-w-0">
         <div className="flex items-baseline gap-2 flex-wrap">
-          <span className="text-sm font-medium text-charcoal">{authorName}</span>
-          <span className="text-xs text-stone">{new Date(comment._creationTime).toLocaleDateString()}</span>
+          <span className="text-sm font-medium text-charcoal">{comment.user?.name ?? "Chef"}</span>
+          <span className="text-xs text-stone">{timeAgo(comment._creationTime)}</span>
         </div>
 
         {isEditing ? (
@@ -149,7 +147,11 @@ export function CommentSection({ recipeId }: { recipeId: Id<"recipes"> }) {
             value={text}
             onChange={(e) => setText(e.target.value)}
             onKeyDown={(e) => {
-              if (e.key === "Enter" && (e.metaKey || e.ctrlKey)) void handleSubmit(e as unknown as React.FormEvent);
+              if (e.key === "Enter" && (e.metaKey || e.ctrlKey)) {
+                e.preventDefault();
+                const form = e.currentTarget.closest("form");
+                if (form) void handleSubmit(new Event("submit", { bubbles: true }) as unknown as React.FormEvent);
+              }
             }}
             placeholder="Share your thoughts…"
             rows={3}

@@ -4,9 +4,11 @@ import { createFileRoute, notFound } from "@tanstack/react-router";
 import { api } from "convex/_generated/api";
 import { useQuery } from "convex/react";
 
+import { APP_TITLE_SUFFIX } from "@/lib/constants";
 import { PageLayout } from "@/components/layout/PageLayout";
 import { FollowButton, FollowStats } from "@/components/social/Follow";
-import { RecipeCard } from "@/components/ui/RecipeCard";
+import { Avatar } from "@/components/ui/Primitives";
+import { RecipeCard, RecipeGridSkeleton } from "@/components/ui/RecipeCard";
 
 function ChefSkeleton() {
   return (
@@ -25,17 +27,7 @@ function ChefSkeleton() {
             </div>
           </div>
         </div>
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
-          {Array.from({ length: 6 }).map((_, i) => (
-            <div key={i} className="card overflow-hidden">
-              <div className="w-full aspect-[4/3] bg-cream-dark" />
-              <div className="p-4 space-y-2">
-                <div className="h-4 w-3/4 bg-cream-dark rounded" />
-                <div className="h-3 w-1/2 bg-cream-dark rounded" />
-              </div>
-            </div>
-          ))}
-        </div>
+        <RecipeGridSkeleton />
       </div>
     </PageLayout>
   );
@@ -48,18 +40,14 @@ export const Route = createFileRoute("/chef/$username")({
     queryClient.ensureQueryData(convexQuery(api.users.getByUsername, { username: params.username })),
   pendingComponent: ChefSkeleton,
   component: ChefPage,
-  head: ({ loaderData }) => {
-    const name = loaderData?.name;
-    const bio = loaderData?.bio;
-    return {
-      meta: [
-        { title: name ? `${name}'s Kitchen | Mise` : "Chef | Mise" },
-        { name: "description", content: bio ?? (name ? `Recipes by ${name} on Mise` : "Chef on Mise") },
-        { property: "og:title", content: name ? `${name}'s Kitchen` : "Chef" },
-        { property: "og:type", content: "profile" },
-      ],
-    };
-  },
+  head: ({ loaderData }) => ({
+    meta: [
+      { title: loaderData?.name ? `${loaderData.name}'s Kitchen${APP_TITLE_SUFFIX}` : `Chef${APP_TITLE_SUFFIX}` },
+      { name: "description", content: loaderData?.bio ?? (loaderData?.name ? `Recipes by ${loaderData.name} on Mise` : "Chef on Mise") },
+      { property: "og:title", content: loaderData?.name ? `${loaderData.name}'s Kitchen` : "Chef" },
+      { property: "og:type", content: "profile" },
+    ],
+  }),
 });
 
 function ChefPage() {
@@ -77,19 +65,7 @@ function ChefPage() {
       <div className="wrapper">
         <div className="py-12 md:py-16 border-b border-cream-dark mb-10">
           <div className="flex flex-col sm:flex-row items-center sm:items-start gap-6">
-            <div className="w-24 h-24 rounded-full bg-sage/15 overflow-hidden shrink-0">
-              {chef.profileImageUrl ?? chef.image ? (
-                <img
-                  src={chef.profileImageUrl ?? chef.image ?? ""}
-                  alt={chef.name ?? ""}
-                  className="w-full h-full object-cover"
-                />
-              ) : (
-                <div className="w-full h-full flex items-center justify-center text-2xl font-medium text-sage">
-                  {chef.name?.[0] ?? "U"}
-                </div>
-              )}
-            </div>
+            <Avatar src={chef.profileImageUrl ?? chef.image} name={chef.name} size="lg" className="!w-24 !h-24 text-2xl" />
             <div className="text-center sm:text-left">
               <h1 className="font-serif text-3xl font-medium mb-1">{chef.name}</h1>
               {chef.username && <p className="text-stone text-sm mb-3">@{chef.username}</p>}

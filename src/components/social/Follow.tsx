@@ -23,7 +23,7 @@ export function FollowButton({ userId }: { userId: Id<"users"> }) {
       disabled={isPending}
       aria-label={isFollowing ? "Unfollow this chef" : "Follow this chef"}
       aria-pressed={isFollowing}
-      className={`flex items-center gap-2 px-4 py-2 rounded-lg border text-sm font-medium transition-colors disabled:opacity-60 ${isFollowing ? "bg-cream-dark border-cream-dark text-charcoal-light hover:bg-stone-light/50" : "bg-charcoal border-charcoal text-cream hover:bg-charcoal-light"} ${isPending ? "opacity-50 cursor-not-allowed" : ""}`}
+      className={`flex items-center gap-2 px-4 py-2 rounded-lg border text-sm font-medium transition-colors disabled:opacity-60 ${isFollowing ? "bg-cream-dark border-cream-dark text-charcoal-light hover:bg-stone-light/50" : "bg-charcoal border-charcoal text-cream hover:bg-charcoal-light"}`}
     >
       {isPending && <Spinner className="w-3.5 h-3.5" />}
       {isFollowing ? "Following" : "Follow"}

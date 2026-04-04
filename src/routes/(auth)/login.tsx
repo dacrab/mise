@@ -1,9 +1,15 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
+import { APP_TITLE_SUFFIX } from "@/lib/constants";
 import { LoginForm } from "@/components/auth/AuthForms";
 import { AuthLayout } from "@/components/layout/PageLayout";
 
 export const Route = createFileRoute("/(auth)/login")({
-  head: () => ({ meta: [{ title: "Sign in | Mise" }, { name: "description", content: "Sign in to access your kitchen, recipes, and saved collections." }] }),
+  head: () => ({
+    meta: [
+      { title: `Sign in${APP_TITLE_SUFFIX}` },
+      { name: "description", content: "Sign in to access your kitchen, recipes, and saved collections." },
+    ],
+  }),
   component: LoginPage,
 });
 

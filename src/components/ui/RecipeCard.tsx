@@ -7,18 +7,17 @@ import { useBookmarkToggle } from "@/hooks/useBookmarkToggle";
 function QuickBookmark({ recipeId }: { recipeId: Id<"recipes"> }) {
   const { currentUser, isBookmarked, isPending, toggleBookmark } = useBookmarkToggle(recipeId);
 
-  const handleClick = async (event: React.MouseEvent) => {
+  if (currentUser === null) return null;
+
+  const handleClick = (event: React.MouseEvent) => {
     event.preventDefault();
     event.stopPropagation();
-    if (!currentUser) return;
-    await toggleBookmark();
+    void toggleBookmark();
   };
-
-  if (currentUser === null) return null;
 
   return (
     <button
-      onClick={(e) => void handleClick(e)}
+      onClick={handleClick}
       disabled={isPending}
       aria-label={isBookmarked ? "Remove from saved" : "Save recipe"}
       className={`p-2 rounded-full shadow-sm transition-all duration-200 backdrop-blur-sm disabled:opacity-50 ${isBookmarked ? "bg-charcoal/80 text-honey" : "bg-black/40 text-white hover:bg-charcoal/80"}`}
@@ -131,6 +130,22 @@ export function RecipeCard({
         {meta}
       </div>
     </Link>
+  );
+}
+
+export function RecipeGridSkeleton({ count = 6 }: { count?: number }) {
+  return (
+    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
+      {Array.from({ length: count }).map((_, i) => (
+        <div key={i} className="card overflow-hidden animate-pulse">
+          <div className="w-full aspect-[4/3] bg-cream-dark" />
+          <div className="p-4 space-y-2">
+            <div className="h-4 bg-cream-dark rounded w-3/4" />
+            <div className="h-3 bg-cream-dark rounded w-1/2" />
+          </div>
+        </div>
+      ))}
+    </div>
   );
 }
 

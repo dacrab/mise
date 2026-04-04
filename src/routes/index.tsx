@@ -6,7 +6,7 @@ import { useState } from "react";
 import { z } from "zod";
 import { PageLayout } from "@/components/layout/PageLayout";
 import { TrendingRecipes } from "@/components/recipe/RecipeWidgets";
-import { RecipeCard } from "@/components/ui/RecipeCard";
+import { RecipeCard, RecipeGridSkeleton } from "@/components/ui/RecipeCard";
 import { Select } from "@/components/ui/Select";
 import { Spinner } from "@/components/ui/Primitives";
 import { CATEGORIES, CATEGORY_ICONS } from "@/lib/constants";
@@ -186,17 +186,7 @@ function HomePage() {
           <span className="text-sm text-stone">{recipes.length} loaded</span>
         </div>
         {hasSearch && searchResults === undefined ? (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
-            {Array.from({ length: 6 }).map((_, i) => (
-              <div key={i} className="card overflow-hidden animate-pulse">
-                <div className="w-full aspect-[4/3] bg-cream-dark" />
-                <div className="p-4 space-y-2">
-                  <div className="h-4 bg-cream-dark rounded w-3/4" />
-                  <div className="h-3 bg-cream-dark rounded w-1/2" />
-                </div>
-              </div>
-            ))}
-          </div>
+          <RecipeGridSkeleton />
         ) : grid.length > 0 ? (
           <>
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">

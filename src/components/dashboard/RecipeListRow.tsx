@@ -36,7 +36,7 @@ export function RecipeListRow({ recipe, showActions = false, pendingDeleteId, on
           View →
         </Link>
       </div>
-      {showActions && onDelete ? (
+      {showActions && onDelete && (
         <div className="flex gap-2">
           <Link to="/dashboard/edit/$id" params={{ id: recipe._id }} className="btn-ghost text-xs py-1.5 px-3">
             Edit
@@ -48,7 +48,7 @@ export function RecipeListRow({ recipe, showActions = false, pendingDeleteId, on
             {pendingDeleteId === recipe._id ? "Confirm?" : "Delete"}
           </button>
         </div>
-      ) : null}
+      )}
     </div>
   );
 }

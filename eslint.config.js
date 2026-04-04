@@ -6,8 +6,6 @@ import pluginQuery from "@tanstack/eslint-plugin-query";
 import pluginVitest from "eslint-plugin-vitest";
 import globals from "globals";
 
-// ─── Shared rule sets ───────────────────────────────────────────────────────
-
 const tsBase = {
   "no-unused-vars": "off",
   "no-undef": "off",
@@ -26,7 +24,7 @@ const tsBase = {
     assertionStyle: "as",
     objectLiteralTypeAssertions: "never",
   }],
-  "@typescript-eslint/no-unnecessary-type-assertion": "off",
+  "@typescript-eslint/no-unnecessary-type-assertion": "error",
   "@typescript-eslint/array-type": ["error", { default: "array-simple" }],
   "@typescript-eslint/prefer-as-const": "error",
 };
@@ -52,8 +50,6 @@ const generalSafety = {
   "no-useless-return": "error",
 };
 
-// ─── Helper factory for common config patterns ──────────────────────────────
-
 const createTsConfig = (files, overrides = {}) => ({
   files,
   languageOptions: {
@@ -64,8 +60,6 @@ const createTsConfig = (files, overrides = {}) => ({
   plugins: { "@typescript-eslint": tseslint.plugin, ...overrides.plugins },
   rules: { ...tsBase, ...generalSafety, ...overrides.rules },
 });
-
-// ─── Config objects ─────────────────────────────────────────────────────────
 
 const srcConfig = createTsConfig(
   ["src/**/*.{ts,tsx}"],

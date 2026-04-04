@@ -18,8 +18,6 @@ updates:
         update-types: ["version-update:semver-major"]
       - dependency-name: "vite"
         versions: ["8.x"]
-      - dependency-name: "astro"
-        update-types: ["version-update:semver-major"]
     labels:
       - "dependencies"
 

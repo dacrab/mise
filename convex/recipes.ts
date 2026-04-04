@@ -274,8 +274,6 @@ export const fork = mutation({
 export const publishScheduled = internalMutation({
   handler: async (ctx) => {
     const now = Date.now();
-    // Use by_status index to only scan drafts, then filter by publishAt in memory
-    // (Convex doesn't support compound range queries on two fields — this is the correct pattern)
     const drafts = await ctx.db
       .query("recipes")
       .withIndex("by_status", (q) => q.eq("status", "draft"))

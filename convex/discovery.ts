@@ -4,17 +4,15 @@ import { query } from "./_generated/server";
 import { getAuthUserId } from "./lib/auth";
 import { withCoverUrls } from "./lib/storage";
 
-// Scans recent likes with a capped query to keep trending computation bounded.
 export const trending = query({
   args: { limit: v.optional(v.number()) },
   handler: async (ctx, { limit = 10 }) => {
     const weekAgo = Date.now() - 7 * 24 * 60 * 60 * 1000;
 
-    // Filter to the recent window, then cap the read size to keep the ranking work bounded.
     const recentLikes = await ctx.db
       .query("likes")
       .filter((q) => q.gt(q.field("_creationTime"), weekAgo))
-      .take(1000); // safety cap — 1k likes/week is plenty to find top 10
+      .take(1000);
 
     const likeCounts = new Map<string, number>();
     for (const like of recentLikes) {
@@ -60,7 +58,6 @@ export const recommendations = query({
     const likedRecipes = await Promise.all([...likedRecipeIds].slice(0, 10).map((id) => ctx.db.get(id)));
     const categories = [...new Set(likedRecipes.flatMap((r) => (r ? [r.category] : [])))];
 
-    // Batch all category queries in parallel instead of serial loop
     const categoryResults = await Promise.all(
       categories.map((category) =>
         ctx.db

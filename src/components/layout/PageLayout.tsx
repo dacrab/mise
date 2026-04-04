@@ -47,11 +47,21 @@ export function SimpleLayout({
   children,
   backTo = "/",
   backLabel = "← Back",
+  asArticle = false,
+  articleClassName = "",
 }: {
   children: React.ReactNode;
   backTo?: string;
   backLabel?: string;
+  asArticle?: boolean;
+  articleClassName?: string;
 }) {
+  const content = asArticle ? (
+    <article className={`wrapper max-w-2xl py-12 md:py-16 ${articleClassName}`}>{children}</article>
+  ) : (
+    children
+  );
+
   return (
     <>
       <header className="fixed top-0 left-0 right-0 z-50 glass border-b border-cream-dark/50">
@@ -61,27 +71,9 @@ export function SimpleLayout({
           </Link>
         </div>
       </header>
-      <main className="pt-20 pb-24 animate-fade-in">{children}</main>
+      <main className="pt-20 pb-24 animate-fade-in">{content}</main>
       <Footer />
     </>
-  );
-}
-
-export function StaticPage({
-  children,
-  backTo,
-  backLabel,
-  className = "",
-}: {
-  children: React.ReactNode;
-  backTo?: string;
-  backLabel?: string;
-  className?: string;
-}) {
-  return (
-    <SimpleLayout backTo={backTo} backLabel={backLabel}>
-      <article className={`wrapper max-w-2xl py-12 md:py-16 ${className}`}>{children}</article>
-    </SimpleLayout>
   );
 }
 
@@ -96,22 +88,24 @@ export function AuthLayout({
   tagline: string;
   subtitle: string;
 }) {
-  const colors = {
-    login: { bg: "bg-charcoal", text: "text-cream", tagline: "text-sage-light", subtitle: "text-stone-light", year: "text-stone" },
-    signup: { bg: "bg-sage", text: "text-warm-white", tagline: "text-cream", subtitle: "text-cream/80", year: "text-cream/60" },
-  }[variant];
+  const isLogin = variant === "login";
+  const bgClass = isLogin ? "bg-charcoal" : "bg-sage";
+  const textClass = isLogin ? "text-cream" : "text-warm-white";
+  const taglineClass = isLogin ? "text-sage-light" : "text-cream";
+  const subtitleClass = isLogin ? "text-stone-light" : "text-cream/80";
+  const yearClass = isLogin ? "text-stone" : "text-cream/60";
 
   return (
     <div className="min-h-screen flex">
-      <div className={`hidden lg:flex lg:w-1/2 ${colors.bg} p-12 flex-col justify-between`}>
-        <Link to="/" className={`font-serif text-2xl font-semibold ${colors.text}`}>
+      <div className={`hidden lg:flex lg:w-1/2 ${bgClass} p-12 flex-col justify-between`}>
+        <Link to="/" className={`font-serif text-2xl font-semibold ${textClass}`}>
           mise
         </Link>
         <div>
-          <p className={`font-hand text-3xl ${colors.tagline} mb-4`}>{tagline}</p>
-          <p className={`${colors.subtitle} text-lg max-w-md`}>{subtitle}</p>
+          <p className={`font-hand text-3xl ${taglineClass} mb-4`}>{tagline}</p>
+          <p className={`${subtitleClass} text-lg max-w-md`}>{subtitle}</p>
         </div>
-        <p className={`${colors.year} text-sm`}>© {new Date().getFullYear()} mise</p>
+        <p className={`${yearClass} text-sm`}>© {new Date().getFullYear()} mise</p>
       </div>
       <div className="flex-1 flex items-center justify-center p-8 bg-cream">
         <div className="w-full max-w-md">

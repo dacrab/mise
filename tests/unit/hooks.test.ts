@@ -95,16 +95,14 @@ describe("useAsyncAction", () => {
     expect(onError.mock.calls[0]?.[0]?.message).toBe("oops");
   });
 
-  it("calls onErrorMessage with the resolved message and error", async () => {
-    const onErrorMessage = vi.fn();
+  it("calls onError and toasts with the resolved message on failure", async () => {
+    const onError = vi.fn();
     const { result } = renderHook(() =>
       useAsyncAction(
-        async () => {
-          throw new Error("oops");
-        },
+        async () => { throw new Error("oops"); },
         {
           getErrorMessage: (error) => `Mapped: ${error.message}`,
-          onErrorMessage,
+          onError,
         }
       )
     );
@@ -113,7 +111,7 @@ describe("useAsyncAction", () => {
       await result.current.execute();
     });
 
-    expect(onErrorMessage).toHaveBeenCalledWith("Mapped: oops", expect.any(Error));
+    expect(onError).toHaveBeenCalledWith(expect.any(Error));
     expect(mockToast).toHaveBeenCalledWith("Mapped: oops", "error");
   });
 
