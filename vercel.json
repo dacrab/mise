@@ -3,5 +3,14 @@
   "outputDirectory": "dist/client",
   "installCommand": "bun install",
   "framework": null,
-  "ignoreCommand": "[ \"$VERCEL_GIT_COMMIT_AUTHOR_LOGIN\" = \"dependabot[bot]\" ] && exit 0 || exit 1"
+  "ignoreCommand": "[ \"$VERCEL_GIT_COMMIT_AUTHOR_LOGIN\" = \"dependabot[bot]\" ] && exit 0 || exit 1",
+  "rewrites": [
+    { "source": "/(.*)", "destination": "/api/server" }
+  ],
+  "functions": {
+    "api/server.js": {
+      "runtime": "nodejs20.x",
+      "maxDuration": 30
+    }
+  }
 }
