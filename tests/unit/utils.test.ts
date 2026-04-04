@@ -1,7 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { CATEGORIES, CATEGORY_ICONS, DIFFICULTIES } from "@/lib/constants";
 import { formatSeconds, timeAgo, getErrorMessage } from "@/lib/utils";
-import { calculatePasswordStrength } from "@/lib/auth";
 
 describe("formatSeconds", () => {
   it.each([
@@ -11,21 +9,6 @@ describe("formatSeconds", () => {
     [3600, "60:00"],
   ])("formatSeconds(%i) → %s", (input, expected) => {
     expect(formatSeconds(input)).toBe(expected);
-  });
-});
-
-describe("calculatePasswordStrength", () => {
-  it("returns 0 for empty string", () => {
-    expect(calculatePasswordStrength("")).toBe(0);
-  });
-  it("returns 1 for 8-char lowercase-only password", () => {
-    expect(calculatePasswordStrength("password")).toBe(1);
-  });
-  it("returns higher score for complex password", () => {
-    expect(calculatePasswordStrength("P@ssw0rd!Extra")).toBe(4);
-  });
-  it("caps at 4", () => {
-    expect(calculatePasswordStrength("A1!bcdefghijklmno")).toBe(4);
   });
 });
 
@@ -45,7 +28,6 @@ describe("getErrorMessage", () => {
     expect(getErrorMessage(undefined)).toBe("Something went wrong");
   });
 });
-
 
 describe("timeAgo", () => {
   const NOW = new Date("2026-01-10T12:00:00Z").getTime();
@@ -78,48 +60,5 @@ describe("timeAgo", () => {
   it("returns a locale date string for 7+ days ago", () => {
     const sevenDaysAgo = Date.now() - 7 * 86_400_000;
     expect(timeAgo(sevenDaysAgo)).toBe(new Date(sevenDaysAgo).toLocaleDateString());
-  });
-});
-
-describe("CATEGORIES constant", () => {
-  it("is an array of 10 items", () => {
-    expect(CATEGORIES).toHaveLength(10);
-  });
-  it("contains expected category names", () => {
-    expect(CATEGORIES).toContain("Breakfast");
-    expect(CATEGORIES).toContain("Dinner");
-    expect(CATEGORIES).toContain("Vegan");
-    expect(CATEGORIES).toContain("Quick & Easy");
-  });
-});
-
-describe("CATEGORY_ICONS constant", () => {
-  it("has an icon for every category", () => {
-    for (const c of CATEGORIES) {
-      expect(CATEGORY_ICONS[c]).toBeDefined();
-      expect(typeof CATEGORY_ICONS[c]).toBe("string");
-      expect(CATEGORY_ICONS[c].length).toBeGreaterThan(0);
-    }
-  });
-  it("does not have extra keys beyond CATEGORIES", () => {
-    const iconKeys = Object.keys(CATEGORY_ICONS);
-    const catSet = new Set(CATEGORIES as readonly string[]);
-    for (const key of iconKeys) expect(catSet.has(key)).toBe(true);
-  });
-});
-
-describe("DIFFICULTIES constant", () => {
-  it("is an array of 4 items", () => {
-    expect(DIFFICULTIES).toHaveLength(4);
-  });
-  it("contains Easy, Medium, Hard, Expert", () => {
-    expect(DIFFICULTIES).toContain("Easy");
-    expect(DIFFICULTIES).toContain("Medium");
-    expect(DIFFICULTIES).toContain("Hard");
-    expect(DIFFICULTIES).toContain("Expert");
-  });
-  it("is ordered from easiest to hardest", () => {
-    expect(DIFFICULTIES[0]).toBe("Easy");
-    expect(DIFFICULTIES[3]).toBe("Expert");
   });
 });

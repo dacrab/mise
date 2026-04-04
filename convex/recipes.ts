@@ -1,8 +1,7 @@
 import { paginationOptsValidator } from "convex/server";
 import { v } from "convex/values";
-import { internalMutation, mutation, query } from "./_generated/server";
+import { mutation, query } from "./_generated/server";
 import { getAuthUserId, requireAuth } from "./lib/auth";
-import { createNotification } from "./lib/notifications";
 import { generateAuthenticatedUploadUrl, withCoverUrl, withCoverUrls } from "./lib/storage";
 
 function generateSlug(title: string): string {
@@ -10,8 +9,7 @@ function generateSlug(title: string): string {
     .toLowerCase()
     .replace(/[^a-z0-9]+/g, "-")
     .replace(/(^-|-$)+/g, "")
-    .slice(0, 80); // cap base length
-  // Use timestamp + random for extremely low collision probability
+    .slice(0, 80);
   const suffix = Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
   return `${base}-${suffix}`;
 }
@@ -77,16 +75,11 @@ export const getBySlug = query({
       .first();
     if (!recipe) return null;
 
-    const [author, likes, userId] = await Promise.all([
+    const [author, userId] = await Promise.all([
       ctx.db.get(recipe.userId),
-      ctx.db
-        .query("likes")
-        .withIndex("by_recipe", (q) => q.eq("recipeId", recipe._id))
-        .collect(),
       getAuthUserId(ctx),
     ]);
 
-    const isLiked = userId ? likes.some((l: { userId: string }) => l.userId === userId) : false;
     const isBookmarked = userId
       ? !!(await ctx.db
           .query("bookmarks")
@@ -97,8 +90,6 @@ export const getBySlug = query({
     return {
       ...(await withCoverUrl(ctx, recipe)),
       author: author ? { name: author.name, username: author.username, image: author.image } : null,
-      likesCount: likes.length,
-      isLiked,
       isBookmarked,
     };
   },
@@ -109,18 +100,10 @@ export const getByUser = query({
   handler: async (ctx, { userId }) => {
     const currentUserId = await getAuthUserId(ctx);
     const isOwner = currentUserId === userId;
-    const recipes = isOwner
-      ? await ctx.db
-          .query("recipes")
-          .withIndex("by_user", (q) => q.eq("userId", userId))
-          .order("desc")
-          .take(100)
-      : await ctx.db
-          .query("recipes")
-          .withIndex("by_user", (q) => q.eq("userId", userId))
-          .filter((q) => q.eq(q.field("status"), "published"))
-          .order("desc")
-          .take(100);
+    const base = ctx.db.query("recipes").withIndex("by_user", (q) => q.eq("userId", userId));
+    const recipes = await (isOwner ? base : base.filter((q) => q.eq(q.field("status"), "published")))
+      .order("desc")
+      .take(100);
     return withCoverUrls(ctx, recipes);
   },
 });
@@ -149,8 +132,10 @@ export const myBookmarks = query({
       .withIndex("by_user", (q) => q.eq("userId", userId))
       .order("desc")
       .take(100);
-    const recipes = await Promise.all(bookmarks.map((b) => ctx.db.get(b.recipeId)));
-    return withCoverUrls(ctx, recipes.filter(Boolean) as Array<NonNullable<(typeof recipes)[number]>>);
+    const recipes = (await Promise.all(bookmarks.map((b) => ctx.db.get(b.recipeId)))).filter(
+      (r): r is NonNullable<typeof r> => r !== null
+    );
+    return withCoverUrls(ctx, recipes);
   },
 });
 
@@ -210,24 +195,12 @@ export const remove = mutation({
     const recipe = await ctx.db.get(id);
     if (!recipe || recipe.userId !== userId) throw new Error("Not found");
 
-    const [comments, likes, bookmarks] = await Promise.all([
-      ctx.db
-        .query("comments")
-        .withIndex("by_recipe", (q) => q.eq("recipeId", id))
-        .collect(),
-      ctx.db
-        .query("likes")
-        .withIndex("by_recipe", (q) => q.eq("recipeId", id))
-        .collect(),
-      ctx.db
-        .query("bookmarks")
-        .withIndex("by_recipe", (q) => q.eq("recipeId", id))
-        .collect(),
-    ]);
+    const bookmarks = await ctx.db
+      .query("bookmarks")
+      .withIndex("by_recipe", (q) => q.eq("recipeId", id))
+      .collect();
 
     await Promise.all([
-      ...comments.map((c) => ctx.db.delete(c._id)),
-      ...likes.map((l) => ctx.db.delete(l._id)),
       ...bookmarks.map((b) => ctx.db.delete(b._id)),
       recipe.coverImage ? ctx.storage.delete(recipe.coverImage) : Promise.resolve(),
       ctx.db.delete(id),
@@ -239,54 +212,3 @@ export const generateUploadUrl = mutation({
   args: {},
   handler: generateAuthenticatedUploadUrl,
 });
-
-export const fork = mutation({
-  args: { id: v.id("recipes") },
-  handler: async (ctx, { id }) => {
-    const userId = await requireAuth(ctx);
-    const original = await ctx.db.get(id);
-    if (!original || original.status !== "published") throw new Error("Recipe not found");
-
-    const slug = generateSlug(original.title);
-    const newId = await ctx.db.insert("recipes", {
-      title: original.title,
-      description: original.description,
-      category: original.category,
-      ingredients: [...original.ingredients],
-      steps: [...original.steps],
-      coverImage: original.coverImage,
-      videoUrl: original.videoUrl,
-      servings: original.servings,
-      prepTime: original.prepTime,
-      cookTime: original.cookTime,
-      difficulty: original.difficulty,
-      status: "draft",
-      slug,
-      userId,
-      forkedFrom: id,
-    });
-
-    await createNotification(ctx, { userId: original.userId, type: "fork", actorId: userId, recipeId: id });
-    return { id: newId, slug };
-  },
-});
-
-export const publishScheduled = internalMutation({
-  handler: async (ctx) => {
-    const now = Date.now();
-    const drafts = await ctx.db
-      .query("recipes")
-      .withIndex("by_status", (q) => q.eq("status", "draft"))
-      .take(200);
-
-    const scheduled = drafts.filter((r) => r.publishAt !== undefined && r.publishAt <= now);
-
-    await Promise.all(
-      scheduled.map((recipe) => ctx.db.patch(recipe._id, { status: "published", publishAt: undefined }))
-    );
-
-    return { published: scheduled.length };
-  },
-});
-
-

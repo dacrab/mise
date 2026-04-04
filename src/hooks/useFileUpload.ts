@@ -10,10 +10,9 @@ export function useFileUpload(getUploadUrl: () => Promise<string>, options: Uplo
   const [progress, setProgress] = useState(0);
   const abortRef = useRef<AbortController | null>(null);
 
-  useEffect(() => () => abortRef.current?.abort(), []);
+  useEffect(() => () => { abortRef.current?.abort(); }, []);
 
   const upload = async (file: File): Promise<{ storageId: string; previewUrl: string } | null> => {
-    abortRef.current?.abort();
     abortRef.current = new AbortController();
     setUploading(true);
     setProgress(0);

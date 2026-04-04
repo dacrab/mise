@@ -1,11 +1,25 @@
 import { useAuthActions } from "@convex-dev/auth/react";
 import { ArrowLeftIcon, EyeIcon, EyeSlashIcon } from "@heroicons/react/24/outline";
 import { Link, useRouter } from "@tanstack/react-router";
-import { useMemo, useState } from "react";
+import { useState } from "react";
 import { Spinner } from "@/components/ui/Primitives";
 import { useToast } from "@/components/ui/Toast";
 import { useAsyncAction } from "@/hooks/useAsyncAction";
-import { calculatePasswordStrength } from "@/lib/auth";
+
+const MIN_PASSWORD_LENGTH = 8;
+
+const STRENGTH_COLORS = ["bg-stone-light", "bg-terracotta", "bg-honey", "bg-sage", "bg-sage"];
+const STRENGTH_LABELS = ["Too short", "Weak", "Good", "Strong", "Strong"];
+
+function calculatePasswordStrength(password: string): number {
+  let score = 0;
+  if (password.length >= 8) score++;
+  if (password.length >= 12) score++;
+  if (/[A-Z]/.test(password)) score++;
+  if (/[0-9]/.test(password)) score++;
+  if (/[^A-Za-z0-9]/.test(password)) score++;
+  return Math.min(score, 4);
+}
 
 
 function FormField({
@@ -147,10 +161,7 @@ export function LoginForm() {
         await router.navigate({ to: "/dashboard", replace: true });
       }
     },
-    {
-      getErrorMessage: (err) => mapAuthError(LOGIN_ERRORS, err),
-      onError: (err) => setFormError(mapAuthError(LOGIN_ERRORS, err)),
-    }
+    { onError: (err) => setFormError(mapAuthError(LOGIN_ERRORS, err)) }
   );
 
   const { execute: executeGoogle, isPending: googlePending } = useAsyncAction(
@@ -178,10 +189,6 @@ export function LoginForm() {
   );
 }
 
-
-const STRENGTH_COLORS = ["bg-stone-light", "bg-terracotta", "bg-honey", "bg-sage", "bg-sage"];
-const STRENGTH_LABELS = ["Too short", "Weak", "Good", "Strong", "Strong"];
-
 export function SignupForm() {
   const { signIn } = useAuthActions();
   const { toast } = useToast();
@@ -192,12 +199,12 @@ export function SignupForm() {
   const [showPassword, setShowPassword] = useState(false);
   const [formError, setFormError] = useState("");
 
-  const strength = useMemo(() => calculatePasswordStrength(password), [password]);
+  const strength = calculatePasswordStrength(password);
 
   const { execute: handleSubmit, isPending } = useAsyncAction(
     async (e: React.FormEvent) => {
       e.preventDefault();
-      if (!name || !email || !password || password.length < 6) return;
+      if (!name || !email || !password || password.length < MIN_PASSWORD_LENGTH) return;
       setFormError("");
       const result = await signIn("password", { email, password, name, flow: "signUp" });
       if (result.signingIn) {
@@ -205,10 +212,7 @@ export function SignupForm() {
         await router.navigate({ to: "/dashboard", replace: true });
       }
     },
-    {
-      getErrorMessage: (err) => mapAuthError(SIGNUP_ERRORS_MAP, err),
-      onError: (err) => setFormError(mapAuthError(SIGNUP_ERRORS_MAP, err)),
-    }
+    { onError: (err) => setFormError(mapAuthError(SIGNUP_ERRORS_MAP, err)) }
   );
 
   const { execute: executeGoogle, isPending: googlePending } = useAsyncAction(
@@ -229,7 +233,7 @@ export function SignupForm() {
       />
       <button
         type="submit"
-        disabled={isPending || !name || !email || password.length < 6}
+        disabled={isPending || !name || !email || password.length < MIN_PASSWORD_LENGTH}
         className="btn-primary w-full disabled:opacity-50"
       >
         {isPending ? <span className="flex items-center justify-center gap-2"><Spinner /> Creating…</span> : "Sign up"}
@@ -268,7 +272,7 @@ export function ForgotPasswordForm() {
   const { execute: handleResetPassword, isPending: resetting } = useAsyncAction(
     async (e: React.FormEvent) => {
       e.preventDefault();
-      if (!code.trim() || newPassword.length < 8) return;
+      if (!code.trim() || newPassword.length < MIN_PASSWORD_LENGTH) return;
       setFormError("");
       const fd = new FormData();
       fd.set("email", email);
@@ -294,7 +298,7 @@ export function ForgotPasswordForm() {
           {formError && <FormError message={formError} />}
           <FormField id="reset-code" label="Reset code" type="text" value={code} onChange={setCode} placeholder="Enter code" autoComplete="one-time-code" />
           <FormField id="reset-password" label="New password" type="password" value={newPassword} onChange={setNewPassword} placeholder="At least 8 characters" autoComplete="new-password" />
-          <button type="submit" disabled={resetting || !code.trim() || newPassword.length < 8} className="btn-primary w-full disabled:opacity-50">
+          <button type="submit" disabled={resetting || !code.trim() || newPassword.length < MIN_PASSWORD_LENGTH} className="btn-primary w-full disabled:opacity-50">
             {resetting ? <span className="flex items-center justify-center gap-2"><Spinner /> Resetting…</span> : "Reset password"}
           </button>
         </form>

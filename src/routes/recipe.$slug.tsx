@@ -4,15 +4,15 @@ import { PlayIcon as PlayIconSolid } from "@heroicons/react/24/solid";
 import { useSuspenseQuery } from "@tanstack/react-query";
 import { createFileRoute, Link, notFound } from "@tanstack/react-router";
 import { api } from "convex/_generated/api";
-import { useQuery } from "convex/react";
 import { PageLayout } from "@/components/layout/PageLayout";
 import { APP_TITLE_SUFFIX } from "@/lib/constants";
-import { AddToCollectionButton, RelatedRecipes, ShareButton } from "@/components/recipe/RecipeActions";
-import { CookingNow, CookingTimers, IngredientScaler, MetaStat } from "@/components/recipe/RecipeWidgets";
-import { CommentSection } from "@/components/social/Comments";
-import { ForkButton, SocialActions } from "@/components/social/SocialActions";
-import { StarRating } from "@/components/social/StarRating";
+import { ShareButton } from "@/components/recipe/RecipeActions";
+import { IngredientScaler, MetaStat } from "@/components/recipe/RecipeWidgets";
 import { Avatar } from "@/components/ui/Primitives";
+import { BookmarkIcon as BookmarkOutlineIcon } from "@heroicons/react/24/outline";
+import { BookmarkIcon as BookmarkSolidIcon } from "@heroicons/react/24/solid";
+import { useBookmarkToggle } from "@/hooks/useBookmarkToggle";
+import type { Id } from "convex/_generated/dataModel";
 
 export const Route = createFileRoute("/recipe/$slug")({
   loader: ({ params, context: { queryClient } }) =>
@@ -31,10 +31,27 @@ export const Route = createFileRoute("/recipe/$slug")({
   }),
 });
 
+function SaveButton({ recipeId }: { recipeId: Id<"recipes"> }) {
+  const { isBookmarked, isPending, toggleBookmark } = useBookmarkToggle(recipeId, {
+    errorMessage: "Sign in to save recipes",
+  });
+  return (
+    <button
+      onClick={() => void toggleBookmark()}
+      disabled={isPending}
+      aria-label={isBookmarked ? "Remove from saved" : "Save recipe"}
+      aria-pressed={isBookmarked}
+      className={`flex items-center gap-1.5 text-sm transition-colors disabled:opacity-50 ${isBookmarked ? "text-sage" : "text-stone hover:text-sage"}`}
+    >
+      {isBookmarked ? <BookmarkSolidIcon className="w-4 h-4" /> : <BookmarkOutlineIcon className="w-4 h-4" />}
+      {isBookmarked ? "Saved" : "Save"}
+    </button>
+  );
+}
+
 function RecipePage() {
   const { slug } = Route.useParams();
   const { data: recipe } = useSuspenseQuery(convexQuery(api.recipes.getBySlug, { slug }));
-  const user = useQuery(api.users.currentUser);
 
   if (!recipe) throw notFound();
 
@@ -44,7 +61,6 @@ function RecipePage() {
         <header className="py-12 md:py-16">
           <div className="flex items-center gap-4 mb-4">
             <span className="tag-sage">{recipe.category ?? "Recipe"}</span>
-            <CookingNow recipeId={recipe._id} />
           </div>
           <h1 className="heading-1 text-3xl sm:text-4xl md:text-5xl mb-4">{recipe.title}</h1>
           {recipe.description && <p className="body-large max-w-2xl">{recipe.description}</p>}
@@ -125,12 +141,11 @@ function RecipePage() {
         )}
 
         <div className="grid md:grid-cols-[280px_1fr] gap-8 md:gap-12">
-          <aside className="space-y-6">
+          <aside>
             <div className="card p-6 sticky top-24">
               <h3 className="font-serif text-lg font-medium mb-4">Ingredients</h3>
               <IngredientScaler ingredients={recipe.ingredients} defaultServings={recipe.servings ?? 4} />
             </div>
-            <CookingTimers />
           </aside>
 
           <section>
@@ -146,34 +161,22 @@ function RecipePage() {
               ))}
             </ol>
             <div className="mt-12 pt-8 border-t border-cream-dark">
-              <div className="flex items-center justify-between mb-6">
-                <SocialActions recipeId={recipe._id} slug={slug} />
-                <div className="flex items-center gap-2 flex-wrap">
-                  <ShareButton title={recipe.title} />
-                  <AddToCollectionButton recipeId={recipe._id} />
-                  {user && <ForkButton recipeId={recipe._id} recipeTitle={recipe.title} />}
-                  <Link
-                    to="/recipe/$slug/print"
-                    params={{ slug }}
-                    className="flex items-center gap-1.5 text-sm text-stone hover:text-sage"
-                  >
-                    <PrinterIcon className="w-4 h-4" />
-                    Print
-                  </Link>
-                </div>
+              <div className="flex items-center gap-4 flex-wrap">
+                <SaveButton recipeId={recipe._id} />
+                <ShareButton title={recipe.title} />
+                <Link
+                  to="/recipe/$slug/print"
+                  params={{ slug }}
+                  className="flex items-center gap-1.5 text-sm text-stone hover:text-sage"
+                >
+                  <PrinterIcon className="w-4 h-4" />
+                  Print
+                </Link>
               </div>
-              <div className="flex items-center justify-between">
-                <span className="text-sm text-stone">Rate this recipe</span>
-                <StarRating recipeId={recipe._id} />
-              </div>
-            </div>
-            <div className="mt-12">
-              <CommentSection recipeId={recipe._id} />
             </div>
           </section>
         </div>
       </article>
-      <RelatedRecipes recipeId={recipe._id} />
     </PageLayout>
   );
 }

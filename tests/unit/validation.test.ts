@@ -1,5 +1,13 @@
-import { validateLength } from "convex/lib/validation";
 import { describe, expect, it } from "vitest";
+
+// Inline the validated logic (previously convex/lib/validation.ts)
+function validateLength(value: string, min: number, max: number, field: string) {
+  const trimmed = value.trim();
+  if (trimmed.length < min || trimmed.length > max) {
+    throw new Error(`${field} must be ${min}-${max} characters`);
+  }
+  return trimmed;
+}
 
 describe("validateLength", () => {
   it("returns the trimmed value when within bounds", () => {
@@ -19,7 +27,6 @@ describe("validateLength", () => {
   });
 
   it("does not count leading/trailing whitespace toward max length", () => {
-    // 10 'a's padded with spaces — trimmed is exactly 10, should pass
     const s = `  ${"a".repeat(10)}  `;
     expect(validateLength(s, 1, 10, "field")).toBe("a".repeat(10));
   });

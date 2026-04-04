@@ -4,7 +4,6 @@ import { Route } from "@/routes/_authed/dashboard/index";
 import { api } from "convex/_generated/api";
 import type { Id } from "convex/_generated/dataModel";
 import { useMutation, useQuery } from "convex/react";
-import { Collections } from "@/components/dashboard/Collections";
 import { EmptyState } from "@/components/dashboard/EmptyState";
 import { RecipeListRow } from "@/components/dashboard/RecipeListRow";
 import { useConfirmAction } from "@/hooks/useConfirmAction";
@@ -12,7 +11,6 @@ import { useConfirmAction } from "@/hooks/useConfirmAction";
 const TABS = [
   { id: "my-recipes", label: "My Recipes" },
   { id: "saved", label: "Saved" },
-  { id: "collections", label: "Collections" },
 ];
 
 export function DashboardView() {
@@ -26,9 +24,9 @@ export function DashboardView() {
   );
 
   const { tab = "my-recipes" } = Route.useSearch();
-  const recipes = tab === "saved" ? myBookmarks : tab === "collections" ? [] : myRecipes;
+  const recipes = tab === "saved" ? myBookmarks : myRecipes;
 
-  if (!user || (tab !== "collections" && recipes === undefined)) {
+  if (!user || recipes === undefined) {
     return (
       <div className="wrapper py-8 animate-pulse">
         <div className="py-8 md:py-12 border-b border-cream-dark mb-8">
@@ -36,7 +34,7 @@ export function DashboardView() {
           <div className="h-9 w-64 bg-cream-dark rounded" />
         </div>
         <div className="flex gap-6 mb-8">
-          {["My Recipes", "Saved", "Collections"].map((label) => (
+          {["My Recipes", "Saved"].map((label) => (
             <div key={label} className="h-4 w-20 bg-cream-dark rounded" />
           ))}
         </div>
@@ -67,7 +65,7 @@ export function DashboardView() {
           </div>
           <div className="flex gap-6">
             <div className="text-center">
-              <p className="font-serif text-2xl font-medium text-charcoal">{recipes?.length ?? "—"}</p>
+              <p className="font-serif text-2xl font-medium text-charcoal">{myRecipes?.length ?? "—"}</p>
               <p className="text-xs text-stone mt-0.5">Recipes</p>
             </div>
             <div className="text-center">
@@ -92,9 +90,7 @@ export function DashboardView() {
         ))}
       </nav>
 
-      {tab === "collections" ? (
-        <Collections />
-      ) : recipes !== undefined && recipes.length === 0 ? (
+      {recipes.length === 0 ? (
         <EmptyState
           icon={<BookmarkIcon className="w-6 h-6 text-stone" />}
           title="Nothing here yet"
@@ -104,7 +100,7 @@ export function DashboardView() {
         />
       ) : (
         <div className="space-y-3">
-          {(recipes ?? []).map((recipe) => (
+          {recipes.map((recipe) => (
             <RecipeListRow
               key={recipe._id}
               recipe={recipe}

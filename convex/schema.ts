@@ -27,9 +27,7 @@ export default defineSchema({
     coverImage: v.optional(v.id("_storage")),
     videoUrl: v.optional(v.string()),
     status: v.union(v.literal("draft"), v.literal("published")),
-    publishAt: v.optional(v.float64()),
     userId: v.id("users"),
-    forkedFrom: v.optional(v.id("recipes")),
     servings: v.optional(v.number()),
     prepTime: v.optional(v.number()),
     cookTime: v.optional(v.number()),
@@ -41,68 +39,11 @@ export default defineSchema({
     .index("by_status", ["status"])
     .searchIndex("search_title", { searchField: "title", filterFields: ["status", "category"] }),
 
-  comments: defineTable({
-    content: v.string(),
-    recipeId: v.id("recipes"),
-    userId: v.id("users"),
-  })
-    .index("by_recipe", ["recipeId"])
-    .index("by_user", ["userId"]),
-
-  likes: defineTable({
-    recipeId: v.id("recipes"),
-    userId: v.id("users"),
-  })
-    .index("by_recipe", ["recipeId"])
-    .index("by_user_recipe", ["userId", "recipeId"]),
-
   bookmarks: defineTable({
     recipeId: v.id("recipes"),
     userId: v.id("users"),
-    collectionId: v.optional(v.id("collections")),
   })
     .index("by_user", ["userId"])
-    .index("by_recipe", ["recipeId"])
-    .index("by_user_recipe", ["userId", "recipeId"])
-    .index("by_collection", ["collectionId"]),
-
-  notifications: defineTable({
-    userId: v.id("users"),
-    type: v.union(v.literal("like"), v.literal("comment"), v.literal("follow"), v.literal("fork")),
-    actorId: v.id("users"),
-    recipeId: v.optional(v.id("recipes")),
-    read: v.boolean(),
-  })
-    .index("by_user", ["userId"])
-    .index("by_user_unread", ["userId", "read"]),
-
-  follows: defineTable({
-    followerId: v.id("users"),
-    followingId: v.id("users"),
-  })
-    .index("by_follower", ["followerId"])
-    .index("by_following", ["followingId"])
-    .index("by_pair", ["followerId", "followingId"]),
-
-  ratings: defineTable({
-    recipeId: v.id("recipes"),
-    userId: v.id("users"),
-    value: v.number(),
-  })
-    .index("by_recipe", ["recipeId"])
-    .index("by_user_recipe", ["userId", "recipeId"]),
-
-  collections: defineTable({
-    name: v.string(),
-    userId: v.id("users"),
-    isDefault: v.optional(v.boolean()),
-  }).index("by_user", ["userId"]),
-
-  presence: defineTable({
-    recipeId: v.id("recipes"),
-    userId: v.id("users"),
-    lastSeen: v.float64(),
-  })
     .index("by_recipe", ["recipeId"])
     .index("by_user_recipe", ["userId", "recipeId"]),
 });

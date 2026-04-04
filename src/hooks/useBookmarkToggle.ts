@@ -17,7 +17,7 @@ export function useBookmarkToggle(recipeId: Id<"recipes">, options?: BookmarkTog
   const isBookmarked = bookmarks?.some((recipe) => recipe._id === recipeId) ?? false;
 
   const { execute: toggleBookmark, isPending } = useAsyncAction(
-    (collectionId?: Id<"collections">) => toggleBookmarkMutation({ recipeId, collectionId }),
+    () => toggleBookmarkMutation({ recipeId }),
     options
   );
 

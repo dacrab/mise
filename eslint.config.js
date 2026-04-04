@@ -50,7 +50,7 @@ const generalSafety = {
   "no-useless-return": "error",
 };
 
-const createTsConfig = (files, overrides = {}) => ({
+const makeTsConfig = (files, overrides = {}) => ({
   files,
   languageOptions: {
     parser: tseslint.parser,
@@ -61,15 +61,21 @@ const createTsConfig = (files, overrides = {}) => ({
   rules: { ...tsBase, ...generalSafety, ...overrides.rules },
 });
 
-const srcConfig = createTsConfig(
-  ["src/**/*.{ts,tsx}"],
-  {
+export default [
+  eslint.configs.recommended,
+  ...pluginRouter.configs["flat/recommended"],
+  ...pluginQuery.configs["flat/recommended"],
+
+  // Source files
+  makeTsConfig(["src/**/*.{ts,tsx}"], {
     globals: { ...globals.browser },
     plugins: { "react-hooks": reactHooks },
+    parserOptions: { ecmaFeatures: { jsx: true } },
     rules: {
       "react-hooks/rules-of-hooks": "error",
       "react-hooks/exhaustive-deps": "error",
       "no-console": ["error", { allow: ["warn", "error"] }],
+      "no-nested-ternary": "off", // JSX ternaries are idiomatic
       "no-restricted-globals": ["error",
         { name: "location", message: "Use useRouter() or navigate() from @tanstack/react-router instead of window.location." },
       ],
@@ -79,30 +85,20 @@ const srcConfig = createTsConfig(
         { selector: "CallExpression[callee.name='prompt']", message: "Use a proper form input instead of prompt()." },
       ],
     },
-    parserOptions: { ecmaFeatures: { jsx: true } },
-  }
-);
+  }),
 
-const srcTsxOverride = {
-  files: ["src/**/*.tsx"],
-  rules: { "no-nested-ternary": "off" },
-};
-
-const convexConfig = createTsConfig(
-  ["convex/**/*.ts"],
-  {
+  // Convex backend
+  makeTsConfig(["convex/**/*.ts"], {
     globals: { ...globals.node },
     rules: {
       "no-console": ["error", { allow: ["warn", "error"] }],
       "no-empty": ["error", { allowEmptyCatch: false }],
       "@typescript-eslint/no-non-null-assertion": "warn",
     },
-  }
-);
+  }),
 
-const unitTestConfig = createTsConfig(
-  ["tests/unit/**/*.test.{ts,tsx}", "src/**/*.test.{ts,tsx}"],
-  {
+  // Unit tests
+  makeTsConfig(["tests/unit/**/*.test.{ts,tsx}", "src/**/*.test.{ts,tsx}"], {
     globals: { ...globals.browser, ...pluginVitest.environments.env.globals },
     plugins: { vitest: pluginVitest },
     rules: {
@@ -122,12 +118,10 @@ const unitTestConfig = createTsConfig(
       "no-console": "off",
       "prefer-template": "warn",
     },
-  }
-);
+  }),
 
-const e2eTestConfig = createTsConfig(
-  ["tests/e2e/**/*.spec.ts"],
-  {
+  // E2E tests
+  makeTsConfig(["tests/e2e/**/*.spec.ts"], {
     globals: { ...globals.node },
     rules: {
       "@typescript-eslint/no-non-null-assertion": "off",
@@ -137,30 +131,17 @@ const e2eTestConfig = createTsConfig(
       ],
       "no-console": "off",
     },
-  }
-);
+  }),
 
-const fixturesConfig = createTsConfig(
-  ["tests/fixtures/**/*.ts", "tests/setup.ts"],
-  {
+  // Test setup
+  makeTsConfig(["tests/setup.ts"], {
     globals: { ...globals.node },
     rules: {
       "@typescript-eslint/no-explicit-any": "warn",
       "no-console": "off",
     },
-  }
-);
+  }),
 
-export default [
-  eslint.configs.recommended,
-  ...pluginRouter.configs["flat/recommended"],
-  ...pluginQuery.configs["flat/recommended"],
-  srcConfig,
-  srcTsxOverride,
-  convexConfig,
-  unitTestConfig,
-  e2eTestConfig,
-  fixturesConfig,
   {
     ignores: [
       "dist/**",

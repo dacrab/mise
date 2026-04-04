@@ -1,4 +1,4 @@
-import { CalendarIcon, CameraIcon, EnvelopeIcon, UserCircleIcon } from "@heroicons/react/24/outline";
+import { CalendarIcon, CameraIcon, EnvelopeIcon } from "@heroicons/react/24/outline";
 import { createFileRoute } from "@tanstack/react-router";
 import { api } from "convex/_generated/api";
 import { APP_TITLE_SUFFIX } from "@/lib/constants";
@@ -46,15 +46,14 @@ function Settings() {
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [newProfileImage, setNewProfileImage] = useState<Id<"_storage"> | null>(null);
 
-  const seeded = useRef(false);
   useEffect(() => {
-    if (user && !seeded.current) {
-      seeded.current = true;
+    if (user) {
       setName(user.name ?? "");
       setUsername(user.username ?? "");
       setBio(user.bio ?? "");
     }
-  }, [user]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user?._id]);
 
   // Revoke preview object URL on unmount
   useEffect(
@@ -118,10 +117,7 @@ function Settings() {
 
       <form onSubmit={handleSubmit} className="space-y-6">
         <section className="card p-6">
-          <h2 className="font-serif text-lg font-medium mb-4 flex items-center gap-2">
-            <UserCircleIcon className="w-5 h-5 text-sage" />
-            Profile
-          </h2>
+          <h2 className="font-serif text-lg font-medium mb-4">Profile</h2>
           <div className="flex items-center gap-5 mb-6">
             <div className="relative w-20 h-20 rounded-full overflow-hidden bg-cream-dark shrink-0 group/avatar">
               {avatar ? (
@@ -236,7 +232,7 @@ function Settings() {
           <button
             type="submit"
             disabled={saving || !hasChanges}
-            className="btn-primary disabled:opacity-50 disabled:cursor-not-allowed"
+            className="btn-primary disabled:opacity-50"
           >
             {saving ? "Saving…" : "Save changes"}
           </button>
