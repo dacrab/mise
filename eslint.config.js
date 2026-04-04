@@ -54,7 +54,7 @@ const createTsConfig = (files, overrides = {}) => ({
   files,
   languageOptions: {
     parser: tseslint.parser,
-    parserOptions: { ecmaVersion: "latest", sourceType: "module", ...overrides.parserOptions },
+    parserOptions: { ecmaVersion: "latest", sourceType: "module", projectService: true, ...overrides.parserOptions },
     globals: { ...globals.es2022, ...overrides.globals },
   },
   plugins: { "@typescript-eslint": tseslint.plugin, ...overrides.plugins },

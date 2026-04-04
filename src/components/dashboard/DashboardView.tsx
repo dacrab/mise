@@ -1,5 +1,6 @@
 import { BookmarkIcon } from "@heroicons/react/24/outline";
-import { useSearch, Link } from "@tanstack/react-router";
+import { Link } from "@tanstack/react-router";
+import { Route } from "@/routes/_authed/dashboard/index";
 import { api } from "convex/_generated/api";
 import type { Id } from "convex/_generated/dataModel";
 import { useMutation, useQuery } from "convex/react";
@@ -24,7 +25,7 @@ export function DashboardView() {
     { confirmMessage: "Tap delete again to confirm", successMessage: "Recipe deleted", errorMessage: "Could not delete recipe" }
   );
 
-  const { tab = "my-recipes" } = useSearch({ strict: false }) as { tab?: string };
+  const { tab = "my-recipes" } = Route.useSearch();
   const recipes = tab === "saved" ? myBookmarks : tab === "collections" ? [] : myRecipes;
 
   if (!user || (tab !== "collections" && recipes === undefined)) {

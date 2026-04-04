@@ -98,7 +98,7 @@ describe("CATEGORY_ICONS constant", () => {
     for (const c of CATEGORIES) {
       expect(CATEGORY_ICONS[c]).toBeDefined();
       expect(typeof CATEGORY_ICONS[c]).toBe("string");
-      expect(CATEGORY_ICONS[c]!.length).toBeGreaterThan(0);
+      expect(CATEGORY_ICONS[c].length).toBeGreaterThan(0);
     }
   });
   it("does not have extra keys beyond CATEGORIES", () => {
