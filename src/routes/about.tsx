@@ -1,14 +1,20 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { StaticPage } from "@/components/layout/PageLayout";
+import { APP_TITLE_SUFFIX } from "@/lib/constants";
+import { SimpleLayout } from "@/components/layout/PageLayout";
 
 export const Route = createFileRoute("/about")({
-  head: () => ({ meta: [{ title: "About | Mise" }, { name: "description", content: "Mise — a place for home cooks to share recipes." }] }),
+  head: () => ({
+    meta: [
+      { title: `About${APP_TITLE_SUFFIX}` },
+      { name: "description", content: "Mise — a place for home cooks to share recipes." },
+    ],
+  }),
   component: AboutPage,
 });
 
 function AboutPage() {
   return (
-    <StaticPage>
+    <SimpleLayout asArticle>
       <h1 className="font-serif text-4xl font-medium mb-4">A place for home cooks</h1>
       <p className="font-hand text-xl text-sage mb-3">our story</p>
       <p className="body-large mb-12">
@@ -34,6 +40,6 @@ function AboutPage() {
           No algorithms pushing viral content. No ads interrupting your flow. Just good food, shared with intention.
         </p>
       </div>
-    </StaticPage>
+    </SimpleLayout>
   );
 }

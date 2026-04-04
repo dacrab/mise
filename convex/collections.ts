@@ -15,7 +15,6 @@ export const list = query({
       .withIndex("by_user", (q) => q.eq("userId", userId))
       .collect();
 
-    // Batch all bookmark count queries in parallel
     const counts = await Promise.all(
       collections.map((c) =>
         ctx.db

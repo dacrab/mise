@@ -6,8 +6,15 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { RecipeCard } from "@/components/ui/RecipeCard";
 import { formatSeconds, scaleIngredient } from "@/lib/utils";
 
-const SERVINGS_MIN = 1;
-const SERVINGS_MAX = 100;
+export function MetaStat({ icon, label, value }: { icon: React.ReactNode; label: string; value: string }) {
+  return (
+    <div className="flex flex-col items-center gap-1 px-4 py-3 bg-cream-dark rounded-xl text-center">
+      <div className="text-stone">{icon}</div>
+      <span className="text-xs text-stone uppercase tracking-wide">{label}</span>
+      <span className="text-sm font-medium text-charcoal">{value}</span>
+    </div>
+  );
+}
 
 export function IngredientScaler({ ingredients, defaultServings = 4 }: { ingredients: string[]; defaultServings?: number }) {
   const [servings, setServings] = useState(defaultServings);
@@ -18,14 +25,14 @@ export function IngredientScaler({ ingredients, defaultServings = 4 }: { ingredi
     <div>
       <div className="flex items-center gap-3 mb-4">
         <label htmlFor="servings-input" className="text-sm font-medium text-charcoal-light">Servings:</label>
-        <button onClick={() => setServings(Math.max(SERVINGS_MIN, servings - 1))} className="w-8 h-8 rounded-lg bg-cream-dark hover:bg-stone-light/50 flex items-center justify-center text-charcoal transition-colors" aria-label="Decrease servings">−</button>
+        <button onClick={() => setServings(Math.max(1, servings - 1))} className="w-8 h-8 rounded-lg bg-cream-dark hover:bg-stone-light/50 flex items-center justify-center text-charcoal transition-colors" aria-label="Decrease servings">−</button>
         <input
           id="servings-input"
           type="number"
-          min={SERVINGS_MIN}
-          max={SERVINGS_MAX}
+          min={1}
+          max={100}
           value={servings}
-          onChange={(e) => { const v = parseInt(e.target.value, 10); if (!Number.isNaN(v) && v >= SERVINGS_MIN && v <= SERVINGS_MAX) setServings(v); }}
+          onChange={(e) => { const v = parseInt(e.target.value, 10); if (!Number.isNaN(v) && v >= 1 && v <= 100) setServings(v); }}
           className="w-12 text-center font-medium text-charcoal bg-transparent border-b border-stone-light focus:outline-none focus:border-sage"
           aria-label="Number of servings"
         />
@@ -46,21 +53,17 @@ export function IngredientScaler({ ingredients, defaultServings = 4 }: { ingredi
 
 export function CookingNow({ recipeId }: { recipeId: Id<"recipes"> }) {
   const cooking = useQuery(api.presence.getCooking, { recipeId });
-  const heartbeatMutation = useMutation(api.presence.heartbeat);
-  const leaveMutation = useMutation(api.presence.leave);
-  const heartbeatRef = useRef(heartbeatMutation);
-  const leaveRef = useRef(leaveMutation);
-  heartbeatRef.current = heartbeatMutation;
-  leaveRef.current = leaveMutation;
+  const heartbeat = useMutation(api.presence.heartbeat);
+  const leave = useMutation(api.presence.leave);
 
   useEffect(() => {
-    heartbeatRef.current({ recipeId });
-    const interval = setInterval(() => heartbeatRef.current({ recipeId }), 10_000);
+    void heartbeat({ recipeId });
+    const interval = setInterval(() => void heartbeat({ recipeId }), 10_000);
     return () => {
       clearInterval(interval);
-      leaveRef.current({ recipeId });
+      void leave({ recipeId });
     };
-  }, [recipeId]);
+  }, [recipeId, heartbeat, leave]);
 
   if (!cooking || cooking.count <= 1) return null;
   const others = cooking.count - 1;
@@ -94,7 +97,7 @@ export function CookingTimers() {
   const [newLabel, setNewLabel] = useState("");
   const [newMinutes, setNewMinutes] = useState(5);
   const audioRef = useRef<HTMLAudioElement | null>(null);
-  const hasRunningTimers = timers.some((timer) => timer.running && timer.remaining > 0);
+  const hasRunningTimers = useMemo(() => timers.some((timer) => timer.running && timer.remaining > 0), [timers]);
 
   useEffect(() => {
     audioRef.current = new Audio("/timer-done.mp3");
@@ -164,9 +167,9 @@ export function CookingTimers() {
           id="timer-minutes"
           type="number"
           value={newMinutes}
-          onChange={(e) => setNewMinutes(Math.min(180, Math.max(1, Number(e.target.value) || 1)))}
+          onChange={(e) => setNewMinutes(Math.min(3 * 60, Math.max(1, Number(e.target.value) || 1)))}
           min={1}
-          max={180}
+          max={3 * 60}
           className="input-field w-16 py-2 text-sm text-center"
           aria-label="Minutes"
         />

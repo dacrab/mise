@@ -14,7 +14,6 @@ export const list = query({
       .order("desc")
       .take(limit);
 
-    // Batch fetch actors and recipes
     const actorIds = [...new Set(notifications.map((n) => n.actorId))];
     const recipeIds = [...new Set(notifications.flatMap((n) => (n.recipeId ? [n.recipeId] : [])))];
 

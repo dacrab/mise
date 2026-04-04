@@ -6,33 +6,29 @@ import { createFileRoute, Link, notFound } from "@tanstack/react-router";
 import { api } from "convex/_generated/api";
 import { useQuery } from "convex/react";
 import { PageLayout } from "@/components/layout/PageLayout";
-import { AddToCollectionButton, MetaStat, RelatedRecipes, ShareButton } from "@/components/recipe/RecipeActions";
-import { CookingNow, CookingTimers, IngredientScaler } from "@/components/recipe/RecipeWidgets";
+import { APP_TITLE_SUFFIX } from "@/lib/constants";
+import { AddToCollectionButton, RelatedRecipes, ShareButton } from "@/components/recipe/RecipeActions";
+import { CookingNow, CookingTimers, IngredientScaler, MetaStat } from "@/components/recipe/RecipeWidgets";
 import { CommentSection } from "@/components/social/Comments";
 import { ForkButton, SocialActions } from "@/components/social/SocialActions";
 import { StarRating } from "@/components/social/StarRating";
-import { AuthorCard } from "@/components/ui/AuthorCard";
+import { Avatar } from "@/components/ui/Primitives";
 
 export const Route = createFileRoute("/recipe/$slug")({
   loader: ({ params, context: { queryClient } }) =>
     queryClient.ensureQueryData(convexQuery(api.recipes.getBySlug, { slug: params.slug })),
   component: RecipePage,
-  head: ({ loaderData }) => {
-    const title = loaderData?.title;
-    const description = loaderData?.description;
-    const coverImageUrl = loaderData?.coverImageUrl;
-    return {
-      meta: [
-        { title: title ? `${title} | Mise` : "Recipe | Mise" },
-        { name: "description", content: description ?? "A delicious recipe on Mise" },
-        { property: "og:title", content: title ?? "Recipe" },
-        { property: "og:description", content: description ?? "A delicious recipe on Mise" },
-        { property: "og:image", content: coverImageUrl ?? "" },
-        { property: "og:type", content: "article" },
-        { name: "twitter:card", content: "summary_large_image" },
-      ],
-    };
-  },
+  head: ({ loaderData }) => ({
+    meta: [
+      { title: loaderData?.title ? `${loaderData.title}${APP_TITLE_SUFFIX}` : `Recipe${APP_TITLE_SUFFIX}` },
+      { name: "description", content: loaderData?.description ?? "A delicious recipe on Mise" },
+      { property: "og:title", content: loaderData?.title ?? "Recipe" },
+      { property: "og:description", content: loaderData?.description ?? "A delicious recipe on Mise" },
+      { property: "og:image", content: loaderData?.coverImageUrl ?? "" },
+      { property: "og:type", content: "article" },
+      { name: "twitter:card", content: "summary_large_image" },
+    ],
+  }),
 });
 
 function RecipePage() {
@@ -82,13 +78,24 @@ function RecipePage() {
           )}
 
           <div className="flex flex-wrap items-center gap-4 mt-8 pt-6 border-t border-cream-dark">
-            <AuthorCard
-              name={recipe.author?.name}
-              username={recipe.author?.username}
-              image={recipe.author?.image}
+            <Link
+              to="/chef/$username"
+              params={{ username: recipe.author?.username ?? "unknown" }}
+              className="flex items-center gap-3 group"
             >
-              <span className="block text-xs text-stone">View kitchen →</span>
-            </AuthorCard>
+              <Avatar
+                src={recipe.author?.image}
+                name={recipe.author?.name ?? "Chef"}
+                size="md"
+                className="ring-2 ring-cream-dark"
+              />
+              <div>
+                <span className="block text-sm font-medium text-charcoal group-hover:text-sage transition-colors">
+                  {recipe.author?.name ?? "Chef"}
+                </span>
+                <span className="block text-xs text-stone">View kitchen →</span>
+              </div>
+            </Link>
             <span className="text-stone-light">·</span>
             <time className="text-sm text-stone">
               {new Date(recipe._creationTime).toLocaleDateString("en-US", {

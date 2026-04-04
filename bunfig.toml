@@ -1,5 +1,0 @@
-[test]
-# Bun discovers all *.test.ts and *.spec.ts by default.
-# Playwright e2e .spec.ts files must NOT be run by bun test.
-# Always use: `bun test tests/unit/` or `bun run test:run` (vitest).
-preload = ["./tests/setup.ts"]

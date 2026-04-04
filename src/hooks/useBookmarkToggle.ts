@@ -7,7 +7,6 @@ interface BookmarkToggleOptions {
   errorMessage?: string;
   getErrorMessage?: (error: Error) => string;
   onError?: (error: Error) => void;
-  onErrorMessage?: (message: string, error: Error) => void;
 }
 
 export function useBookmarkToggle(recipeId: Id<"recipes">, options?: BookmarkToggleOptions) {

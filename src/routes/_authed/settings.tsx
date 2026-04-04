@@ -1,15 +1,22 @@
 import { CalendarIcon, CameraIcon, EnvelopeIcon, UserCircleIcon } from "@heroicons/react/24/outline";
 import { createFileRoute } from "@tanstack/react-router";
 import { api } from "convex/_generated/api";
+import { APP_TITLE_SUFFIX } from "@/lib/constants";
 import type { Id } from "convex/_generated/dataModel";
 import { useMutation, useQuery } from "convex/react";
 import { useEffect, useRef, useState } from "react";
+import { ProgressBar } from "@/components/ui/Primitives";
 import { useToast } from "@/components/ui/Toast";
 import { useAsyncAction } from "@/hooks/useAsyncAction";
 import { useFileUpload } from "@/hooks/useFileUpload";
 
 export const Route = createFileRoute("/_authed/settings")({
-  head: () => ({ meta: [{ title: "Settings | Mise" }, { name: "description", content: "Update your profile, username, bio, and profile image." }] }),
+  head: () => ({
+    meta: [
+      { title: `Settings${APP_TITLE_SUFFIX}` },
+      { name: "description", content: "Update your profile, username, bio, and profile image." },
+    ],
+  }),
   component: Settings,
 });
 
@@ -39,21 +46,15 @@ function Settings() {
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [newProfileImage, setNewProfileImage] = useState<Id<"_storage"> | null>(null);
 
-  // Seed form once — ref guard prevents overwriting user edits on re-render.
-  // Depend on stable primitives to satisfy @tanstack/query/no-unstable-deps.
   const seeded = useRef(false);
-  const userName = user?.name;
-  const userUsername = user?.username;
-  const userBio = user?.bio;
-
   useEffect(() => {
-    if (userName !== undefined && !seeded.current) {
+    if (user && !seeded.current) {
       seeded.current = true;
-      setName(userName ?? "");
-      setUsername(userUsername ?? "");
-      setBio(userBio ?? "");
+      setName(user.name ?? "");
+      setUsername(user.username ?? "");
+      setBio(user.bio ?? "");
     }
-  }, [userName, userUsername, userBio]);
+  }, [user]);
 
   // Revoke preview object URL on unmount
   useEffect(
@@ -65,9 +66,9 @@ function Settings() {
 
   const hasChanges =
     !!user &&
-    (name !== (userName ?? "") ||
-      username !== (userUsername ?? "") ||
-      bio !== (userBio ?? "") ||
+    (name !== (user.name ?? "") ||
+      username !== (user.username ?? "") ||
+      bio !== (user.bio ?? "") ||
       newProfileImage !== null);
 
   const { execute: handleSubmit, isPending: saving } = useAsyncAction(
@@ -115,7 +116,7 @@ function Settings() {
     <div className="wrapper max-w-2xl py-8 md:py-12">
       <h1 className="font-serif text-3xl font-medium mb-8">Settings</h1>
 
-      <form onSubmit={(e) => { void handleSubmit(e); }} className="space-y-6">
+      <form onSubmit={handleSubmit} className="space-y-6">
         <section className="card p-6">
           <h2 className="font-serif text-lg font-medium mb-4 flex items-center gap-2">
             <UserCircleIcon className="w-5 h-5 text-sage" />
@@ -132,23 +133,7 @@ function Settings() {
               )}
               {uploading && (
                 <div className="absolute inset-0 bg-charcoal/60 flex items-center justify-center">
-                  <svg className="w-10 h-10" viewBox="0 0 36 36" aria-hidden="true">
-                    <circle cx="18" cy="18" r="15" fill="none" stroke="white" strokeOpacity="0.3" strokeWidth="3" />
-                    <circle
-                      cx="18"
-                      cy="18"
-                      r="15"
-                      fill="none"
-                      stroke="white"
-                      strokeWidth="3"
-                      strokeDasharray={`${2 * Math.PI * 15}`}
-                      strokeDashoffset={`${2 * Math.PI * 15 * (1 - uploadProgress / 100)}`}
-                      strokeLinecap="round"
-                      transform="rotate(-90 18 18)"
-                      className="transition-[stroke-dashoffset] duration-200"
-                    />
-                  </svg>
-                  <span className="absolute text-white text-[11px] font-bold">{uploadProgress}%</span>
+                  <span className="text-white text-[11px] font-bold">{uploadProgress}%</span>
                 </div>
               )}
               <label className="absolute inset-0 bg-charcoal/50 opacity-0 hover:opacity-100 transition-opacity flex items-center justify-center cursor-pointer">
@@ -163,7 +148,7 @@ function Settings() {
                 />
               </label>
             </div>
-            <div>
+            <div className="flex-1">
               <p className="font-medium text-charcoal">{name || "Chef"}</p>
               <button
                 type="button"
@@ -171,8 +156,9 @@ function Settings() {
                 disabled={uploading}
                 className="text-sm text-sage hover:text-sage-dark transition-colors"
               >
-                {uploading ? `Uploading… ${uploadProgress}%` : "Change photo"}
+                {uploading ? "Uploading…" : "Change photo"}
               </button>
+              {uploading && <ProgressBar value={uploadProgress} className="mt-2" />}
             </div>
           </div>
 

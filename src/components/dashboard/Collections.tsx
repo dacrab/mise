@@ -8,6 +8,9 @@ import { RecipeCard } from "@/components/ui/RecipeCard";
 import { useAsyncAction } from "@/hooks/useAsyncAction";
 import { useConfirmAction } from "@/hooks/useConfirmAction";
 
+const activeNav = "bg-sage/10 text-sage font-medium";
+const inactiveNav = "text-charcoal-light hover:bg-cream-dark";
+
 export function Collections() {
   const collections = useQuery(api.collections.list) ?? [];
   const createCollection = useMutation(api.collections.create);
@@ -24,9 +27,10 @@ export function Collections() {
     { confirmMessage: "Tap delete again to confirm", successMessage: "Collection deleted", errorMessage: "Could not delete collection" }
   );
 
-  const bookmarks =
-    useQuery(api.collections.getBookmarks, selectedId ? { collectionId: selectedId } : { collectionId: undefined }) ??
-    [];
+  const bookmarks = useQuery(
+    api.collections.getBookmarks,
+    selectedId ? { collectionId: selectedId } : { collectionId: undefined }
+  ) ?? [];
 
   const { execute: handleCreate, isPending: creating } = useAsyncAction(
     async (event: React.FormEvent) => {
@@ -48,9 +52,7 @@ export function Collections() {
       <aside className="space-y-2">
         <button
           onClick={() => setSelectedId(null)}
-          className={`w-full flex items-center gap-2 px-3 py-2 rounded-lg text-sm text-left transition-colors ${
-            selectedId === null ? "bg-sage/10 text-sage font-medium" : "text-charcoal-light hover:bg-cream-dark"
-          }`}
+          className={`w-full flex items-center gap-2 px-3 py-2 rounded-lg text-sm text-left transition-colors ${selectedId === null ? activeNav : inactiveNav}`}
         >
           <FolderIcon className="w-4 h-4" />
           All Saved
@@ -60,9 +62,7 @@ export function Collections() {
           <div key={c._id} className="group flex items-center">
             <button
               onClick={() => setSelectedId(c._id)}
-              className={`flex-1 flex items-center gap-2 px-3 py-2 rounded-lg text-sm text-left transition-colors ${
-                selectedId === c._id ? "bg-sage/10 text-sage font-medium" : "text-charcoal-light hover:bg-cream-dark"
-              }`}
+              className={`flex-1 flex items-center gap-2 px-3 py-2 rounded-lg text-sm text-left transition-colors ${selectedId === c._id ? activeNav : inactiveNav}`}
             >
               <FolderIcon className="w-4 h-4" />
               {c.name}

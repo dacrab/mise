@@ -12,7 +12,7 @@ import {
 import { Link, useRouter } from "@tanstack/react-router";
 import { api } from "convex/_generated/api";
 import { useQuery } from "convex/react";
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 import { NotificationBell } from "@/components/social/Notifications";
 import { Avatar } from "@/components/ui/Primitives";
 
@@ -32,19 +32,16 @@ export function Header() {
   const { signOut } = useAuthActions();
   const router = useRouter();
   const [mobileOpen, setMobileOpen] = useState(false);
-  const drawerRef = useRef<HTMLDivElement>(null);
 
-  const handleSignOut = useCallback(async () => {
+  const handleSignOut = async () => {
     setMobileOpen(false);
     await signOut();
     await router.navigate({ to: "/", replace: true });
-  }, [signOut, router]);
+  };
 
   useEffect(() => {
     if (!mobileOpen) return;
-    const handleKey = (e: KeyboardEvent) => {
-      if (e.key === "Escape") setMobileOpen(false);
-    };
+    const handleKey = (e: KeyboardEvent) => { if (e.key === "Escape") setMobileOpen(false); };
     document.addEventListener("keydown", handleKey);
     document.body.style.overflow = "hidden";
     return () => {
@@ -133,7 +130,6 @@ export function Header() {
 
       <div
         id="mobile-menu"
-        ref={drawerRef}
         role="dialog"
         aria-modal="true"
         aria-label="Navigation menu"

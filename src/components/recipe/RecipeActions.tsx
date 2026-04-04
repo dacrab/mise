@@ -1,3 +1,4 @@
+import { Popover } from "@base-ui-components/react/popover";
 import { CheckIcon, FolderPlusIcon, ShareIcon } from "@heroicons/react/24/outline";
 import { api } from "convex/_generated/api";
 import type { Id } from "convex/_generated/dataModel";
@@ -6,13 +7,8 @@ import { useState } from "react";
 import { RecipeCard } from "@/components/ui/RecipeCard";
 import { useToast } from "@/components/ui/Toast";
 import { useBookmarkToggle } from "@/hooks/useBookmarkToggle";
-import { useDismissableLayer } from "@/hooks/useDismissableLayer";
 
-interface AddToCollectionButtonProps {
-  recipeId: Id<"recipes">;
-}
-
-export function AddToCollectionButton({ recipeId }: AddToCollectionButtonProps) {
+export function AddToCollectionButton({ recipeId }: { recipeId: Id<"recipes"> }) {
   const { toast } = useToast();
   const collections = useQuery(api.collections.list);
   const { currentUser, isBookmarked, toggleBookmark } = useBookmarkToggle(recipeId, {
@@ -20,7 +16,6 @@ export function AddToCollectionButton({ recipeId }: AddToCollectionButtonProps) 
   });
   const [open, setOpen] = useState(false);
   const [pending, setPending] = useState<string | null>(null);
-  const containerRef = useDismissableLayer<HTMLDivElement>(open, () => setOpen(false), { closeOnEscape: false });
 
   if (!currentUser) return null;
 
@@ -37,52 +32,49 @@ export function AddToCollectionButton({ recipeId }: AddToCollectionButtonProps) 
   };
 
   return (
-    <div className="relative" ref={containerRef}>
-      <button
-        onClick={() => setOpen((o) => !o)}
+    <Popover.Root open={open} onOpenChange={setOpen}>
+      <Popover.Trigger
         className="flex items-center gap-1.5 text-sm text-stone hover:text-sage transition-colors"
         aria-label="Save to collection"
       >
         <FolderPlusIcon className="w-4 h-4" />
         {isBookmarked ? "Saved" : "Save"}
-      </button>
-      {open && (
-        <div className="absolute bottom-full mb-2 right-0 w-56 bg-warm-white rounded-xl shadow-hover border border-cream-dark py-1 z-20 animate-scale-in origin-bottom-right">
-          <p className="px-3 py-2 text-xs font-medium text-stone uppercase tracking-wide">Save to…</p>
-          <button
-            onClick={() => void handleToggle(undefined)}
-            disabled={!!pending}
-            className="w-full flex items-center gap-2 px-3 py-2 text-sm text-charcoal hover:bg-cream-dark transition-colors text-left disabled:opacity-50"
-          >
-            {isBookmarked ? <CheckIcon className="w-4 h-4 text-sage shrink-0" /> : <div className="w-4" />}
-            Bookmarks
-          </button>
-          {collections?.map((col) => (
+      </Popover.Trigger>
+      <Popover.Portal>
+        <Popover.Positioner side="top" align="end" sideOffset={8}>
+          <Popover.Popup className="w-56 bg-warm-white rounded-xl shadow-hover border border-cream-dark py-1 z-20 animate-scale-in origin-bottom-right">
+            <p className="px-3 py-2 text-xs font-medium text-stone uppercase tracking-wide">Save to…</p>
             <button
-              key={col._id}
-              onClick={() => void handleToggle(col._id)}
+              onClick={() => void handleToggle(undefined)}
               disabled={!!pending}
               className="w-full flex items-center gap-2 px-3 py-2 text-sm text-charcoal hover:bg-cream-dark transition-colors text-left disabled:opacity-50"
             >
-              <div className="w-4" />
-              {col.name}
-              <span className="ml-auto text-xs text-stone">{col.count}</span>
+              {isBookmarked ? <CheckIcon className="w-4 h-4 text-sage shrink-0" /> : <div className="w-4" />}
+              Bookmarks
             </button>
-          ))}
-          {collections?.length === 0 && (
-            <p className="px-3 py-2 text-xs text-stone">No collections yet. Create one in your dashboard.</p>
-          )}
-        </div>
-      )}
-    </div>
+            {collections?.map((col) => (
+              <button
+                key={col._id}
+                onClick={() => void handleToggle(col._id)}
+                disabled={!!pending}
+                className="w-full flex items-center gap-2 px-3 py-2 text-sm text-charcoal hover:bg-cream-dark transition-colors text-left disabled:opacity-50"
+              >
+                <div className="w-4" />
+                {col.name}
+                <span className="ml-auto text-xs text-stone">{col.count}</span>
+              </button>
+            ))}
+            {collections?.length === 0 && (
+              <p className="px-3 py-2 text-xs text-stone">No collections yet. Create one in your dashboard.</p>
+            )}
+          </Popover.Popup>
+        </Popover.Positioner>
+      </Popover.Portal>
+    </Popover.Root>
   );
 }
 
-interface ShareButtonProps {
-  title: string;
-}
-
-export function ShareButton({ title }: ShareButtonProps) {
+export function ShareButton({ title }: { title: string }) {
   const { toast } = useToast();
   const handleShare = async () => {
     const url = window.location.href;
@@ -109,27 +101,7 @@ export function ShareButton({ title }: ShareButtonProps) {
   );
 }
 
-interface MetaStatProps {
-  icon: React.ReactNode;
-  label: string;
-  value: string;
-}
-
-export function MetaStat({ icon, label, value }: MetaStatProps) {
-  return (
-    <div className="flex flex-col items-center gap-1 px-4 py-3 bg-cream-dark rounded-xl text-center">
-      <div className="text-stone">{icon}</div>
-      <span className="text-xs text-stone uppercase tracking-wide">{label}</span>
-      <span className="text-sm font-medium text-charcoal">{value}</span>
-    </div>
-  );
-}
-
-interface RelatedRecipesProps {
-  recipeId: Id<"recipes">;
-}
-
-export function RelatedRecipes({ recipeId }: RelatedRecipesProps) {
+export function RelatedRecipes({ recipeId }: { recipeId: Id<"recipes"> }) {
   const related = useQuery(api.discovery.recommendations, { limit: 4 });
   const filtered = related?.filter((r) => r._id !== recipeId).slice(0, 3);
   if (!filtered?.length) return null;

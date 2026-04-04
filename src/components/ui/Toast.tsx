@@ -13,7 +13,7 @@ interface ToastContextValue {
   toast: (message: string, type?: ToastType) => void;
 }
 
-const ToastContext = createContext<ToastContextValue | null>(null);
+const ToastContext = createContext<ToastContextValue | undefined>(undefined);
 
 const ICONS: Record<ToastType, React.ElementType> = {
   success: CheckCircleIcon,
@@ -74,6 +74,6 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
 
 export function useToast(): ToastContextValue {
   const ctx = useContext(ToastContext);
-  if (!ctx) throw new Error("useToast must be used within a ToastProvider");
+  if (ctx === undefined) throw new Error("useToast must be used within a ToastProvider");
   return ctx;
 }

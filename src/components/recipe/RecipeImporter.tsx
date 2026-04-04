@@ -30,8 +30,7 @@ export function RecipeImporter({ onImport }: { onImport: (recipe: ImportedRecipe
       setUrl("");
     },
     {
-      getErrorMessage: (err) => err.message || "Import failed",
-      onErrorMessage: (message) => setError(message),
+      onError: (err) => setError(err.message || "Import failed"),
     }
   );
 

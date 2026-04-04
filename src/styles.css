@@ -49,13 +49,6 @@
   }
 }
 
-/* Tailwind v4: Dynamic viewport units */
-@utility min-h-dvh { min-height: 100dvh; }
-@utility h-svh { height: 100svh; }
-@utility h-lvh { height: 100lvh; }
-
-/* Tailwind v4: Container queries for recipe cards */
-@utility recipe-container { container-type: inline-size; }
 
 @utility wrapper {
   @apply max-w-6xl mx-auto px-5 sm:px-8;
@@ -75,10 +68,6 @@
 
 @utility btn-ghost {
   @apply btn px-4 py-2 text-charcoal-light hover:text-charcoal hover:bg-cream-dark rounded-lg;
-}
-
-@utility btn-sage {
-  @apply btn px-5 py-2.5 bg-sage text-warm-white rounded-lg hover:bg-sage-light active:scale-[0.98];
 }
 
 @utility input-field {
@@ -109,7 +98,6 @@
   @apply bg-cream/80 backdrop-blur-md border-b border-cream-dark;
 }
 
-/* Tailwind v4: :has() selector for parent styling */
 .form-group:has(:focus) {
   @apply ring-2 ring-sage/20;
 }
@@ -120,7 +108,6 @@
   @apply shadow-hover;
 }
 
-/* Recipe card grid variant */
 @utility recipe-card {
   @apply card-hover block overflow-hidden rounded-xl;
 }
@@ -129,22 +116,12 @@
   @apply w-full aspect-[4/3] object-cover transition-transform duration-500;
 }
 
-/* Typography utilities */
 @utility heading-1 {
   @apply font-serif font-medium tracking-tight text-charcoal leading-tight;
 }
 
 @utility body-large {
   @apply text-lg text-charcoal-light leading-relaxed;
-}
-
-/* Container query responsive recipe card */
-@container (min-width: 300px) {
-  .recipe-card-responsive {
-    display: grid;
-    grid-template-columns: 100px 1fr;
-    gap: 1rem;
-  }
 }
 
 .group:hover .recipe-card-image {
@@ -196,8 +173,6 @@
   }
 }
 
-/* Tailwind @utility animation classes — shorter durations for UI micro-interactions */
 @utility animate-fade-in  { animation: fadeIn   0.5s ease-out both; }
 @utility animate-scale-in { animation: scaleIn  0.2s ease-out both; }
 @utility animate-slide-up { animation: slideUp  0.3s ease-out both; }
-@utility animate-stagger  { animation: fadeSlide 0.4s ease-out both; animation-delay: var(--delay, 0s); }

@@ -1,3 +1,6 @@
+export const APP_NAME = "Mise";
+export const APP_TITLE_SUFFIX = ` | ${APP_NAME}`;
+
 /** Recipe categories — used in editor, discovery filters, and search. */
 export const CATEGORIES = [
   "Breakfast",

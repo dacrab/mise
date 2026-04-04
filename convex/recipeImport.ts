@@ -5,15 +5,14 @@ import { action } from "./_generated/server";
 const BLOCKED_HOSTNAMES = new Set(["localhost", "metadata.google.internal"]);
 
 const BLOCKED_IP_PREFIXES = [
-  "169.254.", // link-local / AWS metadata
-  "10.", // RFC-1918
-  // 172.16.0.0/12 — generate all 172.16–172.31 prefixes
+  "169.254.",
+  "10.",
   ...Array.from({ length: 16 }, (_, i) => `172.${16 + i}.`),
-  "192.168.", // RFC-1918
-  "127.", // loopback
-  "::1", // IPv6 loopback
+  "192.168.",
+  "127.",
+  "::1",
   "fc",
-  "fd", // IPv6 ULA
+  "fd",
 ];
 
 function assertSafeUrl(raw: string): URL {
@@ -38,9 +37,8 @@ function assertSafeUrl(raw: string): URL {
   return parsed;
 }
 
-const MAX_BODY_BYTES = 5 * 1024 * 1024; // 5 MB
+const MAX_BODY_BYTES = 5 * 1024 * 1024;
 
-// Simple recipe extraction from URL using JSON-LD schema
 export const importFromUrl = action({
   args: { url: v.string() },
   handler: async (_, { url }) => {
@@ -52,20 +50,17 @@ export const importFromUrl = action({
     });
     if (!res.ok) throw new Error("Failed to fetch URL");
 
-    // Guard against huge responses
     const contentLength = res.headers.get("content-length");
     if (contentLength && parseInt(contentLength, 10) > MAX_BODY_BYTES) {
       throw new Error("Page too large to import");
     }
 
-    // Read with a hard size cap
     const buffer = await res.arrayBuffer();
     if (buffer.byteLength > MAX_BODY_BYTES) {
       throw new Error("Page too large to import");
     }
     const html = new TextDecoder().decode(buffer);
 
-    // Try JSON-LD first (most recipe sites use this)
     const jsonLdMatch = html.match(/<script type="application\/ld\+json">([\s\S]*?)<\/script>/gi);
     if (jsonLdMatch) {
       for (const match of jsonLdMatch) {
@@ -95,7 +90,7 @@ export const importFromUrl = action({
             };
           }
         } catch {
-          /* continue */
+          // malformed JSON-LD block — try next match
         }
       }
     }

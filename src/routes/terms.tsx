@@ -1,14 +1,20 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { StaticPage } from "@/components/layout/PageLayout";
+import { APP_TITLE_SUFFIX } from "@/lib/constants";
+import { SimpleLayout } from "@/components/layout/PageLayout";
 
 export const Route = createFileRoute("/terms")({
-  head: () => ({ meta: [{ title: "Terms of Service | Mise" }, { name: "description", content: "Mise terms of service." }] }),
+  head: () => ({
+    meta: [
+      { title: `Terms of Service${APP_TITLE_SUFFIX}` },
+      { name: "description", content: "Mise terms of service." },
+    ],
+  }),
   component: TermsPage,
 });
 
 function TermsPage() {
   return (
-    <StaticPage>
+    <SimpleLayout asArticle>
       <h1 className="font-serif text-4xl font-medium mb-4">Terms of Service</h1>
       <p className="text-stone mb-8">By using mise, you agree to these terms.</p>
       <div className="space-y-10 text-charcoal-light leading-relaxed">
@@ -32,6 +38,6 @@ function TermsPage() {
         </section>
       </div>
       <footer className="mt-16 pt-6 border-t border-cream-dark text-sm text-stone">Last updated: January 2026</footer>
-    </StaticPage>
+    </SimpleLayout>
   );
 }

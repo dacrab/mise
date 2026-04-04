@@ -14,11 +14,11 @@ export function EmptyState({ icon, title, message, actionLabel, actionTo }: Empt
       <div className="w-14 h-14 bg-cream-dark rounded-full flex items-center justify-center mx-auto mb-4">{icon}</div>
       <h2 className="font-serif text-xl font-medium mb-2">{title}</h2>
       <p className="text-stone text-sm mb-6">{message}</p>
-      {actionLabel && actionTo ? (
+      {actionLabel && actionTo && (
         <Link to={actionTo} className="btn-primary text-sm">
           {actionLabel}
         </Link>
-      ) : null}
+      )}
     </div>
   );
 }

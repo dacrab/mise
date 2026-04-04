@@ -1,14 +1,20 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { StaticPage } from "@/components/layout/PageLayout";
+import { APP_TITLE_SUFFIX } from "@/lib/constants";
+import { SimpleLayout } from "@/components/layout/PageLayout";
 
 export const Route = createFileRoute("/privacy")({
-  head: () => ({ meta: [{ title: "Privacy Policy | Mise" }, { name: "description", content: "How Mise handles your personal data." }] }),
+  head: () => ({
+    meta: [
+      { title: `Privacy Policy${APP_TITLE_SUFFIX}` },
+      { name: "description", content: "How Mise handles your personal data." },
+    ],
+  }),
   component: PrivacyPage,
 });
 
 function PrivacyPage() {
   return (
-    <StaticPage>
+    <SimpleLayout asArticle>
       <h1 className="font-serif text-4xl font-medium mb-4">Privacy Policy</h1>
       <p className="text-stone mb-8">We respect your privacy and are committed to protecting your personal data.</p>
       <div className="space-y-10 text-charcoal-light leading-relaxed">
@@ -31,6 +37,6 @@ function PrivacyPage() {
         </section>
       </div>
       <footer className="mt-16 pt-6 border-t border-cream-dark text-sm text-stone">Last updated: January 2026</footer>
-    </StaticPage>
+    </SimpleLayout>
   );
 }
