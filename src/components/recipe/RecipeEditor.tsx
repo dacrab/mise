@@ -12,8 +12,6 @@ import { useToast } from "@/components/ui/Toast";
 import { useFileUpload } from "@/hooks/useFileUpload";
 import { CATEGORIES as BASE_CATEGORIES, DIFFICULTIES } from "@/lib/constants";
 
-import { RecipeImporter } from "@/components/recipe/RecipeImporter";
-
 const CATEGORIES = ["General", ...BASE_CATEGORIES];
 
 // All fields are strings in the RHF layer (native HTML inputs return strings).
@@ -93,7 +91,6 @@ export function RecipeEditor({ initialData, isEditing }: Props) {
     control,
     handleSubmit: rhfHandleSubmit,
     watch,
-    reset,
     formState: { errors, isDirty },
   } = useForm<RecipeFormData>({
     resolver: zodResolver(recipeSchema),
@@ -292,27 +289,6 @@ export function RecipeEditor({ initialData, isEditing }: Props) {
           </button>
         </div>
       </div>
-
-      {!isEditing && (
-        <div className="mb-8">
-          <RecipeImporter
-            onImport={(imported) => {
-              reset((formValues) => ({
-                ...formValues,
-                title: imported.title || formValues.title,
-                description: imported.description || formValues.description,
-                ingredients: imported.ingredients.length > 0 ? imported.ingredients.map((v) => ({ value: v })) : formValues.ingredients,
-                steps: imported.steps.length > 0 ? imported.steps.map((v) => ({ value: v })) : formValues.steps,
-                prepTime: imported.prepTime ? String(imported.prepTime) : formValues.prepTime,
-                cookTime: imported.cookTime ? String(imported.cookTime) : formValues.cookTime,
-                servings: imported.servings ? String(imported.servings) : formValues.servings,
-              }));
-              if (imported.imageUrl) setCoverImageUrl(imported.imageUrl);
-              toast("Recipe imported! Review and edit before publishing.", "success");
-            }}
-          />
-        </div>
-      )}
 
       <div className="grid lg:grid-cols-[1fr_300px] gap-8">
         <div className="space-y-8">

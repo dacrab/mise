@@ -12,9 +12,9 @@ import {
 import { Link, useRouter } from "@tanstack/react-router";
 import { api } from "convex/_generated/api";
 import { useQuery } from "convex/react";
-import { useEffect, useState } from "react";
-import { NotificationBell } from "@/components/social/Notifications";
+import { useState } from "react";
 import { Avatar } from "@/components/ui/Primitives";
+import { useDismissableLayer } from "@/hooks/useDismissableLayer";
 
 const FOOTER_LINKS = [
   { to: "/about", label: "About" },
@@ -33,22 +33,14 @@ export function Header() {
   const router = useRouter();
   const [mobileOpen, setMobileOpen] = useState(false);
 
+  const closeMobile = () => setMobileOpen(false);
+  useDismissableLayer<HTMLDivElement>(mobileOpen, closeMobile);
+
   const handleSignOut = async () => {
-    setMobileOpen(false);
+    closeMobile();
     await signOut();
     await router.navigate({ to: "/", replace: true });
   };
-
-  useEffect(() => {
-    if (!mobileOpen) return;
-    const handleKey = (e: KeyboardEvent) => { if (e.key === "Escape") setMobileOpen(false); };
-    document.addEventListener("keydown", handleKey);
-    document.body.style.overflow = "hidden";
-    return () => {
-      document.removeEventListener("keydown", handleKey);
-      document.body.style.overflow = "";
-    };
-  }, [mobileOpen]);
 
   return (
     <>
@@ -64,7 +56,6 @@ export function Header() {
           <nav className="hidden sm:flex items-center gap-2">
             {user ? (
               <>
-                <NotificationBell />
                 <Menu.Root>
                   <Menu.Trigger className="btn-ghost text-sm flex items-center gap-2">
                     <Avatar src={user.profileImageUrl || user.image} name={user.name} size="sm" />
@@ -106,7 +97,6 @@ export function Header() {
           </nav>
 
           <div className="flex sm:hidden items-center gap-2">
-            {user && <NotificationBell />}
             <button
               onClick={() => setMobileOpen(true)}
               className="p-2 hover:bg-cream-dark rounded-lg transition-colors"
@@ -124,7 +114,7 @@ export function Header() {
         <div
           className="fixed inset-0 z-40 bg-charcoal/30 backdrop-blur-sm sm:hidden"
           aria-hidden="true"
-          onClick={() => setMobileOpen(false)}
+          onClick={closeMobile}
         />
       )}
 
@@ -138,7 +128,7 @@ export function Header() {
         <div className="flex items-center justify-between px-5 h-16 border-b border-cream-dark">
           <span className="font-serif text-xl font-semibold text-charcoal">mise</span>
           <button
-            onClick={() => setMobileOpen(false)}
+            onClick={closeMobile}
             className="p-2 hover:bg-cream-dark rounded-lg"
             aria-label="Close menu"
           >

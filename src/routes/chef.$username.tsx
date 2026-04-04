@@ -2,11 +2,9 @@ import { convexQuery } from "@convex-dev/react-query";
 import { useSuspenseQuery } from "@tanstack/react-query";
 import { createFileRoute, notFound } from "@tanstack/react-router";
 import { api } from "convex/_generated/api";
-import { useQuery } from "convex/react";
 
 import { APP_TITLE_SUFFIX } from "@/lib/constants";
 import { PageLayout } from "@/components/layout/PageLayout";
-import { FollowButton, FollowStats } from "@/components/social/Follow";
 import { Avatar } from "@/components/ui/Primitives";
 import { RecipeCard, RecipeGridSkeleton } from "@/components/ui/RecipeCard";
 
@@ -21,10 +19,6 @@ function ChefSkeleton() {
             <div className="h-4 w-24 bg-cream-dark rounded mx-auto sm:mx-0" />
             <div className="h-4 w-full max-w-sm bg-cream-dark rounded mx-auto sm:mx-0" />
             <div className="h-4 w-3/4 max-w-xs bg-cream-dark rounded mx-auto sm:mx-0" />
-            <div className="flex gap-4 justify-center sm:justify-start pt-2">
-              <div className="h-4 w-24 bg-cream-dark rounded" />
-              <div className="h-4 w-24 bg-cream-dark rounded" />
-            </div>
           </div>
         </div>
         <RecipeGridSkeleton />
@@ -34,8 +28,6 @@ function ChefSkeleton() {
 }
 
 export const Route = createFileRoute("/chef/$username")({
-  // Pre-fetch chef profile so the page renders immediately on navigation
-  // and bots get fully-populated HTML for SEO.
   loader: ({ params, context: { queryClient } }) =>
     queryClient.ensureQueryData(convexQuery(api.users.getByUsername, { username: params.username })),
   pendingComponent: ChefSkeleton,
@@ -55,10 +47,8 @@ function ChefPage() {
   const { data: chef } = useSuspenseQuery(convexQuery(api.users.getByUsername, { username }));
   if (!chef) throw notFound();
 
-  const currentUser = useQuery(api.users.currentUser);
   const { data: chefRecipes } = useSuspenseQuery(convexQuery(api.recipes.getByUser, { userId: chef._id }));
   const recipes = chefRecipes.filter((r) => r.status === "published");
-  const isOwnProfile = currentUser?._id === chef._id;
 
   return (
     <PageLayout>
@@ -70,17 +60,9 @@ function ChefPage() {
               <h1 className="font-serif text-3xl font-medium mb-1">{chef.name}</h1>
               {chef.username && <p className="text-stone text-sm mb-3">@{chef.username}</p>}
               {chef.bio && <p className="text-charcoal-light max-w-md mb-4">{chef.bio}</p>}
-              <div className="flex flex-col sm:flex-row items-center gap-4">
-                <FollowStats userId={chef._id} />
-                <span className="text-sm text-charcoal">
-                  <strong>{recipes.length}</strong> recipes
-                </span>
-              </div>
-              {!isOwnProfile && currentUser && (
-                <div className="mt-4">
-                  <FollowButton userId={chef._id} />
-                </div>
-              )}
+              <span className="text-sm text-charcoal">
+                <strong>{recipes.length}</strong> recipes
+              </span>
             </div>
           </div>
         </div>

@@ -5,7 +5,6 @@ import { usePaginatedQuery, useQuery } from "convex/react";
 import { useState } from "react";
 import { z } from "zod";
 import { PageLayout } from "@/components/layout/PageLayout";
-import { TrendingRecipes } from "@/components/recipe/RecipeWidgets";
 import { RecipeCard, RecipeGridSkeleton } from "@/components/ui/RecipeCard";
 import { Select } from "@/components/ui/Select";
 import { Spinner } from "@/components/ui/Primitives";
@@ -234,11 +233,6 @@ function HomePage() {
         )}
       </section>
 
-      {!hasFilters && (
-        <section className="wrapper pb-24">
-          <TrendingRecipes />
-        </section>
-      )}
     </PageLayout>
   );
 }
