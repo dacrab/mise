@@ -31,7 +31,8 @@ function Settings() {
   } = useFileUpload(() => generateUploadUrl(), {
     onSuccess: (storageId, preview) => {
       setNewProfileImage(storageId as Id<"_storage">);
-      if (previewUrl) URL.revokeObjectURL(previewUrl);
+      if (previewUrlRef.current) URL.revokeObjectURL(previewUrlRef.current);
+      previewUrlRef.current = preview;
       setPreviewUrl(preview);
       toast("Photo uploaded!", "success");
     },
@@ -40,28 +41,30 @@ function Settings() {
   const { toast } = useToast();
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  const [name, setName] = useState("");
-  const [username, setUsername] = useState("");
-  const [bio, setBio] = useState("");
+  const [name, setName] = useState(() => user?.name ?? "");
+  const [username, setUsername] = useState(() => user?.username ?? "");
+  const [bio, setBio] = useState(() => user?.bio ?? "");
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [newProfileImage, setNewProfileImage] = useState<Id<"_storage"> | null>(null);
+  const previewUrlRef = useRef<string | null>(null);
 
+  // Sync form when user data first loads (undefined → object)
+  const userIdRef = useRef<string | undefined>(undefined);
   useEffect(() => {
-    if (user) {
+    if (user && user._id !== userIdRef.current) {
+      userIdRef.current = user._id;
       setName(user.name ?? "");
       setUsername(user.username ?? "");
       setBio(user.bio ?? "");
     }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [user?._id]);
+  }, [user]);
 
-  // Revoke preview object URL on unmount
-  useEffect(
-    () => () => {
-      if (previewUrl) URL.revokeObjectURL(previewUrl);
-    },
-    [previewUrl]
-  );
+  // Revoke object URLs only on unmount — not on every previewUrl change
+  useEffect(() => {
+    return () => {
+      if (previewUrlRef.current) URL.revokeObjectURL(previewUrlRef.current);
+    };
+  }, []);
 
   const hasChanges =
     !!user &&

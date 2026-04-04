@@ -16,7 +16,7 @@ export const Route = createFileRoute("/_authed/dashboard/edit/$id")({
 function EditRecipePage() {
   const { id } = Route.useParams();
   const { data: recipe } = useSuspenseQuery(convexQuery(api.recipes.getById, { id: id as Id<"recipes"> }));
-  // loader redirects to /dashboard if recipe is missing, so this is always defined
+  // Loader redirects to /dashboard if recipe is null — type guard for TS
   if (!recipe) return null;
   return <RecipeEditor initialData={{ id: recipe._id, ...recipe }} isEditing />;
 }

@@ -1,16 +1,18 @@
-import { MagnifyingGlassIcon } from "@heroicons/react/24/outline";
+import { MagnifyingGlassIcon, XMarkIcon } from "@heroicons/react/24/outline";
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { api } from "convex/_generated/api";
 import { usePaginatedQuery, useQuery } from "convex/react";
-import { useState } from "react";
+import { useRef } from "react";
 import { z } from "zod";
 import { PageLayout } from "@/components/layout/PageLayout";
 import { RecipeCard, RecipeGridSkeleton } from "@/components/ui/RecipeCard";
-import { Select } from "@/components/ui/Select";
 import { Spinner } from "@/components/ui/Primitives";
 import { CATEGORIES, CATEGORY_ICONS } from "@/lib/constants";
 
-const searchSchema = z.object({ q: z.string().optional(), category: z.string().optional() });
+const searchSchema = z.object({
+  q: z.string().optional(),
+  category: z.string().optional(),
+});
 
 export const Route = createFileRoute("/")({
   validateSearch: searchSchema.parse,
@@ -20,8 +22,7 @@ export const Route = createFileRoute("/")({
       { title: "Mise - Share Your Recipes" },
       {
         name: "description",
-        content:
-          "Discover and share delicious recipes. From mise en place — the chef's practice of preparing everything before cooking.",
+        content: "Discover and share delicious recipes. From mise en place — the chef's practice of preparing everything before cooking.",
       },
       { property: "og:title", content: "Mise - Share Your Recipes" },
       { property: "og:description", content: "Discover and share delicious recipes with the community." },
@@ -32,43 +33,60 @@ export const Route = createFileRoute("/")({
 });
 
 function HomePage() {
+  // Everything is derived from URL — single source of truth
   const { q, category } = Route.useSearch();
   const navigate = useNavigate();
-  const hasSearch = !!q;
-  const [selectedCategory, setSelectedCategory] = useState(category ?? "");
+  const searchInputRef = useRef<HTMLInputElement>(null);
 
-  const handleSearch = (e: React.FormEvent<HTMLFormElement>) => {
-    e.preventDefault();
-    const formData = new FormData(e.currentTarget);
-    const newQ = formData.get("q") as string;
-    navigate({
-      to: "/",
-      search: { q: newQ || undefined, category: selectedCategory || undefined },
-    });
-  };
+  const isSearching = !!q;
+  const isFiltered = !!q || !!category;
 
+  // Search query — only active when q is set
   const searchResults = useQuery(
     api.recipes.list,
-    hasSearch ? { search: q, category: category || undefined, limit: 50 } : "skip"
+    isSearching
+      ? { search: q, category: category ?? undefined, limit: 50 }
+      : "skip"
   );
 
-  const paginatedQuery = usePaginatedQuery(
+  // Paginated browse — always active, respects category filter
+  const paginated = usePaginatedQuery(
     api.recipes.listPaginated,
-    { category: category || undefined },
+    { category: category ?? undefined },
     { initialNumItems: 20 }
   );
 
-  const recipes = hasSearch ? (searchResults ?? []) : paginatedQuery.results;
-  const hasMore = !hasSearch && paginatedQuery.status === "CanLoadMore";
-  const isLoadingMore = paginatedQuery.status === "LoadingMore";
-  const loadMore = () => paginatedQuery.loadMore(20);
+  // Determine what to show
+  const isLoading = isSearching
+    ? searchResults === undefined
+    : paginated.status === "LoadingFirstPage";
 
-  const hasFilters = q || category;
-  const featured = !hasFilters && recipes.length > 0 ? recipes[0] : undefined;
-  const grid = featured ? recipes.slice(1) : recipes;
+  const recipes = isSearching ? (searchResults ?? []) : paginated.results;
+
+  // Featured hero only on clean unfiltered home
+  const showFeatured = !isFiltered && recipes.length > 0;
+  const featured = showFeatured ? recipes[0] : undefined;
+  const grid = showFeatured ? recipes.slice(1) : recipes;
+
+  const handleSearch = (e: React.FormEvent) => {
+    e.preventDefault();
+    const form = e.currentTarget as HTMLFormElement;
+    const q = (form.elements.namedItem("q") as HTMLInputElement).value.trim();
+    navigate({ to: "/", search: { q: q || undefined, category: category ?? undefined } });
+  };
+
+  const handleCategoryClick = (cat: string | undefined) => {
+    navigate({ to: "/", search: { q: q ?? undefined, category: cat } });
+  };
+
+  const clearFilters = () => {
+    if (searchInputRef.current) searchInputRef.current.value = "";
+    navigate({ to: "/", search: {} });
+  };
 
   return (
     <PageLayout>
+      {/* Hero */}
       <section className="wrapper">
         <div className="grid lg:grid-cols-2 gap-8 lg:gap-16 py-12 md:py-20 items-center">
           <div>
@@ -82,12 +100,8 @@ function HomePage() {
               No algorithms. No ads. Just home cooks sharing dishes that actually matter.
             </p>
             <div className="flex flex-wrap gap-3">
-              <Link to="/dashboard/create" className="btn-primary">
-                Share a recipe
-              </Link>
-              <a href="#recipes" className="btn-ghost">
-                Browse recipes ↓
-              </a>
+              <Link to="/dashboard/create" className="btn-primary">Share a recipe</Link>
+              <a href="#recipes" className="btn-ghost">Browse recipes ↓</a>
             </div>
           </div>
           {featured ? (
@@ -108,21 +122,24 @@ function HomePage() {
         </div>
       </section>
 
+      {/* Category pills */}
       <section className="wrapper -mt-4 mb-6">
         <div className="flex gap-2 overflow-x-auto pb-2 scrollbar-minimal">
           <button
-            onClick={() => navigate({ to: "/", search: { q: q || undefined, category: undefined } })}
-            className={`shrink-0 px-4 py-2 rounded-full text-sm font-medium transition-colors ${!category ? "bg-charcoal text-cream" : "bg-cream-dark text-stone hover:text-charcoal"}`}
+            onClick={() => handleCategoryClick(undefined)}
+            className={`shrink-0 px-4 py-2 rounded-full text-sm font-medium transition-colors ${
+              !category ? "bg-charcoal text-cream" : "bg-cream-dark text-stone hover:text-charcoal"
+            }`}
           >
             All
           </button>
           {CATEGORIES.map((c) => (
             <button
               key={c}
-              onClick={() =>
-                navigate({ to: "/", search: { q: q || undefined, category: c === category ? undefined : c } })
-              }
-              className={`shrink-0 flex items-center gap-1.5 px-4 py-2 rounded-full text-sm font-medium transition-colors ${category === c ? "bg-charcoal text-cream" : "bg-cream-dark text-stone hover:text-charcoal"}`}
+              onClick={() => handleCategoryClick(category === c ? undefined : c)}
+              className={`shrink-0 flex items-center gap-1.5 px-4 py-2 rounded-full text-sm font-medium transition-colors ${
+                category === c ? "bg-charcoal text-cream" : "bg-cream-dark text-stone hover:text-charcoal"
+              }`}
             >
               <span>{CATEGORY_ICONS[c]}</span>
               {c}
@@ -131,60 +148,53 @@ function HomePage() {
         </div>
       </section>
 
+      {/* Search bar */}
       <section className="wrapper -mt-2 mb-12">
         <form onSubmit={handleSearch} className="card p-3 flex flex-col sm:flex-row gap-2">
           <div className="relative flex-1">
+            <MagnifyingGlassIcon className="absolute left-3 top-1/2 -translate-y-1/2 text-stone w-5 h-5" />
             <input
+              ref={searchInputRef}
               type="text"
               name="q"
               placeholder="What are you craving?"
               defaultValue={q}
               className="w-full pl-10 pr-4 py-2.5 bg-transparent border-0 focus:outline-none text-charcoal placeholder:text-stone"
             />
-            <MagnifyingGlassIcon className="absolute left-3 top-1/2 -translate-y-1/2 text-stone w-5 h-5" />
           </div>
           <div className="flex gap-2">
-            <Select
-              value={selectedCategory}
-              onChange={setSelectedCategory}
-              options={[{ label: "All categories", value: "" }, ...CATEGORIES.map((c) => ({ label: c, value: c }))]}
-              placeholder="All categories"
-            />
-            <button type="submit" className="btn-primary px-6">
-              Search
-            </button>
+            <button type="submit" className="btn-primary px-6">Search</button>
           </div>
         </form>
-        {hasFilters && (
+
+        {/* Active filter summary */}
+        {isFiltered && (
           <div className="mt-4 flex items-center gap-3 text-sm">
             <span className="text-stone">
-              {recipes.length} result{recipes.length !== 1 && "s"}
-              {q && (
-                <>
-                  {" "}
-                  for "<span className="text-charcoal font-medium">{q}</span>"
-                </>
-              )}
-              {category && (
-                <>
-                  {" "}
-                  in <span className="text-charcoal font-medium">{category}</span>
-                </>
-              )}
+              {recipes.length} result{recipes.length !== 1 ? "s" : ""}
+              {q && <> for "<span className="text-charcoal font-medium">{q}</span>"</>}
+              {category && <> in <span className="text-charcoal font-medium">{category}</span></>}
             </span>
-            <Link to="/" className="text-sage hover:underline">
-              Clear
-            </Link>
+            <button
+              onClick={clearFilters}
+              className="flex items-center gap-1 text-sage hover:underline"
+            >
+              <XMarkIcon className="w-3.5 h-3.5" /> Clear
+            </button>
           </div>
         )}
       </section>
 
+      {/* Recipe grid */}
       <section id="recipes" className="wrapper pb-24">
         <div className="flex items-baseline justify-between mb-6">
-          <h2 className="font-serif text-xl font-medium">{hasFilters ? "Results" : "Latest recipes"}</h2>
-          <span className="text-sm text-stone">{recipes.length} loaded</span>
+          <h2 className="font-serif text-xl font-medium">
+            {category ? category : q ? "Search results" : "Latest recipes"}
+          </h2>
+          {!isLoading && <span className="text-sm text-stone">{recipes.length} recipes</span>}
         </div>
-        {hasSearch && searchResults === undefined ? (
+
+        {isLoading ? (
           <RecipeGridSkeleton />
         ) : grid.length > 0 ? (
           <>
@@ -201,38 +211,43 @@ function HomePage() {
                 />
               ))}
             </div>
-            {hasMore && (
+            {/* Load more — only for paginated (not search) */}
+            {!isSearching && paginated.status === "CanLoadMore" && (
               <div className="py-8 text-center">
-                <button onClick={loadMore} disabled={isLoadingMore} className="btn-ghost disabled:opacity-50">
-                  {isLoadingMore ? (
-                    <span className="flex items-center gap-2">
-                      <Spinner /> Loading…
-                    </span>
-                  ) : (
-                    "Load more"
-                  )}
+                <button
+                  onClick={() => paginated.loadMore(20)}
+                  disabled={paginated.status !== "CanLoadMore"}
+                  className="btn-ghost disabled:opacity-50"
+                >
+                  Load more
                 </button>
               </div>
             )}
+            {!isSearching && paginated.status === "LoadingMore" && (
+              <div className="py-8 flex justify-center">
+                <Spinner />
+              </div>
+            )}
           </>
-        ) : hasSearch ? (
-          <div className="py-20 text-center">
-            <p className="font-serif text-2xl font-medium text-charcoal mb-2">No recipes found</p>
-            <p className="text-stone mb-6">Try different keywords or browse all recipes below.</p>
-            <Link to="/" className="btn-ghost">
-              Clear search
-            </Link>
-          </div>
         ) : (
-          <div className="py-16 text-center">
-            <p className="text-stone mb-4">No recipes yet.</p>
-            <Link to="/dashboard/create" className="btn-primary">
-              Be the first to share
-            </Link>
+          <div className="py-20 text-center">
+            {isFiltered ? (
+              <>
+                <p className="font-serif text-2xl font-medium text-charcoal mb-2">No recipes found</p>
+                <p className="text-stone mb-6">
+                  {category ? `No ${category} recipes yet.` : "Try different keywords."}
+                </p>
+                <button onClick={clearFilters} className="btn-ghost">Clear filters</button>
+              </>
+            ) : (
+              <>
+                <p className="text-stone mb-4">No recipes yet.</p>
+                <Link to="/dashboard/create" className="btn-primary">Be the first to share</Link>
+              </>
+            )}
           </div>
         )}
       </section>
-
     </PageLayout>
   );
 }
