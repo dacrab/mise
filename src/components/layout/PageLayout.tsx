@@ -37,7 +37,7 @@ export function PageLayout({ children, className = "" }: { children: React.React
   return (
     <>
       <Header />
-      <main className={`pt-20 pb-24 animate-fade-in ${className}`}>{children}</main>
+      <main className={`pt-20 pb-24 ${className}`}>{children}</main>
       <Footer />
     </>
   );
@@ -71,7 +71,7 @@ export function SimpleLayout({
           </Link>
         </div>
       </header>
-      <main className="pt-20 pb-24 animate-fade-in">{content}</main>
+      <main className="pt-20 pb-24">{content}</main>
       <Footer />
     </>
   );

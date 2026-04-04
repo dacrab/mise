@@ -9,40 +9,50 @@ import { routeTree } from "./routeTree.gen";
 const CONVEX_URL = import.meta.env["VITE_CONVEX_URL"] as string;
 if (!CONVEX_URL) throw new Error("Missing VITE_CONVEX_URL");
 
-const convexQueryClient = new ConvexQueryClient(CONVEX_URL);
-const queryClient = new QueryClient({
-  defaultOptions: {
-    queries: {
-      queryKeyHashFn: convexQueryClient.hashFn(),
-      queryFn: convexQueryClient.queryFn(),
-      staleTime: 1000 * 60 * 5,
-      gcTime: 1000 * 60 * 60 * 24,
+function createAppRouter() {
+  const convexQueryClient = new ConvexQueryClient(CONVEX_URL);
+  const queryClient = new QueryClient({
+    defaultOptions: {
+      queries: {
+        queryKeyHashFn: convexQueryClient.hashFn(),
+        queryFn: convexQueryClient.queryFn(),
+        staleTime: 0,
+        gcTime: 1000 * 60 * 5,
+      },
     },
-  },
-});
-convexQueryClient.connect(queryClient);
+  });
+  convexQueryClient.connect(queryClient);
 
-export const router = routerWithQueryClient(
-  createRouter({
-    routeTree,
-    defaultPreload: "intent",
-    context: { queryClient },
-    scrollRestoration: true,
-    Wrap: ({ children }) => (
-      <ConvexAuthProvider client={convexQueryClient.convexClient}>
-        <ToastProvider>{children}</ToastProvider>
-      </ConvexAuthProvider>
-    ),
-  }),
-  queryClient
-);
+  return routerWithQueryClient(
+    createRouter({
+      routeTree,
+      defaultPreload: "intent",
+      context: { queryClient },
+      scrollRestoration: true,
+      Wrap: ({ children }) => (
+        <ConvexAuthProvider client={convexQueryClient.convexClient}>
+          <ToastProvider>{children}</ToastProvider>
+        </ConvexAuthProvider>
+      ),
+    }),
+    queryClient
+  );
+}
+
+// Singleton on client — preserves WS connection and auth state across navigations.
+// On the server, always create fresh to avoid locked ReadableStream serialization.
+let clientRouter: ReturnType<typeof createAppRouter> | undefined;
 
 export function getRouter() {
-  return router;
+  if (typeof document !== "undefined") {
+    if (!clientRouter) clientRouter = createAppRouter();
+    return clientRouter;
+  }
+  return createAppRouter();
 }
 
 declare module "@tanstack/react-router" {
   interface Register {
-    router: typeof router;
+    router: ReturnType<typeof createAppRouter>;
   }
 }

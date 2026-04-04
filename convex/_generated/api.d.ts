@@ -9,14 +9,10 @@
  */
 
 import type * as auth from "../auth.js";
-import type * as collections from "../collections.js";
-import type * as crons from "../crons.js";
-import type * as discovery from "../discovery.js";
 import type * as http from "../http.js";
-import type * as import_ from "../import.js";
+import type * as lib_auth from "../lib/auth.js";
 import type * as lib_helpers from "../lib/helpers.js";
-import type * as notifications from "../notifications.js";
-import type * as presence from "../presence.js";
+import type * as lib_storage from "../lib/storage.js";
 import type * as recipes from "../recipes.js";
 import type * as social from "../social.js";
 import type * as users from "../users.js";
@@ -29,14 +25,10 @@ import type {
 
 declare const fullApi: ApiFromModules<{
   auth: typeof auth;
-  collections: typeof collections;
-  crons: typeof crons;
-  discovery: typeof discovery;
   http: typeof http;
-  import: typeof import_;
+  "lib/auth": typeof lib_auth;
   "lib/helpers": typeof lib_helpers;
-  notifications: typeof notifications;
-  presence: typeof presence;
+  "lib/storage": typeof lib_storage;
   recipes: typeof recipes;
   social: typeof social;
   users: typeof users;

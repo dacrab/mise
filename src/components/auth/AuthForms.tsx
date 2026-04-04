@@ -85,14 +85,6 @@ function PasswordField({
   );
 }
 
-function FormError({ message }: { message: string }) {
-  return (
-    <div role="alert" className="p-3 bg-terracotta/10 border border-terracotta/20 rounded-lg text-terracotta text-sm">
-      {message}
-    </div>
-  );
-}
-
 
 const LOGIN_ERRORS: Record<string, string> = {
   InvalidAccountId: "No account found with this email. Please sign up first.",
@@ -122,25 +114,26 @@ export function LoginForm() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
-  const [formError, setFormError] = useState("");
 
   const { execute: handleSubmit, isPending } = useAsyncAction(
     async (e: React.FormEvent) => {
       e.preventDefault();
       if (!email || !password) return;
-      setFormError("");
       const result = await signIn("password", { email, password, flow: "signIn" });
       if (result.signingIn) {
-        toast("Welcome back!", "success");
+        toast("Welcome back! 👨‍🍳", "success");
         await router.navigate({ to: "/dashboard", replace: true });
       }
     },
-    { onError: (err) => setFormError(mapAuthError(LOGIN_ERRORS, err)) }
+    {
+      onError: (err) => {
+        toast(mapAuthError(LOGIN_ERRORS, err), "error");
+      },
+    }
   );
 
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
-      {formError && <FormError message={formError} />}
       <FormField id="login-email" label="Email" type="email" value={email} onChange={setEmail} placeholder="you@example.com" />
       <PasswordField
         id="login-password" label="Password" value={password} onChange={setPassword}
@@ -165,7 +158,6 @@ export function SignupForm() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
-  const [formError, setFormError] = useState("");
 
   const strength = calculatePasswordStrength(password);
 
@@ -173,19 +165,26 @@ export function SignupForm() {
     async (e: React.FormEvent) => {
       e.preventDefault();
       if (!name || !email || !password || password.length < MIN_PASSWORD_LENGTH) return;
-      setFormError("");
       const result = await signIn("password", { email, password, name, flow: "signUp" });
+      // Convex Auth signs the user in immediately after signup
       if (result.signingIn) {
-        toast("Account created! Welcome to Mise.", "success");
+        toast("Account created! Welcome to Mise 🎉", "success");
         await router.navigate({ to: "/dashboard", replace: true });
+      } else {
+        // Signed up but not yet signed in (e.g. email verification required)
+        toast("Account created! Please check your email to verify.", "info");
+        await router.navigate({ to: "/login", replace: true });
       }
     },
-    { onError: (err) => setFormError(mapAuthError(SIGNUP_ERRORS_MAP, err)) }
+    {
+      onError: (err) => {
+        toast(mapAuthError(SIGNUP_ERRORS_MAP, err), "error");
+      },
+    }
   );
 
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
-      {formError && <FormError message={formError} />}
       <FormField id="signup-name" label="Name" type="text" value={name} onChange={setName} placeholder="Your name" autoComplete="name" />
       <FormField id="signup-email" label="Email" type="email" value={email} onChange={setEmail} placeholder="you@example.com" />
       <PasswordField
@@ -214,38 +213,35 @@ export function ForgotPasswordForm() {
   const [email, setEmail] = useState("");
   const [code, setCode] = useState("");
   const [newPassword, setNewPassword] = useState("");
-  const [formError, setFormError] = useState("");
 
   const { execute: handleRequestReset, isPending: sendingCode } = useAsyncAction(
     async (e: React.FormEvent) => {
       e.preventDefault();
       if (!email.trim()) return;
-      setFormError("");
       const fd = new FormData();
       fd.set("email", email);
       fd.set("flow", "reset");
       await signIn("password", fd);
       setStep("code");
-      toast("Reset code sent to your email", "success");
+      toast("Reset code sent to your email 📬", "success");
     },
-    { onError: (err) => setFormError(err.message) }
+    { onError: (err) => toast(err.message || "Could not send reset code. Please try again.", "error") }
   );
 
   const { execute: handleResetPassword, isPending: resetting } = useAsyncAction(
     async (e: React.FormEvent) => {
       e.preventDefault();
       if (!code.trim() || newPassword.length < MIN_PASSWORD_LENGTH) return;
-      setFormError("");
       const fd = new FormData();
       fd.set("email", email);
       fd.set("code", code);
       fd.set("newPassword", newPassword);
       fd.set("flow", "reset-verification");
       await signIn("password", fd);
-      toast("Password reset successfully!", "success");
+      toast("Password reset successfully! Please sign in.", "success");
       await router.navigate({ to: "/login", replace: true });
     },
-    { onError: (err) => setFormError(err.message) }
+    { onError: (err) => toast(err.message || "Invalid or expired code. Please try again.", "error") }
   );
 
   if (step === "code") {
@@ -257,7 +253,6 @@ export function ForgotPasswordForm() {
         <h1 className="font-serif text-2xl font-medium mb-2">Enter reset code</h1>
         <p className="text-stone mb-6">We sent a code to {email}</p>
         <form onSubmit={handleResetPassword} className="space-y-4">
-          {formError && <FormError message={formError} />}
           <FormField id="reset-code" label="Reset code" type="text" value={code} onChange={setCode} placeholder="Enter code" autoComplete="one-time-code" />
           <FormField id="reset-password" label="New password" type="password" value={newPassword} onChange={setNewPassword} placeholder="At least 8 characters" autoComplete="new-password" />
           <button type="submit" disabled={resetting || !code.trim() || newPassword.length < MIN_PASSWORD_LENGTH} className="btn-primary w-full disabled:opacity-50">
@@ -276,7 +271,6 @@ export function ForgotPasswordForm() {
       <h1 className="font-serif text-2xl font-medium mb-2">Forgot password?</h1>
       <p className="text-stone mb-6">Enter your email and we'll send you a reset code.</p>
       <form onSubmit={handleRequestReset} className="space-y-4">
-        {formError && <FormError message={formError} />}
         <FormField id="forgot-email" label="Email" type="email" value={email} onChange={setEmail} placeholder="you@example.com" />
         <button type="submit" disabled={sendingCode || !email.trim()} className="btn-primary w-full disabled:opacity-50">
           {sendingCode ? <span className="flex items-center justify-center gap-2"><Spinner /> Sending…</span> : "Send reset code"}

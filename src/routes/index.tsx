@@ -109,7 +109,7 @@ function HomePage() {
       </section>
 
       <section className="wrapper -mt-4 mb-6">
-        <div className="flex gap-2 overflow-x-auto pb-2 scrollbar-none">
+        <div className="flex gap-2 overflow-x-auto pb-2 scrollbar-minimal">
           <button
             onClick={() => navigate({ to: "/", search: { q: q || undefined, category: undefined } })}
             className={`shrink-0 px-4 py-2 rounded-full text-sm font-medium transition-colors ${!category ? "bg-charcoal text-cream" : "bg-cream-dark text-stone hover:text-charcoal"}`}
