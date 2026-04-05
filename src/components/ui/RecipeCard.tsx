@@ -5,7 +5,9 @@ import type { Id } from "convex/_generated/dataModel";
 import { useBookmarkToggle } from "@/hooks/useBookmarkToggle";
 
 function QuickBookmark({ recipeId }: { recipeId: Id<"recipes"> }) {
-  const { currentUser, isBookmarked, isPending, toggleBookmark } = useBookmarkToggle(recipeId);
+  const { currentUser, isBookmarked, isPending, toggleBookmark } = useBookmarkToggle(recipeId, {
+    errorMessage: "Sign in to save recipes",
+  });
 
   if (currentUser === null) return null;
 
