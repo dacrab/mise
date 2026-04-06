@@ -22,13 +22,15 @@ export function useDismissableLayer<T extends HTMLElement>(
       }
     };
 
-    document.addEventListener("mousedown", handlePointerDown);
-    document.addEventListener("keydown", handleKeyDown);
-
-    return () => {
+    const cleanup = () => {
       document.removeEventListener("mousedown", handlePointerDown);
       document.removeEventListener("keydown", handleKeyDown);
     };
+
+    document.addEventListener("mousedown", handlePointerDown);
+    document.addEventListener("keydown", handleKeyDown);
+
+    return cleanup;
   }, [closeOnEscape, onDismiss, open]);
 
   return ref;

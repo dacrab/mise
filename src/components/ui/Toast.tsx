@@ -28,7 +28,6 @@ const STYLES: Record<ToastType, string> = {
   info: "bg-honey/10 border-honey/20 text-charcoal",
 };
 
-// Errors stay visible longer since they're important
 const DURATIONS: Record<ToastType, number> = {
   success: 3500,
   error: 5000,
@@ -63,9 +62,7 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
   const timers = useRef<Map<number, ReturnType<typeof setTimeout>>>(new Map());
 
   const dismiss = useCallback((id: number) => {
-    // Mark as exiting to trigger exit animation
     setToasts((prev) => prev.map((t) => t.id === id ? { ...t, exiting: true } : t));
-    // Remove after animation completes
     const timer = setTimeout(() => {
       setToasts((prev) => prev.filter((t) => t.id !== id));
       timers.current.delete(id);
@@ -76,15 +73,13 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
   const toast = useCallback((message: string, type: ToastType = "info") => {
     const id = ++nextId.current;
     setToasts((prev) => [...prev, { id, message, type }]);
-    const duration = DURATIONS[type];
-    const timer = setTimeout(() => dismiss(id), duration);
+    const timer = setTimeout(() => dismiss(id), DURATIONS[type]);
     timers.current.set(id, timer);
   }, [dismiss]);
 
-  // Clean up timers on unmount
   useEffect(() => {
     const currentTimers = timers.current;
-    return () => { currentTimers.forEach(clearTimeout); };
+    return () => currentTimers.forEach(clearTimeout);
   }, []);
 
   return (

@@ -14,8 +14,6 @@ interface AsyncActionOptions<T extends AsyncFunction> {
 export function useAsyncAction<T extends AsyncFunction>(action: T, options?: AsyncActionOptions<T>) {
   const [isPending, setIsPending] = useState(false);
   const { toast } = useToast();
-  // Refs keep execute stable across renders — action/options change identity every render
-  // but we always want to call the latest version without recreating execute.
   const actionRef = useRef(action);
   actionRef.current = action;
   const optionsRef = useRef(options);

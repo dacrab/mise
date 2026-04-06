@@ -154,7 +154,7 @@ export function Header() {
       </header>
 
       {mobileOpen && (
-        <div className="fixed inset-0 z-40 bg-charcoal/30 backdrop-blur-sm sm:hidden" aria-hidden="true" onClick={closeMobile} />
+        <div className="fixed inset-0 z-40 bg-charcoal/30 backdrop-blur-sm sm:hidden" aria-hidden="true" onClick={() => setMobileOpen(false)} />
       )}
 
       <div
@@ -166,7 +166,7 @@ export function Header() {
       >
         <div className="flex items-center justify-between px-5 h-16 border-b border-cream-dark">
           <span className="font-serif text-xl font-semibold text-charcoal">mise</span>
-          <button onClick={closeMobile} className="p-2 hover:bg-cream-dark rounded-lg" aria-label="Close menu">
+          <button onClick={() => setMobileOpen(false)} className="p-2 hover:bg-cream-dark rounded-lg" aria-label="Close menu">
             <XMarkIcon className="w-5 h-5" />
           </button>
         </div>
@@ -177,7 +177,7 @@ export function Header() {
         <div className="p-5 border-t border-cream-dark">
           <nav className="flex gap-4 text-sm text-stone">
             {FOOTER_LINKS.map(({ to, label }) => (
-              <Link key={to} to={to} onClick={closeMobile} className="hover:text-charcoal transition-colors">{label}</Link>
+              <Link key={to} to={to} onClick={() => setMobileOpen(false)} className="hover:text-charcoal transition-colors">{label}</Link>
             ))}
           </nav>
         </div>
