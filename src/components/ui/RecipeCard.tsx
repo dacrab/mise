@@ -11,9 +11,9 @@ function QuickBookmark({ recipeId }: { recipeId: Id<"recipes"> }) {
 
   if (currentUser === null) return null;
 
-  const handleClick = (event: React.MouseEvent) => {
-    event.preventDefault();
-    event.stopPropagation();
+  const handleClick = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
     void toggleBookmark();
   };
 

@@ -89,23 +89,25 @@ export function AuthLayout({
   subtitle: string;
 }) {
   const isLogin = variant === "login";
-  const bgClass = isLogin ? "bg-charcoal" : "bg-sage";
-  const textClass = isLogin ? "text-cream" : "text-warm-white";
-  const taglineClass = isLogin ? "text-sage-light" : "text-cream";
-  const subtitleClass = isLogin ? "text-stone-light" : "text-cream/80";
-  const yearClass = isLogin ? "text-stone" : "text-cream/60";
+  const classes = {
+    bg: isLogin ? "bg-charcoal" : "bg-sage",
+    text: isLogin ? "text-cream" : "text-warm-white",
+    tagline: isLogin ? "text-sage-light" : "text-cream",
+    subtitle: isLogin ? "text-stone-light" : "text-cream/80",
+    year: isLogin ? "text-stone" : "text-cream/60",
+  };
 
   return (
     <div className="min-h-screen flex">
-      <div className={`hidden lg:flex lg:w-1/2 ${bgClass} p-12 flex-col justify-between`}>
-        <Link to="/" className={`font-serif text-2xl font-semibold ${textClass}`}>
+      <div className={`hidden lg:flex lg:w-1/2 ${classes.bg} p-12 flex-col justify-between`}>
+        <Link to="/" className={`font-serif text-2xl font-semibold ${classes.text}`}>
           mise
         </Link>
         <div>
-          <p className={`font-hand text-3xl ${taglineClass} mb-4`}>{tagline}</p>
-          <p className={`${subtitleClass} text-lg max-w-md`}>{subtitle}</p>
+          <p className={`font-hand text-3xl ${classes.tagline} mb-4`}>{tagline}</p>
+          <p className={`${classes.subtitle} text-lg max-w-md`}>{subtitle}</p>
         </div>
-        <p className={`${yearClass} text-sm`}>© {new Date().getFullYear()} mise</p>
+        <p className={`${classes.year} text-sm`}>© {new Date().getFullYear()} mise</p>
       </div>
       <div className="flex-1 flex items-center justify-center p-8 bg-cream">
         <div className="w-full max-w-md">

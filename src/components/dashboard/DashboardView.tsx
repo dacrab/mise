@@ -55,7 +55,8 @@ export function DashboardView() {
   );
 
   const { tab = "my-recipes" } = Route.useSearch();
-  const recipes = tab === "saved" ? myBookmarks : myRecipes;
+  const isSavedTab = tab === "saved";
+  const recipes = isSavedTab ? myBookmarks : myRecipes;
 
   // Show skeleton while any data is still loading
   if (user === undefined || myRecipes === undefined || myBookmarks === undefined) {
@@ -106,7 +107,7 @@ export function DashboardView() {
           >
             {tabItem.label}
             <span className="ml-2 text-xs bg-cream-dark px-1.5 py-0.5 rounded-full">
-              {tabItem.id === "saved" ? myBookmarks.length : myRecipes.length}
+              {(tabItem.id === "saved" ? myBookmarks : myRecipes).length}
             </span>
           </Link>
         ))}
@@ -116,14 +117,10 @@ export function DashboardView() {
       {!recipes || recipes.length === 0 ? (
         <EmptyState
           icon={<BookmarkIcon className="w-6 h-6 text-stone" />}
-          title={tab === "saved" ? "No saved recipes yet" : "No recipes yet"}
-          message={
-            tab === "saved"
-              ? "Bookmark recipes you love and they'll appear here."
-              : "Create your first recipe and share it with the world."
-          }
-          actionLabel={tab === "saved" ? undefined : "Create your first recipe"}
-          actionTo={tab === "saved" ? undefined : "/dashboard/create"}
+          title={isSavedTab ? "No saved recipes yet" : "No recipes yet"}
+          message={isSavedTab ? "Bookmark recipes you love and they'll appear here." : "Create your first recipe and share it with the world."}
+          actionLabel={isSavedTab ? undefined : "Create your first recipe"}
+          actionTo={isSavedTab ? undefined : "/dashboard/create"}
         />
       ) : (
         <div className="space-y-3">

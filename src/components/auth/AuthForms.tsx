@@ -100,10 +100,7 @@ const SIGNUP_ERRORS_MAP: Record<string, string> = {
 
 function mapAuthError(errors: Record<string, string>, error: unknown): string {
   const msg = error instanceof Error ? error.message : String(error);
-  for (const [key, val] of Object.entries(errors)) {
-    if (key !== "default" && msg.includes(key)) return val;
-  }
-  return errors["default"] ?? "An error occurred";
+  return Object.entries(errors).find(([key]) => key !== "default" && msg.includes(key))?.[1] ?? errors["default"] ?? "An error occurred";
 }
 
 
