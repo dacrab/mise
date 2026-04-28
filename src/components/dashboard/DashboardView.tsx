@@ -4,9 +4,9 @@ import { useQuery, useMutation } from "convex/react";
 import { api } from "convex/_generated/api";
 import type { Id } from "convex/_generated/dataModel";
 import { Route } from "@/routes/_authed/dashboard/index";
-import { EmptyState } from "@/components/dashboard/EmptyState";
 import { RecipeListRow } from "@/components/dashboard/RecipeListRow";
-import { useConfirmAction } from "@/hooks/useConfirmAction";
+import { useToast } from "@/components/ui/Toast";
+import { useEffect, useRef, useState } from "react";
 
 const TABS = [
   { id: "my-recipes", label: "My Recipes" },
@@ -44,15 +44,33 @@ export function DashboardView() {
   const myRecipes = useQuery(api.recipes.myRecipes);
   const myBookmarks = useQuery(api.recipes.myBookmarks);
   const deleteRecipe = useMutation(api.recipes.remove);
+  const { toast } = useToast();
+  const [pendingDelete, setPendingDelete] = useState<Id<"recipes"> | null>(null);
+  const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  const { trigger: handleDelete, pendingId: pendingDelete } = useConfirmAction<Id<"recipes">>(
-    async (id) => { await deleteRecipe({ id }); },
-    {
-      confirmMessage: "Tap delete again to confirm",
-      successMessage: "Recipe deleted",
-      errorMessage: "Could not delete recipe",
+  useEffect(() => {
+    return () => {
+      if (timer.current) clearTimeout(timer.current);
+    };
+  }, []);
+
+  const handleDelete = async (id: Id<"recipes">) => {
+    if (pendingDelete !== id) {
+      setPendingDelete(id);
+      toast("Tap delete again to confirm", "info");
+      if (timer.current) clearTimeout(timer.current);
+      timer.current = setTimeout(() => setPendingDelete(null), 3000);
+      return;
     }
-  );
+    if (timer.current) clearTimeout(timer.current);
+    setPendingDelete(null);
+    try {
+      await deleteRecipe({ id });
+      toast("Recipe deleted", "success");
+    } catch {
+      toast("Could not delete recipe", "error");
+    }
+  };
 
   const { tab = "my-recipes" } = Route.useSearch();
   const isSavedTab = tab === "saved";
@@ -115,13 +133,24 @@ export function DashboardView() {
 
       {/* Content */}
       {!recipes || recipes.length === 0 ? (
-        <EmptyState
-          icon={<BookmarkIcon className="w-6 h-6 text-stone" />}
-          title={isSavedTab ? "No saved recipes yet" : "No recipes yet"}
-          message={isSavedTab ? "Bookmark recipes you love and they'll appear here." : "Create your first recipe and share it with the world."}
-          actionLabel={isSavedTab ? undefined : "Create your first recipe"}
-          actionTo={isSavedTab ? undefined : "/dashboard/create"}
-        />
+        <div className="card p-12 text-center">
+          <div className="w-14 h-14 bg-cream-dark rounded-full flex items-center justify-center mx-auto mb-4">
+            <BookmarkIcon className="w-6 h-6 text-stone" />
+          </div>
+          <h2 className="font-serif text-xl font-medium mb-2">
+            {isSavedTab ? "No saved recipes yet" : "No recipes yet"}
+          </h2>
+          <p className="text-stone text-sm mb-6">
+            {isSavedTab
+              ? "Bookmark recipes you love and they'll appear here."
+              : "Create your first recipe and share it with the world."}
+          </p>
+          {!isSavedTab && (
+            <Link to="/dashboard/create" className="btn-primary text-sm">
+              Create your first recipe
+            </Link>
+          )}
+        </div>
       ) : (
         <div className="space-y-3">
           {recipes.map((recipe) => (

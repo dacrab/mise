@@ -7,7 +7,6 @@ import { useMutation, useQuery } from "convex/react";
 import { useEffect, useRef, useState } from "react";
 import { ProgressBar } from "@/components/ui/Primitives";
 import { useToast } from "@/components/ui/Toast";
-import { useAsyncAction } from "@/hooks/useAsyncAction";
 import { useFileUpload } from "@/hooks/useFileUpload";
 
 export const Route = createFileRoute("/_authed/settings")({
@@ -46,6 +45,7 @@ function Settings() {
   const [bio, setBio] = useState(() => user?.bio ?? "");
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [newProfileImage, setNewProfileImage] = useState<Id<"_storage"> | null>(null);
+  const [saving, setSaving] = useState(false);
   const previewUrlRef = useRef<string | null>(null);
 
   // Sync form when user data first loads (undefined → object)
@@ -73,15 +73,16 @@ function Settings() {
       bio !== (user.bio ?? "") ||
       newProfileImage !== null);
 
-  const { execute: handleSubmit, isPending: saving } = useAsyncAction(
-    async (e: React.FormEvent) => {
-      e.preventDefault();
-      if (!hasChanges) return;
-      if (!name.trim()) { toast("Name cannot be empty", "error"); return; }
-      if (username.trim() && !/^[a-z0-9_]+$/.test(username.trim())) {
-        toast("Username can only contain letters, numbers, and underscores", "error");
-        return;
-      }
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!hasChanges || saving) return;
+    if (!name.trim()) { toast("Name cannot be empty", "error"); return; }
+    if (username.trim() && !/^[a-z0-9_]+$/.test(username.trim())) {
+      toast("Username can only contain letters, numbers, and underscores", "error");
+      return;
+    }
+    setSaving(true);
+    try {
       await updateProfile({
         name: name.trim(),
         username: username.trim() || undefined,
@@ -90,12 +91,15 @@ function Settings() {
       });
       setNewProfileImage(null);
       toast("Profile saved", "success");
-    },
-    { errorMessage: "Could not save profile" }
-  );
+    } catch {
+      toast("Could not save profile", "error");
+    } finally {
+      setSaving(false);
+    }
+  };
 
   if (!user) {
-    return <div className="flex items-center justify-center min-h-[60vh] text-stone animate-pulse">Loading…</div>;
+    return <div className="center min-h-[60vh] text-stone animate-pulse">Loading…</div>;
   }
 
   const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -126,7 +130,7 @@ function Settings() {
               {avatar ? (
                 <img src={avatar} alt="Profile" className="w-full h-full object-cover" />
               ) : (
-                <div className="w-full h-full flex items-center justify-center text-2xl font-medium text-sage">
+                <div className="center w-full h-full text-2xl font-medium text-sage">
                   {(name || "?")[0]}
                 </div>
               )}
@@ -163,7 +167,7 @@ function Settings() {
 
           <div className="space-y-5">
             <div>
-              <label htmlFor="name" className="block text-sm font-medium text-charcoal-light mb-2">
+              <label htmlFor="name" className="label">
                 Display name
               </label>
               <input
@@ -176,7 +180,7 @@ function Settings() {
               />
             </div>
             <div>
-              <label htmlFor="username" className="block text-sm font-medium text-charcoal-light mb-2">
+              <label htmlFor="username" className="label">
                 Username
               </label>
               <div className="relative">
@@ -193,7 +197,7 @@ function Settings() {
               <p className="text-xs text-stone mt-1.5">Letters, numbers, and underscores only</p>
             </div>
             <div>
-              <label htmlFor="bio" className="block text-sm font-medium text-charcoal-light mb-2">
+              <label htmlFor="bio" className="label">
                 Bio
               </label>
               <textarea

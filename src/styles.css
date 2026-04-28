@@ -3,7 +3,6 @@
 @theme {
   --font-sans: "Inter", system-ui, sans-serif;
   --font-serif: "Playfair Display", "Georgia", serif;
-  --font-hand: "Caveat", cursive;
 
   --color-cream: #FAF7F2;
   --color-cream-dark: #F3EDE4;
@@ -13,49 +12,25 @@
   --color-sage: #8B9A7D;
   --color-sage-light: #A8B89A;
   --color-terracotta: #C4846C;
-  --color-terracotta-light: #D9A08C;
-  --color-honey: #D4A853;
   --color-stone: #9C9488;
   --color-stone-light: #C4BEB4;
-  --color-sage-dark: #6B7A5E;
-
-  --shadow-soft: 0 2px 8px rgba(45, 42, 38, 0.06);
-  --shadow-card: 0 4px 20px rgba(45, 42, 38, 0.08);
-  --shadow-hover: 0 8px 30px rgba(45, 42, 38, 0.12);
 }
 
 @layer base {
   body {
     @apply bg-cream text-charcoal font-sans antialiased;
   }
-  h1,
-  h2,
-  h3,
-  h4 {
+  h1, h2, h3, h4 {
     @apply font-serif text-charcoal;
   }
-  ::selection {
-    @apply bg-sage/30 text-charcoal;
-  }
-  a,
-  button,
-  [role="button"],
-  [type="button"],
-  [type="submit"],
-  label[for],
-  select,
-  [tabindex]:not([tabindex="-1"]) {
-    @apply cursor-pointer;
-  }
 }
-
 
 @utility wrapper {
   @apply max-w-6xl mx-auto px-5 sm:px-8;
 }
 
 @utility btn {
-  @apply inline-flex items-center justify-center gap-2 font-medium transition-all duration-200 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed;
+  @apply inline-flex items-center justify-center gap-2 font-medium transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed;
 }
 
 @utility btn-primary {
@@ -71,199 +46,61 @@
 }
 
 @utility input-field {
-  @apply w-full px-4 py-3 bg-warm-white border border-stone-light/60 rounded-lg text-charcoal placeholder:text-stone transition-all focus:outline-none focus:border-sage focus:ring-2 focus:ring-sage/20;
-}
-
-@utility textarea-field {
-  @apply input-field resize-none;
+  @apply w-full px-4 py-3 bg-warm-white border border-stone-light/60 rounded-lg text-charcoal placeholder:text-stone focus:outline-none focus:border-sage focus:ring-2 focus:ring-sage/20;
 }
 
 @utility card {
-  @apply bg-warm-white rounded-xl border border-cream-dark shadow-soft;
+  @apply bg-warm-white rounded-xl border border-cream-dark;
 }
 
 @utility card-hover {
-  @apply card transition-all duration-300 hover:shadow-card hover:border-stone-light/60;
+  @apply card transition-all duration-300 hover:shadow-[0_4px_20px_rgba(45,42,38,0.08)] hover:border-stone-light/60;
 }
 
 @utility tag {
   @apply inline-flex items-center px-2.5 py-1 text-xs font-medium rounded-md bg-cream-dark text-charcoal-light;
 }
 
-@utility tag-sage {
-  @apply tag bg-sage/15 text-sage;
-}
-
 @utility glass {
   @apply bg-cream/80 backdrop-blur-md border-b border-cream-dark;
 }
 
-.form-group:has(:focus) {
-  @apply ring-2 ring-sage/20;
-}
-.form-group:has(:invalid:not(:placeholder-shown)) {
-  @apply ring-2 ring-terracotta/30;
-}
-.card:has(img:hover) {
-  @apply shadow-hover;
+@utility label {
+  @apply block text-sm font-medium text-charcoal-light mb-2;
 }
 
-@utility recipe-card {
-  @apply card-hover block overflow-hidden rounded-xl;
+@utility stat-box {
+  @apply flex flex-col items-center gap-1 px-4 py-3 bg-cream-dark rounded-xl text-center;
 }
 
-@utility recipe-card-image {
-  @apply w-full aspect-[4/3] object-cover transition-transform duration-500;
+@utility center {
+  @apply flex items-center justify-center;
 }
 
-@utility heading-1 {
-  @apply font-serif font-medium tracking-tight text-charcoal leading-tight;
+@utility link-muted {
+  @apply text-sm text-stone hover:text-charcoal transition-colors;
 }
 
-@utility body-large {
-  @apply text-lg text-charcoal-light leading-relaxed;
+@utility menu-item {
+  @apply flex items-center gap-2.5 px-4 py-2 text-sm text-charcoal hover:bg-cream-dark outline-none data-[highlighted]:bg-cream-dark;
 }
 
 .group:hover .recipe-card-image {
   transform: scale(1.05);
 }
 
-
-@keyframes fadeIn {
-  from {
-    opacity: 0;
-    transform: translateY(10px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
-@keyframes slideUp {
-  from {
-    opacity: 0;
-    transform: translateY(100%);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
 @keyframes scaleIn {
-  from {
-    opacity: 0;
-    transform: scale(0.96);
-  }
-  to {
-    opacity: 1;
-    transform: scale(1);
-  }
+  from { opacity: 0; transform: scale(0.96); }
+  to { opacity: 1; transform: scale(1); }
 }
 
-@keyframes fadeSlide {
-  from {
-    opacity: 0;
-    transform: translateX(-10px);
-  }
-  to {
-    opacity: 1;
-    transform: translateX(0);
-  }
-}
+@utility animate-scale-in { animation: scaleIn 0.2s ease-out both; }
 
-@utility animate-fade-in  { animation: fadeIn   0.5s ease-out both; }
-@utility animate-scale-in { animation: scaleIn  0.2s ease-out both; }
-@utility animate-slide-up { animation: slideUp  0.3s ease-out both; }
-
-/* ── Toast animations ────────────────────────────────────────── */
-@keyframes toastEnter {
-  from {
-    opacity: 0;
-    transform: translateX(16px) scale(0.95);
-  }
-  to {
-    opacity: 1;
-    transform: translateX(0) scale(1);
-  }
-}
-
-@keyframes toastExit {
-  from {
-    opacity: 1;
-    transform: translateX(0) scale(1);
-    max-height: 100px;
-    margin-bottom: 0;
-  }
-  to {
-    opacity: 0;
-    transform: translateX(16px) scale(0.95);
-    max-height: 0;
-    margin-bottom: -8px;
-  }
-}
-
-/* ── Page transition ──────────────────────────────────────────── */
 @keyframes pageEnter {
-  from {
-    opacity: 0;
-    transform: translateY(8px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
-@keyframes pageExit {
-  from {
-    opacity: 1;
-    transform: translateY(0);
-  }
-  to {
-    opacity: 0;
-    transform: translateY(-6px);
-  }
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
 }
 
 .page-enter {
   animation: pageEnter 0.35s cubic-bezier(0.25, 0.46, 0.45, 0.94) both;
-}
-
-.page-exit {
-  animation: pageExit 0.2s cubic-bezier(0.55, 0, 1, 0.45) both;
-  pointer-events: none;
-}
-
-/* ── Minimal scrollbar for horizontally scrollable rows ──────── */
-.scrollbar-minimal {
-  scrollbar-width: thin;
-  scrollbar-color: rgba(156, 148, 136, 0.35) transparent; /* stone/35 on transparent */
-}
-
-.scrollbar-minimal::-webkit-scrollbar {
-  height: 3px;
-  width: 3px;
-}
-
-.scrollbar-minimal::-webkit-scrollbar-track {
-  background: transparent;
-}
-
-.scrollbar-minimal::-webkit-scrollbar-thumb {
-  background-color: rgba(156, 148, 136, 0.35);
-  border-radius: 9999px;
-}
-
-.scrollbar-minimal::-webkit-scrollbar-thumb:hover {
-  background-color: rgba(156, 148, 136, 0.6);
-}
-
-/* Hide scrollbar utility (keep existing behaviour with class) */
-.scrollbar-none {
-  scrollbar-width: none;
-}
-.scrollbar-none::-webkit-scrollbar {
-  display: none;
 }

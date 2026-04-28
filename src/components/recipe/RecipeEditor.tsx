@@ -51,29 +51,28 @@ const recipeSchema = z.object({
   steps: z.array(z.object({ value: z.string() })),
 });
 
-interface InitialData {
-  id?: Id<"recipes">;
-  title: string;
-  description?: string | null;
-  coverImage?: Id<"_storage"> | null;
-  coverImageUrl?: string | null;
-  ingredients: string[];
-  steps: string[];
-  category?: string | null;
-  videoUrl?: string | null;
-  status?: "draft" | "published";
-  prepTime?: number | null;
-  cookTime?: number | null;
-  servings?: number | null;
-  difficulty?: string | null;
-}
-
-interface Props {
-  initialData?: InitialData;
+export function RecipeEditor({
+  initialData,
+  isEditing,
+}: {
+  initialData?: {
+    id?: Id<"recipes">;
+    title: string;
+    description?: string | null;
+    coverImage?: Id<"_storage"> | null;
+    coverImageUrl?: string | null;
+    ingredients: string[];
+    steps: string[];
+    category?: string | null;
+    videoUrl?: string | null;
+    status?: "draft" | "published";
+    prepTime?: number | null;
+    cookTime?: number | null;
+    servings?: number | null;
+    difficulty?: string | null;
+  };
   isEditing?: boolean;
-}
-
-export function RecipeEditor({ initialData, isEditing }: Props) {
+}) {
   const { toast } = useToast();
   const user = useQuery(api.users.currentUser);
   const navigate = useNavigate();
@@ -203,7 +202,7 @@ export function RecipeEditor({ initialData, isEditing }: Props) {
   }, [user, navigate]);
 
   if (user === undefined) {
-    return <div className="flex items-center justify-center min-h-[60vh] text-stone animate-pulse">Loading…</div>;
+    return <div className="center min-h-[60vh] text-stone animate-pulse">Loading…</div>;
   }
   if (user === null) return null;
 
@@ -295,7 +294,7 @@ export function RecipeEditor({ initialData, isEditing }: Props) {
           <section className="card p-6 space-y-5">
             <h2 className="font-serif text-lg font-medium">Basic info</h2>
             <div>
-              <label htmlFor="recipe-title" className="block text-sm font-medium text-charcoal-light mb-2">
+              <label htmlFor="recipe-title" className="label">
                 Title
               </label>
               <input
@@ -310,7 +309,7 @@ export function RecipeEditor({ initialData, isEditing }: Props) {
             </div>
             <div className="grid sm:grid-cols-2 gap-4">
               <div>
-                <label htmlFor="recipe-category" className="block text-sm font-medium text-charcoal-light mb-2">
+                <label htmlFor="recipe-category" className="label">
                   Category
                 </label>
                 <Controller
@@ -328,7 +327,7 @@ export function RecipeEditor({ initialData, isEditing }: Props) {
                 />
               </div>
               <div>
-                <label htmlFor="recipe-difficulty" className="block text-sm font-medium text-charcoal-light mb-2">
+                <label htmlFor="recipe-difficulty" className="label">
                   Difficulty <span className="text-stone">(optional)</span>
                 </label>
                 <Controller
@@ -348,7 +347,7 @@ export function RecipeEditor({ initialData, isEditing }: Props) {
             </div>
             <div className="grid sm:grid-cols-3 gap-4">
               <div>
-                <label htmlFor="recipe-prep-time" className="block text-sm font-medium text-charcoal-light mb-2">
+                <label htmlFor="recipe-prep-time" className="label">
                   Prep time <span className="text-stone">(min)</span>
                 </label>
                 <input
@@ -363,7 +362,7 @@ export function RecipeEditor({ initialData, isEditing }: Props) {
                 {errors.prepTime && <p className="text-xs text-terracotta mt-1">{errors.prepTime.message}</p>}
               </div>
               <div>
-                <label htmlFor="recipe-cook-time" className="block text-sm font-medium text-charcoal-light mb-2">
+                <label htmlFor="recipe-cook-time" className="label">
                   Cook time <span className="text-stone">(min)</span>
                 </label>
                 <input
@@ -378,7 +377,7 @@ export function RecipeEditor({ initialData, isEditing }: Props) {
                 {errors.cookTime && <p className="text-xs text-terracotta mt-1">{errors.cookTime.message}</p>}
               </div>
               <div>
-                <label htmlFor="recipe-servings" className="block text-sm font-medium text-charcoal-light mb-2">
+                <label htmlFor="recipe-servings" className="label">
                   Servings
                 </label>
                 <input
@@ -394,7 +393,7 @@ export function RecipeEditor({ initialData, isEditing }: Props) {
               </div>
             </div>
             <div>
-              <label htmlFor="recipe-video" className="block text-sm font-medium text-charcoal-light mb-2">
+              <label htmlFor="recipe-video" className="label">
                 Video URL <span className="text-stone">(optional)</span>
               </label>
               <input
@@ -407,7 +406,7 @@ export function RecipeEditor({ initialData, isEditing }: Props) {
               {errors.videoUrl && <p className="text-xs text-terracotta mt-1">{errors.videoUrl.message}</p>}
             </div>
             <div>
-              <label htmlFor="recipe-description" className="block text-sm font-medium text-charcoal-light mb-2">
+              <label htmlFor="recipe-description" className="label">
                 Description
               </label>
               <textarea

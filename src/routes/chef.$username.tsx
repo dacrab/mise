@@ -14,11 +14,10 @@ function ChefSkeleton() {
       <div className="wrapper py-8 md:py-16 animate-pulse">
         <div className="flex flex-col sm:flex-row items-center sm:items-start gap-6 mb-10 pb-10 border-b border-cream-dark">
           <div className="w-24 h-24 rounded-full bg-cream-dark shrink-0" />
-          <div className="flex-1 space-y-3 text-center sm:text-left">
-            <div className="h-7 w-48 bg-cream-dark rounded mx-auto sm:mx-0" />
-            <div className="h-4 w-24 bg-cream-dark rounded mx-auto sm:mx-0" />
-            <div className="h-4 w-full max-w-sm bg-cream-dark rounded mx-auto sm:mx-0" />
-            <div className="h-4 w-3/4 max-w-xs bg-cream-dark rounded mx-auto sm:mx-0" />
+          <div className="flex-1 space-y-3">
+            <div className="h-7 w-48 bg-cream-dark rounded" />
+            <div className="h-4 w-24 bg-cream-dark rounded" />
+            <div className="h-4 w-full max-w-sm bg-cream-dark rounded" />
           </div>
         </div>
         <RecipeGridSkeleton />

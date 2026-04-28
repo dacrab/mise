@@ -1,16 +1,6 @@
 import { useMemo, useState } from "react";
 import { scaleIngredient } from "@/lib/utils";
 
-export function MetaStat({ icon, label, value }: { icon: React.ReactNode; label: string; value: string }) {
-  return (
-    <div className="flex flex-col items-center gap-1 px-4 py-3 bg-cream-dark rounded-xl text-center">
-      <div className="text-stone">{icon}</div>
-      <span className="text-xs text-stone uppercase tracking-wide">{label}</span>
-      <span className="text-sm font-medium text-charcoal">{value}</span>
-    </div>
-  );
-}
-
 export function IngredientScaler({ ingredients, defaultServings = 4 }: { ingredients: string[]; defaultServings?: number }) {
   const [servings, setServings] = useState(defaultServings);
   const scale = servings / defaultServings;

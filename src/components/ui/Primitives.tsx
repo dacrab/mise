@@ -1,13 +1,16 @@
-interface AvatarProps {
+const AVATAR_SIZES = { sm: "w-8 h-8 text-xs", md: "w-10 h-10 text-sm", lg: "w-14 h-14 text-base" };
+
+export function Avatar({
+  src,
+  name,
+  size = "sm",
+  className = "",
+}: {
   src?: string | null;
   name?: string | null;
   size?: "sm" | "md" | "lg";
   className?: string;
-}
-
-const AVATAR_SIZES = { sm: "w-8 h-8 text-xs", md: "w-10 h-10 text-sm", lg: "w-14 h-14 text-base" };
-
-export function Avatar({ src, name, size = "sm", className = "" }: AvatarProps) {
+}) {
   const sizeClass = AVATAR_SIZES[size];
   const initial = name?.[0]?.toUpperCase() ?? "?";
   return (
@@ -15,7 +18,7 @@ export function Avatar({ src, name, size = "sm", className = "" }: AvatarProps) 
       {src ? (
         <img src={src} alt={name ?? ""} className="w-full h-full object-cover" />
       ) : (
-        <div className="w-full h-full flex items-center justify-center text-sage font-medium">
+        <div className="center w-full h-full text-sage font-medium">
           {initial}
         </div>
       )}
@@ -23,9 +26,7 @@ export function Avatar({ src, name, size = "sm", className = "" }: AvatarProps) 
   );
 }
 
-interface SpinnerProps { className?: string; }
-
-export function Spinner({ className = "w-4 h-4" }: SpinnerProps) {
+export function Spinner({ className = "w-4 h-4" }: { className?: string }) {
   return (
     <svg className={`animate-spin ${className}`} xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" aria-hidden="true">
       <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
@@ -34,9 +35,15 @@ export function Spinner({ className = "w-4 h-4" }: SpinnerProps) {
   );
 }
 
-interface ProgressBarProps { value: number; label?: string; className?: string; }
-
-export function ProgressBar({ value, label, className = "" }: ProgressBarProps) {
+export function ProgressBar({
+  value,
+  label,
+  className = "",
+}: {
+  value: number;
+  label?: string;
+  className?: string;
+}) {
   const pct = Math.min(100, Math.max(0, value));
   return (
     <div className={`space-y-1 ${className}`}>
