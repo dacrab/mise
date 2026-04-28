@@ -7,6 +7,7 @@ import { APP_TITLE_SUFFIX } from "@/lib/constants";
 import { PageLayout } from "@/components/layout/PageLayout";
 import { Avatar } from "@/components/ui/Primitives";
 import { RecipeCard, RecipeGridSkeleton } from "@/components/ui/RecipeCard";
+import { RouteError } from "@/components/ui/RouteError";
 
 function ChefSkeleton() {
   return (
@@ -26,11 +27,23 @@ function ChefSkeleton() {
   );
 }
 
+/**
+ * Chef profile route with SSR support.
+ * 
+ * SSR Pattern:
+ * - loader: Prefetches chef data on the server using ensureQueryData
+ * - useSuspenseQuery: Reads from cache (populated by loader) without waterfalls
+ * - pendingComponent: Shows skeleton while navigating client-side
+ * - errorComponent: Gracefully handles loader failures and notFound() errors
+ * 
+ * This ensures the chef profile HTML is rendered on the server for SEO and fast FCP.
+ */
 export const Route = createFileRoute("/chef/$username")({
   loader: ({ params, context: { queryClient } }) =>
     queryClient.ensureQueryData(convexQuery(api.users.getByUsername, { username: params.username })),
   pendingComponent: ChefSkeleton,
   component: ChefPage,
+  errorComponent: ({ error, reset }) => <RouteError error={error} reset={reset} />,
   head: ({ loaderData }) => ({
     meta: [
       { title: loaderData?.name ? `${loaderData.name}'s Kitchen${APP_TITLE_SUFFIX}` : `Chef${APP_TITLE_SUFFIX}` },

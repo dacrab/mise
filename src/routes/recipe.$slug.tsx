@@ -15,11 +15,23 @@ import { BookmarkIcon as BookmarkSolidIcon } from "@heroicons/react/24/solid";
 import type { Id } from "convex/_generated/dataModel";
 import { useState } from "react";
 import { useToast } from "@/components/ui/Toast";
+import { RouteError } from "@/components/ui/RouteError";
 
+/**
+ * Recipe detail route with SSR support.
+ * 
+ * SSR Pattern:
+ * - loader: Prefetches recipe data on the server using ensureQueryData
+ * - useSuspenseQuery: Reads from cache (populated by loader) without waterfalls
+ * - errorComponent: Gracefully handles loader failures and notFound() errors
+ * 
+ * This ensures the recipe HTML is rendered on the server for SEO and fast FCP.
+ */
 export const Route = createFileRoute("/recipe/$slug")({
   loader: ({ params, context: { queryClient } }) =>
     queryClient.ensureQueryData(convexQuery(api.recipes.getBySlug, { slug: params.slug })),
   component: RecipePage,
+  errorComponent: ({ error, reset }) => <RouteError error={error} reset={reset} />,
   head: ({ loaderData }) => ({
     meta: [
       { title: loaderData?.title ? `${loaderData.title}${APP_TITLE_SUFFIX}` : `Recipe${APP_TITLE_SUFFIX}` },
