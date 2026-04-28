@@ -60,6 +60,42 @@ bun test:coverage    # test coverage
 bun test:e2e         # E2E tests
 ```
 
+## SSR Verification
+
+This project uses TanStack Start with server-side rendering for optimal performance and SEO.
+
+### Testing SSR Locally
+
+1. **Build and preview:**
+   ```bash
+   bun run build
+   bun run start
+   ```
+
+2. **View page source** (not Inspect Element):
+   - Right-click on page → "View Page Source"
+   - Verify HTML contains actual content (recipe titles, descriptions, etc.)
+   - Should NOT see loading states or empty divs
+
+3. **Test without JavaScript:**
+   - Open DevTools → Settings (⚙️) → Debugger
+   - Check "Disable JavaScript"
+   - Reload the page
+   - Content should be visible (though not interactive)
+
+4. **Check meta tags:**
+   - View source and search for `<meta property="og:title"`
+   - Verify Open Graph tags are populated with actual data
+
+### SSR Routes
+
+These routes are server-rendered for SEO and performance:
+- `/` - Home page with featured recipes
+- `/recipe/:slug` - Recipe detail pages
+- `/chef/:username` - Chef profile pages
+
+See `src/router.tsx` for detailed SSR patterns and best practices.
+
 ## License
 
 MIT
