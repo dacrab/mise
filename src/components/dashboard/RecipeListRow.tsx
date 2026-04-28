@@ -2,7 +2,12 @@ import { PhotoIcon } from "@heroicons/react/24/outline";
 import { Link } from "@tanstack/react-router";
 import type { Id } from "convex/_generated/dataModel";
 
-interface RecipeListRowProps {
+export function RecipeListRow({
+  recipe,
+  showActions = false,
+  pendingDeleteId,
+  onDelete,
+}: {
   recipe: {
     _id: Id<"recipes">;
     slug: string;
@@ -13,9 +18,7 @@ interface RecipeListRowProps {
   showActions?: boolean;
   pendingDeleteId?: Id<"recipes"> | null;
   onDelete?: (id: Id<"recipes">) => void;
-}
-
-export function RecipeListRow({ recipe, showActions = false, pendingDeleteId, onDelete }: RecipeListRowProps) {
+}) {
   return (
     <div className="card-hover flex items-center gap-4 p-4 group">
       <div className="w-16 h-16 md:w-20 md:h-20 rounded-lg overflow-hidden bg-cream-dark shrink-0">

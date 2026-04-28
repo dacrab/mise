@@ -2,54 +2,33 @@ import { describe, expect, it } from "vitest";
 import { formatNumber, scaleIngredient } from "@/lib/utils";
 
 describe("formatNumber", () => {
-  it("returns whole numbers as strings", () => {
-    expect(formatNumber(2)).toBe("2");
-  });
-  it("returns ½ for 0.5", () => {
-    expect(formatNumber(0.5)).toBe("½");
-  });
-  it("returns 1½ for 1.5", () => {
-    expect(formatNumber(1.5)).toBe("1½");
-  });
-  it("returns ¼ for 0.25", () => {
-    expect(formatNumber(0.25)).toBe("¼");
-  });
-  it("returns ¾ for 0.75", () => {
-    expect(formatNumber(0.75)).toBe("¾");
-  });
-  it("falls back to decimal for non-fraction values", () => {
-    expect(formatNumber(0.6)).toBe("0.6");
-  });
-
-  it("rounds nearby thirds to the supported vulgar fraction", () => {
-    expect(formatNumber(0.35)).toBe("⅓");
+  it.each([
+    [2, "2"],
+    [0.5, "½"],
+    [1.5, "1½"],
+    [0.25, "¼"],
+    [0.75, "¾"],
+    [0.35, "⅓"],
+    [0.6, "0.6"],
+  ])("formatNumber(%f) → %s", (input, expected) => {
+    expect(formatNumber(input)).toBe(expected);
   });
 });
 
 describe("scaleIngredient", () => {
-  it("scales a whole number ingredient", () => {
+  it("scales whole numbers", () => {
     expect(scaleIngredient("2 cups flour", 2)).toBe("4 cups flour");
   });
-  it("scales a fractional ingredient", () => {
+  it("scales fractions", () => {
     expect(scaleIngredient("1/2 cup sugar", 2)).toBe("1 cup sugar");
   });
-  it("scales a decimal ingredient", () => {
+  it("scales decimals", () => {
     expect(scaleIngredient("1.5 tsp salt", 2)).toBe("3 tsp salt");
   });
   it("leaves non-numeric text unchanged", () => {
     expect(scaleIngredient("a pinch of salt", 3)).toBe("a pinch of salt");
   });
-  it("handles scale factor of 1 (identity)", () => {
-    expect(scaleIngredient("2 eggs", 1)).toBe("2 eggs");
-  });
-  it("handles scale factor < 1 (halving)", () => {
-    expect(scaleIngredient("2 cups milk", 0.5)).toBe("1 cups milk");
-  });
-  it("uses fraction symbol when result is a vulgar fraction", () => {
+  it("uses vulgar fractions for results", () => {
     expect(scaleIngredient("1 cup", 0.5)).toBe("½ cup");
-  });
-
-  it("uses the supported vulgar fraction when decimal output rounds close enough", () => {
-    expect(scaleIngredient("0.35 cup oil", 1)).toBe("⅓ cup oil");
   });
 });

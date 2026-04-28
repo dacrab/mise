@@ -5,7 +5,7 @@ import { usePaginatedQuery, useQuery } from "convex/react";
 import { useRef } from "react";
 import { z } from "zod";
 import { PageLayout } from "@/components/layout/PageLayout";
-import { RecipeCard, RecipeGridSkeleton } from "@/components/ui/RecipeCard";
+import { RecipeCard, FeaturedRecipeCard, RecipeGridSkeleton } from "@/components/ui/RecipeCard";
 import { Spinner } from "@/components/ui/Primitives";
 import { CATEGORIES, CATEGORY_ICONS } from "@/lib/constants";
 
@@ -105,13 +105,10 @@ function HomePage() {
             </div>
           </div>
           {featured ? (
-            <RecipeCard
-              recipeId={featured._id}
+            <FeaturedRecipeCard
               slug={featured.slug}
               title={featured.title}
               coverImageUrl={featured.coverImageUrl}
-              category={featured.category}
-              variant="featured"
               badge="Featured"
             />
           ) : (

@@ -3,16 +3,18 @@ import { ClockIcon, FireIcon, PrinterIcon, UserGroupIcon } from "@heroicons/reac
 import { PlayIcon as PlayIconSolid } from "@heroicons/react/24/solid";
 import { useSuspenseQuery } from "@tanstack/react-query";
 import { createFileRoute, Link, notFound } from "@tanstack/react-router";
+import { useMutation, useQuery } from "convex/react";
 import { api } from "convex/_generated/api";
 import { PageLayout } from "@/components/layout/PageLayout";
 import { APP_TITLE_SUFFIX } from "@/lib/constants";
 import { ShareButton } from "@/components/recipe/RecipeActions";
-import { IngredientScaler, MetaStat } from "@/components/recipe/RecipeWidgets";
+import { IngredientScaler } from "@/components/recipe/RecipeWidgets";
 import { Avatar } from "@/components/ui/Primitives";
 import { BookmarkIcon as BookmarkOutlineIcon } from "@heroicons/react/24/outline";
 import { BookmarkIcon as BookmarkSolidIcon } from "@heroicons/react/24/solid";
-import { useBookmarkToggle } from "@/hooks/useBookmarkToggle";
 import type { Id } from "convex/_generated/dataModel";
+import { useState } from "react";
+import { useToast } from "@/components/ui/Toast";
 
 export const Route = createFileRoute("/recipe/$slug")({
   loader: ({ params, context: { queryClient } }) =>
@@ -32,12 +34,28 @@ export const Route = createFileRoute("/recipe/$slug")({
 });
 
 function SaveButton({ recipeId }: { recipeId: Id<"recipes"> }) {
-  const { isBookmarked, isPending, toggleBookmark } = useBookmarkToggle(recipeId, {
-    errorMessage: "Sign in to save recipes",
-  });
+  const bookmarks = useQuery(api.recipes.myBookmarks);
+  const toggleBookmarkMutation = useMutation(api.social.toggleBookmark);
+  const { toast } = useToast();
+  const [isPending, setIsPending] = useState(false);
+
+  const isBookmarked = bookmarks?.some((recipe) => recipe._id === recipeId) ?? false;
+
+  const handleClick = async () => {
+    if (isPending) return;
+    setIsPending(true);
+    try {
+      await toggleBookmarkMutation({ recipeId });
+    } catch {
+      toast("Sign in to save recipes", "error");
+    } finally {
+      setIsPending(false);
+    }
+  };
+
   return (
     <button
-      onClick={() => void toggleBookmark()}
+      onClick={handleClick}
       disabled={isPending}
       aria-label={isBookmarked ? "Remove from saved" : "Save recipe"}
       aria-pressed={isBookmarked}
@@ -68,27 +86,49 @@ function RecipePage() {
           {(recipe.prepTime || recipe.cookTime || recipe.servings || recipe.difficulty) && (
             <div className="flex flex-wrap gap-3 mt-6">
               {recipe.prepTime && (
-                <MetaStat icon={<ClockIcon className="w-4 h-4" />} label="Prep" value={`${recipe.prepTime} min`} />
+                <div className="stat-box">
+                  <div className="text-stone">
+                    <ClockIcon className="w-4 h-4" />
+                  </div>
+                  <span className="text-xs text-stone uppercase tracking-wide">Prep</span>
+                  <span className="text-sm font-medium text-charcoal">{recipe.prepTime} min</span>
+                </div>
               )}
               {recipe.cookTime && (
-                <MetaStat icon={<FireIcon className="w-4 h-4" />} label="Cook" value={`${recipe.cookTime} min`} />
+                <div className="stat-box">
+                  <div className="text-stone">
+                    <FireIcon className="w-4 h-4" />
+                  </div>
+                  <span className="text-xs text-stone uppercase tracking-wide">Cook</span>
+                  <span className="text-sm font-medium text-charcoal">{recipe.cookTime} min</span>
+                </div>
               )}
               {recipe.prepTime && recipe.cookTime && (
-                <MetaStat
-                  icon={<ClockIcon className="w-4 h-4" />}
-                  label="Total"
-                  value={`${recipe.prepTime + recipe.cookTime} min`}
-                />
+                <div className="stat-box">
+                  <div className="text-stone">
+                    <ClockIcon className="w-4 h-4" />
+                  </div>
+                  <span className="text-xs text-stone uppercase tracking-wide">Total</span>
+                  <span className="text-sm font-medium text-charcoal">{recipe.prepTime + recipe.cookTime} min</span>
+                </div>
               )}
               {recipe.servings && (
-                <MetaStat
-                  icon={<UserGroupIcon className="w-4 h-4" />}
-                  label="Servings"
-                  value={String(recipe.servings)}
-                />
+                <div className="stat-box">
+                  <div className="text-stone">
+                    <UserGroupIcon className="w-4 h-4" />
+                  </div>
+                  <span className="text-xs text-stone uppercase tracking-wide">Servings</span>
+                  <span className="text-sm font-medium text-charcoal">{recipe.servings}</span>
+                </div>
               )}
               {recipe.difficulty && (
-                <MetaStat icon={<FireIcon className="w-4 h-4" />} label="Difficulty" value={recipe.difficulty} />
+                <div className="stat-box">
+                  <div className="text-stone">
+                    <FireIcon className="w-4 h-4" />
+                  </div>
+                  <span className="text-xs text-stone uppercase tracking-wide">Difficulty</span>
+                  <span className="text-sm font-medium text-charcoal">{recipe.difficulty}</span>
+                </div>
               )}
             </div>
           )}

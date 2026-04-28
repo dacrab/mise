@@ -43,84 +43,6 @@ export function PageLayout({ children, className = "" }: { children: React.React
   );
 }
 
-export function SimpleLayout({
-  children,
-  backTo = "/",
-  backLabel = "← Back",
-  asArticle = false,
-  articleClassName = "",
-}: {
-  children: React.ReactNode;
-  backTo?: string;
-  backLabel?: string;
-  asArticle?: boolean;
-  articleClassName?: string;
-}) {
-  const content = asArticle ? (
-    <article className={`wrapper max-w-2xl py-12 md:py-16 ${articleClassName}`}>{children}</article>
-  ) : (
-    children
-  );
-
-  return (
-    <>
-      <header className="fixed top-0 left-0 right-0 z-50 glass border-b border-cream-dark/50">
-        <div className="wrapper h-16 flex items-center">
-          <Link to={backTo} className="text-sm text-stone hover:text-charcoal transition-colors">
-            {backLabel}
-          </Link>
-        </div>
-      </header>
-      <main className="pt-20 pb-24">{content}</main>
-      <Footer />
-    </>
-  );
-}
-
-export function AuthLayout({
-  children,
-  variant,
-  tagline,
-  subtitle,
-}: {
-  children: React.ReactNode;
-  variant: "login" | "signup";
-  tagline: string;
-  subtitle: string;
-}) {
-  const isLogin = variant === "login";
-  const classes = {
-    bg: isLogin ? "bg-charcoal" : "bg-sage",
-    text: isLogin ? "text-cream" : "text-warm-white",
-    tagline: isLogin ? "text-sage-light" : "text-cream",
-    subtitle: isLogin ? "text-stone-light" : "text-cream/80",
-    year: isLogin ? "text-stone" : "text-cream/60",
-  };
-
-  return (
-    <div className="min-h-screen flex">
-      <div className={`hidden lg:flex lg:w-1/2 ${classes.bg} p-12 flex-col justify-between`}>
-        <Link to="/" className={`font-serif text-2xl font-semibold ${classes.text}`}>
-          mise
-        </Link>
-        <div>
-          <p className={`font-hand text-3xl ${classes.tagline} mb-4`}>{tagline}</p>
-          <p className={`${classes.subtitle} text-lg max-w-md`}>{subtitle}</p>
-        </div>
-        <p className={`${classes.year} text-sm`}>© {new Date().getFullYear()} mise</p>
-      </div>
-      <div className="flex-1 flex items-center justify-center p-8 bg-cream">
-        <div className="w-full max-w-md">
-          <Link to="/" className="lg:hidden font-serif text-2xl font-semibold text-charcoal block mb-8">
-            mise
-          </Link>
-          {children}
-        </div>
-      </div>
-    </div>
-  );
-}
-
 export function ErrorPage({
   title,
   message,
@@ -131,7 +53,7 @@ export function ErrorPage({
   showHomeLink?: boolean;
 }) {
   return (
-    <div className="min-h-screen flex items-center justify-center bg-cream p-8 text-center">
+    <div className="center min-h-screen bg-cream p-8 text-center">
       <div>
         <h1 className="font-serif text-4xl font-medium text-charcoal mb-4">{title}</h1>
         {message && <p className="text-stone mb-6">{message}</p>}

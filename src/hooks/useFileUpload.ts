@@ -1,11 +1,12 @@
 import { useEffect, useRef, useState } from "react";
 
-interface UploadOptions {
-  onSuccess?: (storageId: string, previewUrl: string) => void;
-  onError?: (err: Error) => void;
-}
-
-export function useFileUpload(getUploadUrl: () => Promise<string>, options: UploadOptions = {}) {
+export function useFileUpload(
+  getUploadUrl: () => Promise<string>,
+  options: {
+    onSuccess?: (storageId: string, previewUrl: string) => void;
+    onError?: (err: Error) => void;
+  } = {}
+) {
   const [uploading, setUploading] = useState(false);
   const [progress, setProgress] = useState(0);
   const abortRef = useRef<AbortController | null>(null);

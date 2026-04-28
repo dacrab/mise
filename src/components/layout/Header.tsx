@@ -12,9 +12,8 @@ import {
 import { Link, useRouter } from "@tanstack/react-router";
 import { api } from "convex/_generated/api";
 import { Authenticated, Unauthenticated, useQuery } from "convex/react";
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Avatar } from "@/components/ui/Primitives";
-import { useDismissableLayer } from "@/hooks/useDismissableLayer";
 
 const FOOTER_LINKS = [
   { to: "/about", label: "About" },
@@ -63,7 +62,7 @@ function UserMenu({ onClose }: { onClose?: () => void }) {
                 {USER_MENU_LINKS.map(({ to, label, icon: Icon }) => (
                   <Menu.Item
                     key={to}
-                    className="flex items-center gap-2.5 px-4 py-2 text-sm text-charcoal hover:bg-cream-dark outline-none cursor-pointer data-[highlighted]:bg-cream-dark transition-colors"
+                    className="menu-item cursor-pointer"
                     render={<Link to={to} />}
                   >
                     <Icon className="w-4 h-4 text-stone" /> {label}
@@ -132,7 +131,29 @@ function GuestNav({ onClose }: { onClose?: () => void }) {
 export function Header() {
   const [mobileOpen, setMobileOpen] = useState(false);
   const closeMobile = () => setMobileOpen(false);
-  useDismissableLayer<HTMLDivElement>(mobileOpen, closeMobile);
+  const menuRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!mobileOpen) return;
+
+    const handleClick = (e: MouseEvent) => {
+      if (menuRef.current && !menuRef.current.contains(e.target as Node)) {
+        closeMobile();
+      }
+    };
+
+    const handleEscape = (e: KeyboardEvent) => {
+      if (e.key === "Escape") closeMobile();
+    };
+
+    document.addEventListener("mousedown", handleClick);
+    document.addEventListener("keydown", handleEscape);
+
+    return () => {
+      document.removeEventListener("mousedown", handleClick);
+      document.removeEventListener("keydown", handleEscape);
+    };
+  }, [mobileOpen]);
 
   return (
     <>
@@ -158,6 +179,7 @@ export function Header() {
       )}
 
       <div
+        ref={menuRef}
         id="mobile-menu"
         role="dialog"
         aria-modal="true"

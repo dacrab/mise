@@ -4,7 +4,6 @@ import { Link, useRouter } from "@tanstack/react-router";
 import { useState } from "react";
 import { Spinner } from "@/components/ui/Primitives";
 import { useToast } from "@/components/ui/Toast";
-import { useAsyncAction } from "@/hooks/useAsyncAction";
 
 const MIN_PASSWORD_LENGTH = 8;
 
@@ -31,7 +30,7 @@ function FormField({
   const errorId = `${id}-error`;
   return (
     <div>
-      <label htmlFor={id} className="block text-sm font-medium text-charcoal-light mb-2">{label}</label>
+      <label htmlFor={id} className="label">{label}</label>
       <input
         id={id} type={type} value={value}
         onChange={(e) => onChange(e.target.value)}
@@ -55,7 +54,7 @@ function PasswordField({
 }) {
   return (
     <div>
-      <label htmlFor={id} className="block text-sm font-medium text-charcoal-light mb-2">{label}</label>
+      <label htmlFor={id} className="label">{label}</label>
       <div className="relative">
         <input
           id={id} type={show ? "text" : "password"} value={value}
@@ -111,23 +110,24 @@ export function LoginForm() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
+  const [isPending, setIsPending] = useState(false);
 
-  const { execute: handleSubmit, isPending } = useAsyncAction(
-    async (e: React.FormEvent) => {
-      e.preventDefault();
-      if (!email || !password) return;
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!email || !password || isPending) return;
+    setIsPending(true);
+    try {
       const result = await signIn("password", { email, password, flow: "signIn" });
       if (result.signingIn) {
         toast("Welcome back! 👨‍🍳", "success");
         await router.navigate({ to: "/dashboard", replace: true });
       }
-    },
-    {
-      onError: (err) => {
-        toast(mapAuthError(LOGIN_ERRORS, err), "error");
-      },
+    } catch (err) {
+      toast(mapAuthError(LOGIN_ERRORS, err), "error");
+    } finally {
+      setIsPending(false);
     }
-  );
+  };
 
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
@@ -155,30 +155,29 @@ export function SignupForm() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
+  const [isPending, setIsPending] = useState(false);
 
   const strength = calculatePasswordStrength(password);
 
-  const { execute: handleSubmit, isPending } = useAsyncAction(
-    async (e: React.FormEvent) => {
-      e.preventDefault();
-      if (!name || !email || !password || password.length < MIN_PASSWORD_LENGTH) return;
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!name || !email || !password || password.length < MIN_PASSWORD_LENGTH || isPending) return;
+    setIsPending(true);
+    try {
       const result = await signIn("password", { email, password, name, flow: "signUp" });
-      // Convex Auth signs the user in immediately after signup
       if (result.signingIn) {
         toast("Account created! Welcome to Mise 🎉", "success");
         await router.navigate({ to: "/dashboard", replace: true });
       } else {
-        // Signed up but not yet signed in (e.g. email verification required)
         toast("Account created! Please check your email to verify.", "info");
         await router.navigate({ to: "/login", replace: true });
       }
-    },
-    {
-      onError: (err) => {
-        toast(mapAuthError(SIGNUP_ERRORS_MAP, err), "error");
-      },
+    } catch (err) {
+      toast(mapAuthError(SIGNUP_ERRORS_MAP, err), "error");
+    } finally {
+      setIsPending(false);
     }
-  );
+  };
 
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
@@ -210,25 +209,33 @@ export function ForgotPasswordForm() {
   const [email, setEmail] = useState("");
   const [code, setCode] = useState("");
   const [newPassword, setNewPassword] = useState("");
+  const [sendingCode, setSendingCode] = useState(false);
+  const [resetting, setResetting] = useState(false);
 
-  const { execute: handleRequestReset, isPending: sendingCode } = useAsyncAction(
-    async (e: React.FormEvent) => {
-      e.preventDefault();
-      if (!email.trim()) return;
+  const handleRequestReset = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!email.trim() || sendingCode) return;
+    setSendingCode(true);
+    try {
       const fd = new FormData();
       fd.set("email", email);
       fd.set("flow", "reset");
       await signIn("password", fd);
       setStep("code");
       toast("Reset code sent to your email 📬", "success");
-    },
-    { onError: (err) => toast(err.message || "Could not send reset code. Please try again.", "error") }
-  );
+    } catch (err) {
+      const message = err instanceof Error ? err.message : "Could not send reset code. Please try again.";
+      toast(message, "error");
+    } finally {
+      setSendingCode(false);
+    }
+  };
 
-  const { execute: handleResetPassword, isPending: resetting } = useAsyncAction(
-    async (e: React.FormEvent) => {
-      e.preventDefault();
-      if (!code.trim() || newPassword.length < MIN_PASSWORD_LENGTH) return;
+  const handleResetPassword = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!code.trim() || newPassword.length < MIN_PASSWORD_LENGTH || resetting) return;
+    setResetting(true);
+    try {
       const fd = new FormData();
       fd.set("email", email);
       fd.set("code", code);
@@ -237,14 +244,18 @@ export function ForgotPasswordForm() {
       await signIn("password", fd);
       toast("Password reset successfully! Please sign in.", "success");
       await router.navigate({ to: "/login", replace: true });
-    },
-    { onError: (err) => toast(err.message || "Invalid or expired code. Please try again.", "error") }
-  );
+    } catch (err) {
+      const message = err instanceof Error ? err.message : "Invalid or expired code. Please try again.";
+      toast(message, "error");
+    } finally {
+      setResetting(false);
+    }
+  };
 
   if (step === "code") {
     return (
       <div>
-        <button onClick={() => setStep("email")} className="flex items-center gap-1 text-sm text-stone hover:text-charcoal mb-6">
+        <button onClick={() => setStep("email")} className="link-muted flex items-center gap-1 mb-6">
           <ArrowLeftIcon className="w-4 h-4" /> Back
         </button>
         <h1 className="font-serif text-2xl font-medium mb-2">Enter reset code</h1>
@@ -262,7 +273,7 @@ export function ForgotPasswordForm() {
 
   return (
     <div>
-      <Link to="/login" className="flex items-center gap-1 text-sm text-stone hover:text-charcoal mb-6">
+      <Link to="/login" className="link-muted flex items-center gap-1 mb-6">
         <ArrowLeftIcon className="w-4 h-4" /> Back to login
       </Link>
       <h1 className="font-serif text-2xl font-medium mb-2">Forgot password?</h1>

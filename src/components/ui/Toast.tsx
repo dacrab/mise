@@ -3,18 +3,7 @@ import { CheckCircleIcon, ExclamationCircleIcon, InformationCircleIcon, XMarkIco
 
 type ToastType = "success" | "error" | "info";
 
-interface ToastItem {
-  id: number;
-  message: string;
-  type: ToastType;
-  exiting?: boolean;
-}
-
-interface ToastContextValue {
-  toast: (message: string, type?: ToastType) => void;
-}
-
-const ToastContext = createContext<ToastContextValue | undefined>(undefined);
+const ToastContext = createContext<((message: string, type?: ToastType) => void) | undefined>(undefined);
 
 const ICONS: Record<ToastType, React.ElementType> = {
   success: CheckCircleIcon,
@@ -28,19 +17,18 @@ const STYLES: Record<ToastType, string> = {
   info: "bg-honey/10 border-honey/20 text-charcoal",
 };
 
-const DURATIONS: Record<ToastType, number> = {
-  success: 3500,
-  error: 5000,
-  info: 4000,
-};
-
-function ToastItem({ toast: t, onDismiss }: { toast: ToastItem; onDismiss: (id: number) => void }) {
+function ToastItem({
+  toast: t,
+  onDismiss,
+}: {
+  toast: { id: number; message: string; type: ToastType };
+  onDismiss: (id: number) => void;
+}) {
   const Icon = ICONS[t.type];
   return (
     <div
       role={t.type === "error" ? "alert" : "status"}
       aria-live={t.type === "error" ? "assertive" : "polite"}
-      style={{ animation: t.exiting ? "toastExit 0.25s ease-in forwards" : "toastEnter 0.3s cubic-bezier(0.21, 1.02, 0.73, 1) forwards" }}
       className={`flex items-start gap-3 px-4 py-3 rounded-xl border shadow-lg text-sm max-w-sm w-full pointer-events-auto ${STYLES[t.type]}`}
     >
       <Icon className="w-4 h-4 shrink-0 mt-0.5" aria-hidden="true" />
@@ -57,23 +45,24 @@ function ToastItem({ toast: t, onDismiss }: { toast: ToastItem; onDismiss: (id: 
 }
 
 export function ToastProvider({ children }: { children: React.ReactNode }) {
-  const [toasts, setToasts] = useState<ToastItem[]>([]);
+  const [toasts, setToasts] = useState<Array<{ id: number; message: string; type: ToastType }>>([]);
   const nextId = useRef(0);
   const timers = useRef<Map<number, ReturnType<typeof setTimeout>>>(new Map());
 
   const dismiss = useCallback((id: number) => {
-    setToasts((prev) => prev.map((t) => t.id === id ? { ...t, exiting: true } : t));
-    const timer = setTimeout(() => {
-      setToasts((prev) => prev.filter((t) => t.id !== id));
+    setToasts((prev) => prev.filter((t) => t.id !== id));
+    const timer = timers.current.get(id);
+    if (timer) {
+      clearTimeout(timer);
       timers.current.delete(id);
-    }, 280);
-    timers.current.set(id, timer);
+    }
   }, []);
 
   const toast = useCallback((message: string, type: ToastType = "info") => {
     const id = ++nextId.current;
     setToasts((prev) => [...prev, { id, message, type }]);
-    const timer = setTimeout(() => dismiss(id), DURATIONS[type]);
+    const duration = type === "error" ? 5000 : type === "success" ? 3500 : 4000;
+    const timer = setTimeout(() => dismiss(id), duration);
     timers.current.set(id, timer);
   }, [dismiss]);
 
@@ -83,7 +72,7 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   return (
-    <ToastContext.Provider value={{ toast }}>
+    <ToastContext.Provider value={toast}>
       {children}
       <div
         aria-atomic="false"
@@ -97,8 +86,8 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
   );
 }
 
-export function useToast(): ToastContextValue {
-  const ctx = useContext(ToastContext);
-  if (ctx === undefined) throw new Error("useToast must be used within a ToastProvider");
-  return ctx;
+export function useToast() {
+  const toast = useContext(ToastContext);
+  if (toast === undefined) throw new Error("useToast must be used within a ToastProvider");
+  return { toast };
 }

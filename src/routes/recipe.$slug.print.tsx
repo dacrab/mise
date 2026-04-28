@@ -3,7 +3,6 @@ import { ClockIcon, FireIcon, UserGroupIcon, PrinterIcon } from "@heroicons/reac
 import { useSuspenseQuery } from "@tanstack/react-query";
 import { createFileRoute, notFound } from "@tanstack/react-router";
 import { api } from "convex/_generated/api";
-import { MetaStat } from "@/components/recipe/RecipeWidgets";
 
 export const Route = createFileRoute("/recipe/$slug/print")({
   loader: ({ params, context: { queryClient } }) =>
@@ -25,11 +24,51 @@ function PrintRecipe() {
         <h1 className="text-3xl font-bold mb-2">{recipe.title}</h1>
         {recipe.description && <p className="text-stone">{recipe.description}</p>}
         <div className="flex flex-wrap gap-3 mt-4">
-          {recipe.prepTime && <MetaStat icon={<ClockIcon className="w-4 h-4" />} label="Prep" value={`${recipe.prepTime} min`} />}
-          {recipe.cookTime && <MetaStat icon={<FireIcon className="w-4 h-4" />} label="Cook" value={`${recipe.cookTime} min`} />}
-          {recipe.prepTime && recipe.cookTime && <MetaStat icon={<ClockIcon className="w-4 h-4" />} label="Total" value={`${recipe.prepTime + recipe.cookTime} min`} />}
-          {recipe.servings && <MetaStat icon={<UserGroupIcon className="w-4 h-4" />} label="Serves" value={String(recipe.servings)} />}
-          {recipe.difficulty && <MetaStat icon={<FireIcon className="w-4 h-4" />} label="Difficulty" value={recipe.difficulty} />}
+          {recipe.prepTime && (
+            <div className="stat-box">
+              <div className="text-stone">
+                <ClockIcon className="w-4 h-4" />
+              </div>
+              <span className="text-xs text-stone uppercase tracking-wide">Prep</span>
+              <span className="text-sm font-medium text-charcoal">{recipe.prepTime} min</span>
+            </div>
+          )}
+          {recipe.cookTime && (
+            <div className="stat-box">
+              <div className="text-stone">
+                <FireIcon className="w-4 h-4" />
+              </div>
+              <span className="text-xs text-stone uppercase tracking-wide">Cook</span>
+              <span className="text-sm font-medium text-charcoal">{recipe.cookTime} min</span>
+            </div>
+          )}
+          {recipe.prepTime && recipe.cookTime && (
+            <div className="stat-box">
+              <div className="text-stone">
+                <ClockIcon className="w-4 h-4" />
+              </div>
+              <span className="text-xs text-stone uppercase tracking-wide">Total</span>
+              <span className="text-sm font-medium text-charcoal">{recipe.prepTime + recipe.cookTime} min</span>
+            </div>
+          )}
+          {recipe.servings && (
+            <div className="stat-box">
+              <div className="text-stone">
+                <UserGroupIcon className="w-4 h-4" />
+              </div>
+              <span className="text-xs text-stone uppercase tracking-wide">Serves</span>
+              <span className="text-sm font-medium text-charcoal">{recipe.servings}</span>
+            </div>
+          )}
+          {recipe.difficulty && (
+            <div className="stat-box">
+              <div className="text-stone">
+                <FireIcon className="w-4 h-4" />
+              </div>
+              <span className="text-xs text-stone uppercase tracking-wide">Difficulty</span>
+              <span className="text-sm font-medium text-charcoal">{recipe.difficulty}</span>
+            </div>
+          )}
         </div>
       </header>
 

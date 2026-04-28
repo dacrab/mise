@@ -10,8 +10,6 @@ function RootComponent() {
   const { isLoading, location } = useRouterState();
   const wrapperRef = useRef<HTMLDivElement>(null);
   const prevPathRef = useRef(location.pathname);
-  const rafRef = useRef<number | null>(null);
-  const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
     if (location.pathname === prevPathRef.current) return;
@@ -20,25 +18,11 @@ function RootComponent() {
     const el = wrapperRef.current;
     if (!el) return;
 
-    // Clean up any in-flight animations
-    if (rafRef.current) cancelAnimationFrame(rafRef.current);
-    if (timerRef.current) clearTimeout(timerRef.current);
+    el.classList.remove("page-enter");
+    requestAnimationFrame(() => el.classList.add("page-enter"));
 
-    // Remove both classes, then add enter on next frame to avoid forced reflow
-    el.classList.remove("page-exit", "page-enter");
-    rafRef.current = requestAnimationFrame(() => {
-      el.classList.add("page-enter");
-    });
-
-    // Clean up enter class after animation completes so it can re-trigger
-    timerRef.current = setTimeout(() => {
-      el.classList.remove("page-enter");
-    }, 400);
-
-    return () => {
-      if (rafRef.current) cancelAnimationFrame(rafRef.current);
-      if (timerRef.current) clearTimeout(timerRef.current);
-    };
+    const timer = setTimeout(() => el.classList.remove("page-enter"), 400);
+    return () => clearTimeout(timer);
   }, [location.pathname]);
 
   return (

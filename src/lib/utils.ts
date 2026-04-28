@@ -1,7 +1,3 @@
-/**
- * Pure utility functions — no React, no Convex, no side effects.
- */
-
 const FRACTIONS: Array<[number, string]> = [
   [0.125, "⅛"],
   [0.25, "¼"],
@@ -11,7 +7,6 @@ const FRACTIONS: Array<[number, string]> = [
   [0.75, "¾"],
 ];
 
-/** Format a number as a human-readable quantity using vulgar fraction symbols where appropriate. */
 export function formatNumber(n: number): string {
   if (n === 0) return "0";
   if (n === Math.floor(n)) return n.toString();
@@ -25,10 +20,6 @@ export function formatNumber(n: number): string {
   return n.toFixed(1).replace(/\.0$/, "");
 }
 
-/**
- * Scale a single ingredient string by `scale`.
- * Handles integers, decimals, and fractions (e.g. "1/2", "2 1/4").
- */
 export function scaleIngredient(ingredient: string, scale: number): string {
   return ingredient.replace(/(\d+\/\d+|\d+\.?\d*)/g, (match) => {
     if (match.includes("/")) {
@@ -41,14 +32,12 @@ export function scaleIngredient(ingredient: string, scale: number): string {
   });
 }
 
-/** Format a duration in seconds as "m:ss". */
 export function formatSeconds(seconds: number): string {
   const m = Math.floor(seconds / 60);
   const s = seconds % 60;
   return `${m}:${s.toString().padStart(2, "0")}`;
 }
 
-/** Format a timestamp (ms since epoch) as a relative "time ago" string. */
 export function timeAgo(ms: number): string {
   const diff = Date.now() - ms;
   const mins = Math.floor(diff / 60000);
@@ -61,7 +50,6 @@ export function timeAgo(ms: number): string {
   return new Date(ms).toLocaleDateString();
 }
 
-/** Extract a human-readable message from an unknown error value. */
 export function getErrorMessage(err: unknown): string {
   if (err instanceof Error) return err.message;
   if (typeof err === "string") return err;

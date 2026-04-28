@@ -12,7 +12,7 @@ function AuthedLayout() {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
+      <div className="center min-h-screen">
         <Spinner className="w-8 h-8 text-sage" />
       </div>
     );

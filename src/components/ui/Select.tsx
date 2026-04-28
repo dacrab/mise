@@ -1,17 +1,23 @@
 import { Select as BaseSelect } from "@base-ui-components/react/select";
 import { CheckIcon, ChevronUpDownIcon } from "@heroicons/react/24/outline";
 
-interface SelectProps {
+export function Select({
+  value,
+  onChange,
+  options,
+  placeholder = "Select...",
+  name,
+  id,
+  className = "",
+}: {
   value: string;
   onChange: (value: string) => void;
   options: Array<{ label: string; value: string }>;
   placeholder?: string;
-  name?: string | undefined;
+  name?: string;
   id?: string;
   className?: string;
-}
-
-export function Select({ value, onChange, options, placeholder = "Select...", name, id, className = "" }: SelectProps) {
+}) {
   const displayValue = value ? options.find((o) => o.value === value)?.label : placeholder;
 
   return (
@@ -33,7 +39,7 @@ export function Select({ value, onChange, options, placeholder = "Select...", na
               <BaseSelect.Item
                 key={opt.value}
                 value={opt.value}
-                className="flex items-center gap-2 px-3 py-2 text-sm text-charcoal cursor-pointer outline-none data-[highlighted]:bg-cream-dark"
+                className="menu-item cursor-pointer"
               >
                 <BaseSelect.ItemIndicator className="w-4">
                   <CheckIcon className="w-4 h-4 text-sage" />
