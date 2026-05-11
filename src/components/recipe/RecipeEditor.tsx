@@ -6,6 +6,7 @@ import { useMutation, useQuery } from "convex/react";
 import { useEffect, useRef, useState } from "react";
 import { Controller, useFieldArray, useForm } from "react-hook-form";
 import { z } from "zod";
+import { FieldError } from "@/components/ui/FieldError";
 import { ProgressBar } from "@/components/ui/Primitives";
 import { Select } from "@/components/ui/Select";
 import { useToast } from "@/components/ui/Toast";
@@ -50,6 +51,27 @@ const recipeSchema = z.object({
   ingredients: z.array(z.object({ value: z.string() })),
   steps: z.array(z.object({ value: z.string() })),
 });
+
+function buildPayload(
+  data: RecipeFormData,
+  coverImage: Id<"_storage"> | null,
+  validIngredients: string[],
+  validSteps: string[]
+) {
+  return {
+    title: data.title.trim() || "Untitled",
+    description: data.description?.trim() || undefined,
+    category: data.category || "General",
+    prepTime: data.prepTime ? Number(data.prepTime) : undefined,
+    cookTime: data.cookTime ? Number(data.cookTime) : undefined,
+    servings: data.servings ? Number(data.servings) : undefined,
+    difficulty: data.difficulty || undefined,
+    ingredients: validIngredients,
+    steps: validSteps,
+    coverImage: coverImage ?? undefined,
+    videoUrl: data.videoUrl?.trim() || undefined,
+  };
+}
 
 export function RecipeEditor({
   initialData,
@@ -168,17 +190,7 @@ export function RecipeEditor({
 
         await updateRecipe({
           id: recipeId,
-          title: watchedValues.title.trim() || "Untitled",
-          description: watchedValues.description?.trim() || undefined,
-          category: watchedValues.category || "General",
-          prepTime: watchedValues.prepTime ? Number(watchedValues.prepTime) : undefined,
-          cookTime: watchedValues.cookTime ? Number(watchedValues.cookTime) : undefined,
-          servings: watchedValues.servings ? Number(watchedValues.servings) : undefined,
-          difficulty: watchedValues.difficulty || undefined,
-          ingredients: validIngredients,
-          steps: validSteps,
-          coverImage: coverImage ?? undefined,
-          videoUrl: watchedValues.videoUrl?.trim() || undefined,
+          ...buildPayload(watchedValues, coverImage, validIngredients, validSteps),
           status: "draft",
         });
         setLastSaved(new Date());
@@ -228,21 +240,10 @@ export function RecipeEditor({
       return;
     }
 
-
     setLoading(true);
     try {
       const payload = {
-        title: data.title.trim(),
-        description: data.description?.trim() || undefined,
-        category: data.category || "General",
-        prepTime: data.prepTime ? Number(data.prepTime) : undefined,
-        cookTime: data.cookTime ? Number(data.cookTime) : undefined,
-        servings: data.servings ? Number(data.servings) : undefined,
-        difficulty: data.difficulty || undefined,
-        ingredients: validIngredients,
-        steps: validSteps,
-        coverImage: coverImage ?? undefined,
-        videoUrl: data.videoUrl?.trim() || undefined,
+        ...buildPayload(data, coverImage, validIngredients, validSteps),
         status,
       };
 
@@ -305,7 +306,7 @@ export function RecipeEditor({
                 maxLength={200}
                 {...register("title")}
               />
-              {errors.title && <p className="text-xs text-terracotta mt-1">{errors.title.message}</p>}
+              <FieldError error={errors.title} />
             </div>
             <div className="grid sm:grid-cols-2 gap-4">
               <div>
@@ -359,7 +360,7 @@ export function RecipeEditor({
                   placeholder="15"
                   {...register("prepTime")}
                 />
-                {errors.prepTime && <p className="text-xs text-terracotta mt-1">{errors.prepTime.message}</p>}
+                <FieldError error={errors.prepTime} />
               </div>
               <div>
                 <label htmlFor="recipe-cook-time" className="label">
@@ -374,7 +375,7 @@ export function RecipeEditor({
                   placeholder="30"
                   {...register("cookTime")}
                 />
-                {errors.cookTime && <p className="text-xs text-terracotta mt-1">{errors.cookTime.message}</p>}
+                <FieldError error={errors.cookTime} />
               </div>
               <div>
                 <label htmlFor="recipe-servings" className="label">
@@ -389,7 +390,7 @@ export function RecipeEditor({
                   placeholder="4"
                   {...register("servings")}
                 />
-                {errors.servings && <p className="text-xs text-terracotta mt-1">{errors.servings.message}</p>}
+                <FieldError error={errors.servings} />
               </div>
             </div>
             <div>
@@ -403,7 +404,7 @@ export function RecipeEditor({
                 placeholder="YouTube or TikTok"
                 {...register("videoUrl")}
               />
-              {errors.videoUrl && <p className="text-xs text-terracotta mt-1">{errors.videoUrl.message}</p>}
+              <FieldError error={errors.videoUrl} />
             </div>
             <div>
               <label htmlFor="recipe-description" className="label">
@@ -415,7 +416,7 @@ export function RecipeEditor({
                 placeholder="Tell the story…"
                 {...register("description")}
               />
-              {errors.description && <p className="text-xs text-terracotta mt-1">{errors.description.message}</p>}
+              <FieldError error={errors.description} />
             </div>
           </section>
 
@@ -432,9 +433,7 @@ export function RecipeEditor({
                       {...register(`ingredients.${i}.value`)}
                       aria-label={`Ingredient ${i + 1}`}
                     />
-                    {errors.ingredients?.[i] && (
-                      <p className="text-xs text-terracotta mt-1">{errors.ingredients[i]?.message}</p>
-                    )}
+                    <FieldError error={errors.ingredients?.[i]} />
                   </div>
                   <button
                     onClick={() => removeIngredient(i)}
@@ -471,7 +470,7 @@ export function RecipeEditor({
                       {...register(`steps.${i}.value`)}
                       aria-label={`Step ${i + 1}`}
                     />
-                    {errors.steps?.[i] && <p className="text-xs text-terracotta mt-1">{errors.steps[i]?.message}</p>}
+                    <FieldError error={errors.steps?.[i]} />
                     <button
                       onClick={() => removeStep(i)}
                       className="text-xs text-stone hover:text-terracotta mt-1"
