@@ -3,6 +3,7 @@ import { v } from "convex/values";
 import { mutation, query } from "./_generated/server";
 import { getAuthUserId, requireAuth } from "./lib/auth";
 import { generateAuthenticatedUploadUrl, withCoverUrl, withCoverUrls } from "./lib/storage";
+import { checkRateLimit } from "./rateLimit";
 
 function generateSlug(title: string): string {
   const base = title
@@ -108,6 +109,19 @@ export const getByUser = query({
   },
 });
 
+export const getByUserPaginated = query({
+  args: { userId: v.id("users"), paginationOpts: paginationOptsValidator },
+  handler: async (ctx, { userId, paginationOpts }) => {
+    const currentUserId = await getAuthUserId(ctx);
+    const isOwner = currentUserId === userId;
+    const base = ctx.db.query("recipes").withIndex("by_user", (q) => q.eq("userId", userId));
+    const results = await (isOwner ? base : base.filter((q) => q.eq(q.field("status"), "published")))
+      .order("desc")
+      .paginate(paginationOpts);
+    return { ...results, page: await withCoverUrls(ctx, results.page) };
+  },
+});
+
 export const myRecipes = query({
   args: {},
   handler: async (ctx) => {
@@ -136,6 +150,23 @@ export const myBookmarks = query({
       (r): r is NonNullable<typeof r> => r !== null
     );
     return withCoverUrls(ctx, recipes);
+  },
+});
+
+export const myBookmarksPaginated = query({
+  args: { paginationOpts: paginationOptsValidator },
+  handler: async (ctx, { paginationOpts }) => {
+    const userId = await getAuthUserId(ctx);
+    if (!userId) return { page: [], isDone: true, continueCursor: "" };
+    const results = await ctx.db
+      .query("bookmarks")
+      .withIndex("by_user", (q) => q.eq("userId", userId))
+      .order("desc")
+      .paginate(paginationOpts);
+    const recipes = (await Promise.all(results.page.map((b) => ctx.db.get(b.recipeId)))).filter(
+      (r): r is NonNullable<typeof r> => r !== null
+    );
+    return { ...results, page: await withCoverUrls(ctx, recipes) };
   },
 });
 
@@ -171,6 +202,7 @@ export const create = mutation({
   args: recipeArgs,
   handler: async (ctx, args) => {
     const userId = await requireAuth(ctx);
+    await checkRateLimit(ctx, userId, "recipe:create");
     const slug = generateSlug(args.title);
     const id = await ctx.db.insert("recipes", { ...args, slug, userId });
     return { id, slug };
@@ -181,6 +213,7 @@ export const update = mutation({
   args: { id: v.id("recipes"), ...recipeArgs },
   handler: async (ctx, { id, ...args }) => {
     const userId = await requireAuth(ctx);
+    await checkRateLimit(ctx, userId, "recipe:update");
     const recipe = await ctx.db.get(id);
     if (!recipe || recipe.userId !== userId) throw new Error("Not found");
     await ctx.db.patch(id, args);

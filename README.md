@@ -6,14 +6,25 @@ A recipe sharing platform for home cooks. No ads, no algorithms — just good fo
 
 ## Features
 
-- **Recipes** — create, edit, fork, import from URL, print view, ingredient scaling, cooking timers
-- **Social** — likes, bookmarks, comments, star ratings, follow chefs, real-time notifications
-- **Collections** — organize bookmarks into named collections
-- **Auth** — email/password + Google OAuth, password reset, custom avatars
+- **Recipes** — create, edit, publish/draft, print view, cover images
+- **Browse** — paginated listing, category filters, full-text search
+- **Social** — bookmarks, chef profiles
+- **Auth** — email/password with session management
+- **Dark mode** — system-aware with manual toggle, persisted preference
+- **SEO** — server-side rendering, sitemap, Open Graph meta tags
+
+### Planned
+
+- Fork recipes, import from URL
+- Ingredient scaling, cooking timers
+- Comments, star ratings
+- Follow chefs, notifications
+- Collections (organize bookmarks)
+- Google OAuth
 
 ## Tech Stack
 
-- **Frontend**: React 19, TanStack Router, Tailwind CSS
+- **Frontend**: React 19, TanStack Start (SSR), Tailwind CSS v4
 - **Backend**: Convex (database, auth, file storage, real-time)
 - **Testing**: Vitest, Playwright
 
@@ -39,8 +50,6 @@ For production, set these in the [Convex dashboard](https://dashboard.convex.dev
 
 ```
 SITE_URL           # production URL
-AUTH_GOOGLE_ID     # Google OAuth client ID
-AUTH_GOOGLE_SECRET # Google OAuth client secret
 ```
 
 ## Development
@@ -59,42 +68,6 @@ bun test:run         # run tests (CI)
 bun test:coverage    # test coverage
 bun test:e2e         # E2E tests
 ```
-
-## SSR Verification
-
-This project uses TanStack Start with server-side rendering for optimal performance and SEO.
-
-### Testing SSR Locally
-
-1. **Build and preview:**
-   ```bash
-   bun run build
-   bun run start
-   ```
-
-2. **View page source** (not Inspect Element):
-   - Right-click on page → "View Page Source"
-   - Verify HTML contains actual content (recipe titles, descriptions, etc.)
-   - Should NOT see loading states or empty divs
-
-3. **Test without JavaScript:**
-   - Open DevTools → Settings (⚙️) → Debugger
-   - Check "Disable JavaScript"
-   - Reload the page
-   - Content should be visible (though not interactive)
-
-4. **Check meta tags:**
-   - View source and search for `<meta property="og:title"`
-   - Verify Open Graph tags are populated with actual data
-
-### SSR Routes
-
-These routes are server-rendered for SEO and performance:
-- `/` - Home page with featured recipes
-- `/recipe/:slug` - Recipe detail pages
-- `/chef/:username` - Chef profile pages
-
-See `src/router.tsx` for detailed SSR patterns and best practices.
 
 ## License
 
