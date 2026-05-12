@@ -6,7 +6,9 @@ import {
   ChevronDownIcon,
   Cog6ToothIcon,
   HomeIcon,
+  MoonIcon,
   PlusIcon,
+  SunIcon,
   XMarkIcon,
 } from "@heroicons/react/24/outline";
 import { Link, useRouter } from "@tanstack/react-router";
@@ -14,6 +16,7 @@ import { api } from "convex/_generated/api";
 import { Authenticated, Unauthenticated, useQuery } from "convex/react";
 import { useEffect, useRef, useState } from "react";
 import { Avatar } from "@/components/ui/Primitives";
+import { useTheme } from "@/hooks/useTheme";
 
 const FOOTER_LINKS = [
   { to: "/about", label: "About" },
@@ -128,6 +131,15 @@ function GuestNav({ onClose }: { onClose?: () => void }) {
   );
 }
 
+function ThemeToggle() {
+  const { theme, toggle } = useTheme();
+  return (
+    <button onClick={toggle} className="btn-ghost p-2" aria-label={`Switch to ${theme === "dark" ? "light" : "dark"} mode`}>
+      {theme === "dark" ? <SunIcon className="w-5 h-5" /> : <MoonIcon className="w-5 h-5" />}
+    </button>
+  );
+}
+
 export function Header() {
   const [mobileOpen, setMobileOpen] = useState(false);
   const closeMobile = () => setMobileOpen(false);
@@ -163,10 +175,12 @@ export function Header() {
             mise
           </Link>
           <nav className="hidden sm:flex items-center gap-2">
+            <ThemeToggle />
             <Authenticated><UserMenu /></Authenticated>
             <Unauthenticated><GuestNav /></Unauthenticated>
           </nav>
           <div className="flex sm:hidden items-center gap-2">
+            <ThemeToggle />
             <button onClick={() => setMobileOpen(true)} className="p-2 hover:bg-cream-dark rounded-lg transition-colors" aria-label="Open menu" aria-expanded={mobileOpen} aria-controls="mobile-menu">
               <Bars3Icon className="w-5 h-5" />
             </button>

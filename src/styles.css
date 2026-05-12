@@ -16,12 +16,14 @@
   --color-stone-light: #C4BEB4;
 }
 
+@custom-variant dark (&:where(.dark, .dark *));
+
 @layer base {
   body {
-    @apply bg-cream text-charcoal font-sans antialiased;
+    @apply bg-cream text-charcoal font-sans antialiased dark:bg-[#1a1a1a] dark:text-[#e8e4df];
   }
   h1, h2, h3, h4 {
-    @apply font-serif text-charcoal;
+    @apply font-serif text-charcoal dark:text-[#f0ece7];
   }
 }
 
@@ -34,35 +36,35 @@
 }
 
 @utility btn-primary {
-  @apply btn px-5 py-2.5 bg-charcoal text-cream rounded-lg hover:bg-charcoal-light active:scale-[0.98];
+  @apply btn px-5 py-2.5 bg-charcoal text-cream rounded-lg hover:bg-charcoal-light active:scale-[0.98] dark:bg-[#e8e4df] dark:text-[#1a1a1a] dark:hover:bg-[#d4cfc7];
 }
 
 @utility btn-secondary {
-  @apply btn px-5 py-2.5 bg-cream-dark text-charcoal rounded-lg hover:bg-stone-light/50 border border-stone-light/50;
+  @apply btn px-5 py-2.5 bg-cream-dark text-charcoal rounded-lg hover:bg-stone-light/50 border border-stone-light/50 dark:bg-[#2a2a2a] dark:text-[#e8e4df] dark:border-[#444] dark:hover:bg-[#333];
 }
 
 @utility btn-ghost {
-  @apply btn px-4 py-2 text-charcoal-light hover:text-charcoal hover:bg-cream-dark rounded-lg;
+  @apply btn px-4 py-2 text-charcoal-light hover:text-charcoal hover:bg-cream-dark rounded-lg dark:text-[#aaa] dark:hover:text-[#e8e4df] dark:hover:bg-[#2a2a2a];
 }
 
 @utility input-field {
-  @apply w-full px-4 py-3 bg-warm-white border border-stone-light/60 rounded-lg text-charcoal placeholder:text-stone focus:outline-none focus:border-sage focus:ring-2 focus:ring-sage/20;
+  @apply w-full px-4 py-3 bg-warm-white border border-stone-light/60 rounded-lg text-charcoal placeholder:text-stone focus:outline-none focus:border-sage focus:ring-2 focus:ring-sage/20 dark:bg-[#222] dark:border-[#444] dark:text-[#e8e4df] dark:placeholder:text-[#777];
 }
 
 @utility card {
-  @apply bg-warm-white rounded-xl border border-cream-dark;
+  @apply bg-warm-white rounded-xl border border-cream-dark dark:bg-[#222] dark:border-[#333];
 }
 
 @utility card-hover {
-  @apply card transition-all duration-300 hover:shadow-[0_4px_20px_rgba(45,42,38,0.08)] hover:border-stone-light/60;
+  @apply card transition-all duration-300 hover:shadow-[0_4px_20px_rgba(45,42,38,0.08)] hover:border-stone-light/60 dark:hover:shadow-[0_4px_20px_rgba(0,0,0,0.3)] dark:hover:border-[#444];
 }
 
 @utility tag {
-  @apply inline-flex items-center px-2.5 py-1 text-xs font-medium rounded-md bg-cream-dark text-charcoal-light;
+  @apply inline-flex items-center px-2.5 py-1 text-xs font-medium rounded-md bg-cream-dark text-charcoal-light dark:bg-[#2a2a2a] dark:text-[#aaa];
 }
 
 @utility glass {
-  @apply bg-cream/80 backdrop-blur-md border-b border-cream-dark;
+  @apply bg-cream/80 backdrop-blur-md border-b border-cream-dark dark:bg-[#1a1a1a]/80 dark:border-[#333];
 }
 
 @utility label {

@@ -46,4 +46,10 @@ export default defineSchema({
     .index("by_user", ["userId"])
     .index("by_recipe", ["recipeId"])
     .index("by_user_recipe", ["userId", "recipeId"]),
+
+  rateLimits: defineTable({
+    userId: v.id("users"),
+    action: v.string(),
+  })
+    .index("by_user_action", ["userId", "action"]),
 });

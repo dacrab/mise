@@ -1,0 +1,42 @@
+import { describe, expect, it } from "vitest";
+
+// Replicate the pure generateSlug logic from convex/recipes.ts for unit testing
+function generateSlug(title: string): string {
+  const base = title
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/(^-|-$)+/g, "")
+    .slice(0, 80);
+  const suffix = Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
+  return `${base}-${suffix}`;
+}
+
+describe("generateSlug", () => {
+  it("lowercases and hyphenates", () => {
+    const slug = generateSlug("My Great Recipe");
+    expect(slug).toMatch(/^my-great-recipe-/);
+  });
+
+  it("strips special characters", () => {
+    const slug = generateSlug("Crème Brûlée!!!");
+    expect(slug).toMatch(/^cr-me-br-l-e-/);
+  });
+
+  it("trims leading/trailing hyphens", () => {
+    const slug = generateSlug("---hello---");
+    expect(slug).toMatch(/^hello-/);
+  });
+
+  it("truncates base to 80 chars", () => {
+    const long = "a".repeat(100);
+    const slug = generateSlug(long);
+    const base = slug.split("-").slice(0, -1).join("-");
+    expect(base.length).toBeLessThanOrEqual(80);
+  });
+
+  it("appends a unique suffix", () => {
+    const a = generateSlug("test");
+    const b = generateSlug("test");
+    expect(a).not.toBe(b);
+  });
+});
