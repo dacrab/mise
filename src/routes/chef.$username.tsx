@@ -12,15 +12,16 @@ import { RouteError } from "@/components/ui/RouteError";
 function ChefSkeleton() {
   return (
     <PageLayout>
-      <div className="wrapper py-8 md:py-16 animate-pulse">
-        <div className="flex flex-col sm:flex-row items-center sm:items-start gap-6 mb-10 pb-10 border-b border-cream-dark">
-          <div className="w-24 h-24 rounded-full bg-cream-dark shrink-0" />
-          <div className="flex-1 space-y-3">
-            <div className="h-7 w-48 bg-cream-dark rounded" />
-            <div className="h-4 w-24 bg-cream-dark rounded" />
-            <div className="h-4 w-full max-w-sm bg-cream-dark rounded" />
+      <div className="hero-banner py-16 px-5 animate-pulse">
+        <div className="max-w-6xl mx-auto flex flex-col sm:flex-row items-center sm:items-end gap-6">
+          <div className="w-28 h-28 rounded-full bg-white/10 shrink-0" />
+          <div className="space-y-3">
+            <div className="h-8 w-48 bg-white/10 rounded" />
+            <div className="h-4 w-24 bg-white/10 rounded" />
           </div>
         </div>
+      </div>
+      <div className="max-w-6xl mx-auto px-5 py-10">
         <RecipeGridSkeleton />
       </div>
     </PageLayout>
@@ -64,43 +65,50 @@ function ChefPage() {
 
   return (
     <PageLayout>
-      <div className="wrapper">
-        <div className="py-12 md:py-16 border-b border-cream-dark mb-10">
-          <div className="flex flex-col sm:flex-row items-center sm:items-start gap-6">
-            <Avatar src={chef.profileImageUrl ?? chef.image} name={chef.name} size="lg" className="!w-24 !h-24 text-2xl" />
-            <div className="text-center sm:text-left">
-              <h1 className="font-serif text-3xl font-medium mb-1">{chef.name}</h1>
-              {chef.username && <p className="text-stone text-sm mb-3">@{chef.username}</p>}
-              {chef.bio && <p className="text-charcoal-light max-w-md mb-4">{chef.bio}</p>}
-              <span className="text-sm text-charcoal">
-                <strong>{recipes.length}</strong> recipes
-              </span>
+      {/* Hero Banner */}
+      <div className="hero-banner py-14 md:py-20 px-5">
+        <div className="max-w-6xl mx-auto flex flex-col sm:flex-row items-center sm:items-end gap-6">
+          <Avatar src={chef.profileImageUrl ?? chef.image} name={chef.name} size="lg" className="!w-28 !h-28 text-3xl ring-4 ring-white/20" />
+          <div className="text-center sm:text-left">
+            <h1 className="font-serif text-3xl md:text-4xl font-medium text-cream mb-1">{chef.name}</h1>
+            {chef.username && <p className="text-sage-light text-sm mb-3">@{chef.username}</p>}
+            {chef.bio && <p className="text-cream/70 max-w-md mb-4">{chef.bio}</p>}
+            <div className="inline-flex items-center gap-2 bg-white/10 rounded-full px-4 py-1.5">
+              <span className="font-serif text-lg font-medium text-cream">{recipes.length}</span>
+              <span className="text-sm text-cream/70">{recipes.length === 1 ? "recipe" : "recipes"}</span>
             </div>
           </div>
         </div>
+      </div>
 
-        <section>
-          <h2 className="font-serif text-xl font-medium mb-6">Recipes</h2>
-          {recipes.length > 0 ? (
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-              {recipes.map((r) => (
-                <RecipeCard
-                  key={r._id}
-                  recipeId={r._id}
-                  slug={r.slug}
-                  title={r.title}
-                  description={r.description}
-                  category={r.category}
-                  coverImageUrl={r.coverImageUrl}
-                />
-              ))}
+      {/* Recipes */}
+      <div className="max-w-6xl mx-auto px-5 py-10 md:py-14">
+        <h2 className="font-serif text-xl font-medium mb-6">Recipes</h2>
+        {recipes.length > 0 ? (
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+            {recipes.map((r) => (
+              <RecipeCard
+                key={r._id}
+                recipeId={r._id}
+                slug={r.slug}
+                title={r.title}
+                description={r.description}
+                category={r.category}
+                coverImageUrl={r.coverImageUrl}
+              />
+            ))}
+          </div>
+        ) : (
+          <div className="card p-16 text-center">
+            <div className="w-20 h-20 bg-sage/10 rounded-full flex items-center justify-center mx-auto mb-6">
+              <svg className="w-9 h-9 text-sage" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M12 6.042A8.967 8.967 0 0 0 6 3.75c-1.052 0-2.062.18-3 .512v14.25A8.987 8.987 0 0 1 6 18c2.305 0 4.408.867 6 2.292m0-14.25a8.966 8.966 0 0 1 6-2.292c1.052 0 2.062.18 3 .512v14.25A8.987 8.987 0 0 0 18 18a8.967 8.967 0 0 0-6 2.292m0-14.25v14.25" />
+              </svg>
             </div>
-          ) : (
-            <div className="card p-12 text-center">
-              <p className="text-stone">No recipes published yet.</p>
-            </div>
-          )}
-        </section>
+            <h3 className="font-serif text-2xl font-medium mb-2">No recipes yet</h3>
+            <p className="text-stone max-w-sm mx-auto">This chef hasn't published any recipes yet. Check back soon!</p>
+          </div>
+        )}
       </div>
     </PageLayout>
   );

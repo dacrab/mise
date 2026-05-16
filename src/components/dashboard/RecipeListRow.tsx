@@ -21,7 +21,7 @@ export function RecipeListRow({
 }) {
   return (
     <div className="card-hover flex items-center gap-4 p-4 group">
-      <div className="w-16 h-16 md:w-20 md:h-20 rounded-lg overflow-hidden bg-cream-dark shrink-0">
+      <div className="w-16 h-16 md:w-20 md:h-20 rounded-lg overflow-hidden surface-raised shrink-0">
         {recipe.coverImageUrl ? (
           <img src={recipe.coverImageUrl} className="w-full h-full object-cover" alt="" />
         ) : (

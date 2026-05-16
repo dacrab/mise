@@ -26,8 +26,6 @@ export default defineConfig({
       exclude: [
         "src/routeTree.gen.ts",
         "src/**/*.d.ts",
-        "src/client.tsx",
-        "src/server.tsx",
       ],
     },
   },

@@ -25,9 +25,9 @@ function ForgotPasswordPage() {
         </div>
         <p className="text-stone text-sm">© {new Date().getFullYear()} mise</p>
       </div>
-      <div className="center flex-1 p-8 bg-cream">
+      <div className="center flex-1 p-8 bg-cream dark:bg-d-bg">
         <div className="w-full max-w-md">
-          <Link to="/" className="lg:hidden font-serif text-2xl font-semibold text-charcoal block mb-8">
+          <Link to="/" className="lg:hidden font-serif text-2xl font-semibold text-primary block mb-8">
             mise
           </Link>
           <ForgotPasswordForm />

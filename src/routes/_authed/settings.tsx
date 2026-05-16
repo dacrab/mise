@@ -1,13 +1,26 @@
-import { CalendarIcon, CameraIcon, EnvelopeIcon } from "@heroicons/react/24/outline";
-import { createFileRoute } from "@tanstack/react-router";
+import {
+  CalendarIcon,
+  CameraIcon,
+  EnvelopeIcon,
+  MoonIcon,
+  SunIcon,
+  ComputerDesktopIcon,
+  ArrowRightOnRectangleIcon,
+  TrashIcon,
+} from "@heroicons/react/24/outline";
+import { useAuthActions } from "@convex-dev/auth/react";
+import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { api } from "convex/_generated/api";
 import { APP_TITLE_SUFFIX } from "@/lib/constants";
 import type { Id } from "convex/_generated/dataModel";
 import { useMutation, useQuery } from "convex/react";
 import { useEffect, useRef, useState } from "react";
 import { ProgressBar } from "@/components/ui/Primitives";
+import { TextArea } from "@/components/ui/TextArea";
+import { TextField } from "@/components/ui/TextField";
 import { useToast } from "@/components/ui/Toast";
 import { useFileUpload } from "@/hooks/useFileUpload";
+import { useTheme } from "@/hooks/useTheme";
 
 export const Route = createFileRoute("/_authed/settings")({
   head: () => ({
@@ -23,6 +36,9 @@ function Settings() {
   const user = useQuery(api.users.currentUser);
   const updateProfile = useMutation(api.users.updateProfile);
   const generateUploadUrl = useMutation(api.users.generateUploadUrl);
+  const { signOut } = useAuthActions();
+  const navigate = useNavigate();
+  const { preference, setTheme } = useTheme();
   const {
     upload,
     uploading,
@@ -48,7 +64,6 @@ function Settings() {
   const [saving, setSaving] = useState(false);
   const previewUrlRef = useRef<string | null>(null);
 
-  // Sync form when user data first loads (undefined → object)
   const userIdRef = useRef<string | undefined>(undefined);
   useEffect(() => {
     if (user && user._id !== userIdRef.current) {
@@ -59,7 +74,6 @@ function Settings() {
     }
   }, [user]);
 
-  // Revoke object URLs only on unmount — not on every previewUrl change
   useEffect(() => {
     return () => {
       if (previewUrlRef.current) URL.revokeObjectURL(previewUrlRef.current);
@@ -105,146 +119,244 @@ function Settings() {
   const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
-    if (!file.type.startsWith("image/")) {
-      toast("Please select an image file", "error");
-      return;
-    }
-    if (file.size > 5 * 1024 * 1024) {
-      toast("Image must be under 5MB", "error");
-      return;
-    }
+    if (!file.type.startsWith("image/")) { toast("Please select an image file", "error"); return; }
+    if (file.size > 5 * 1024 * 1024) { toast("Image must be under 5MB", "error"); return; }
     await upload(file);
+  };
+
+  const handleSignOut = async () => {
+    await signOut();
+    void navigate({ to: "/", replace: true });
   };
 
   const avatar = previewUrl ?? user.profileImageUrl ?? user.image;
 
   return (
-    <div className="wrapper max-w-2xl py-8 md:py-12">
-      <h1 className="font-serif text-3xl font-medium mb-8">Settings</h1>
-
-      <form onSubmit={handleSubmit} className="space-y-6">
-        <section className="card p-6">
-          <h2 className="font-serif text-lg font-medium mb-4">Profile</h2>
-          <div className="flex items-center gap-5 mb-6">
-            <div className="relative w-20 h-20 rounded-full overflow-hidden bg-cream-dark shrink-0 group/avatar">
-              {avatar ? (
-                <img src={avatar} alt="Profile" className="w-full h-full object-cover" />
-              ) : (
-                <div className="center w-full h-full text-2xl font-medium text-sage">
-                  {(name || "?")[0]}
-                </div>
-              )}
-              {uploading && (
-                <div className="absolute inset-0 bg-charcoal/60 flex items-center justify-center">
-                  <span className="text-white text-[11px] font-bold">{uploadProgress}%</span>
-                </div>
-              )}
-              <label className="absolute inset-0 bg-charcoal/50 opacity-0 hover:opacity-100 transition-opacity flex items-center justify-center cursor-pointer">
-                <CameraIcon className="w-5 h-5 text-white" />
-                <input
-                  ref={fileInputRef}
-                  type="file"
-                  accept="image/*"
-                  onChange={handleImageUpload}
-                  className="hidden"
-                  aria-label="Upload profile photo"
-                />
-              </label>
-            </div>
-            <div className="flex-1">
-              <p className="font-medium text-charcoal">{name || "Chef"}</p>
-              <button
-                type="button"
-                onClick={() => fileInputRef.current?.click()}
-                disabled={uploading}
-                className="text-sm text-sage hover:text-sage-dark transition-colors"
-              >
-                {uploading ? "Uploading…" : "Change photo"}
-              </button>
-              {uploading && <ProgressBar value={uploadProgress} className="mt-2" />}
-            </div>
-          </div>
-
-          <div className="space-y-5">
-            <div>
-              <label htmlFor="name" className="label">
-                Display name
-              </label>
-              <input
-                id="name"
-                type="text"
-                value={name}
-                onChange={(e) => setName(e.target.value)}
-                className="input-field"
-                placeholder="Your name"
-              />
-            </div>
-            <div>
-              <label htmlFor="username" className="label">
-                Username
-              </label>
-              <div className="relative">
-                <span className="absolute left-3 top-1/2 -translate-y-1/2 text-stone">@</span>
-                <input
-                  id="username"
-                  type="text"
-                  value={username}
-                  onChange={(e) => setUsername(e.target.value.toLowerCase().replace(/[^a-z0-9_]/g, ""))}
-                  className="input-field pl-8"
-                  placeholder="username"
-                />
+    <div className="min-h-[calc(100vh-4rem)]">
+      {/* Header banner */}
+      <div className="hero-banner py-12 px-5 sm:px-8">
+        <div className="max-w-5xl mx-auto flex items-center gap-6">
+          <div className="relative w-24 h-24 sm:w-28 sm:h-28 rounded-full overflow-hidden surface-raised shrink-0 ring-4 ring-cream/20">
+            {avatar ? (
+              <img src={avatar} alt="Profile" className="w-full h-full object-cover" />
+            ) : (
+              <div className="center w-full h-full text-3xl font-medium text-sage surface-raised">
+                {(name || "?")[0]}
               </div>
-              <p className="text-xs text-stone mt-1.5">Letters, numbers, and underscores only</p>
-            </div>
-            <div>
-              <label htmlFor="bio" className="label">
-                Bio
-              </label>
-              <textarea
-                id="bio"
-                value={bio}
-                onChange={(e) => setBio(e.target.value)}
-                className="textarea-field"
-                rows={3}
-                placeholder="A few words about yourself…"
-                maxLength={160}
+            )}
+            {uploading && (
+              <div className="absolute inset-0 bg-charcoal/70 flex items-center justify-center">
+                <span className="text-white text-xs font-bold">{uploadProgress}%</span>
+              </div>
+            )}
+            <label className="absolute inset-0 bg-charcoal/50 opacity-0 hover:opacity-100 transition-opacity flex items-center justify-center">
+              <CameraIcon className="w-6 h-6 text-white" />
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept="image/*"
+                onChange={handleImageUpload}
+                className="hidden"
+                aria-label="Upload profile photo"
               />
-              <p className="text-xs text-stone mt-1.5 text-right">{bio.length}/160</p>
-            </div>
+            </label>
           </div>
-        </section>
-
-        <section className="card p-6">
-          <h2 className="font-serif text-lg font-medium mb-4 flex items-center gap-2">
-            <EnvelopeIcon className="w-5 h-5 text-sage" />
-            Account
-          </h2>
-          <dl className="space-y-3 text-sm">
-            <div className="flex justify-between py-2 border-b border-cream-dark">
-              <dt className="text-stone">Email</dt>
-              <dd className="text-charcoal">{user.email}</dd>
-            </div>
-            <div className="flex justify-between py-2 items-center">
-              <dt className="text-stone flex items-center gap-1.5">
-                <CalendarIcon className="w-4 h-4" /> Member since
-              </dt>
-              <dd className="text-charcoal">
-                {new Date(user._creationTime).toLocaleDateString("en-US", { month: "long", year: "numeric" })}
-              </dd>
-            </div>
-          </dl>
-        </section>
-
-        <div className="flex justify-end pt-2">
-          <button
-            type="submit"
-            disabled={saving || !hasChanges}
-            className="btn-primary disabled:opacity-50"
-          >
-            {saving ? "Saving…" : "Save changes"}
-          </button>
+          <div>
+            <h1 className="font-serif text-2xl sm:text-3xl font-medium text-cream">{name || "Chef"}</h1>
+            {username && <p className="text-sage-light text-sm mt-1">@{username}</p>}
+            <button
+              type="button"
+              onClick={() => fileInputRef.current?.click()}
+              disabled={uploading}
+              className="text-sm text-cream/70 hover:text-cream transition-colors mt-2"
+            >
+              {uploading ? "Uploading…" : "Change photo"}
+            </button>
+            {uploading && <ProgressBar value={uploadProgress} className="mt-2" />}
+          </div>
         </div>
-      </form>
+      </div>
+
+      {/* Content */}
+      <div className="max-w-5xl mx-auto px-5 sm:px-8 py-8">
+        <form onSubmit={handleSubmit}>
+          <div className="grid lg:grid-cols-[1fr_320px] gap-8">
+            {/* Left column */}
+            <div className="space-y-10">
+              {/* Profile section */}
+              <section className="space-y-6">
+                <h2 className="font-serif text-xl font-medium">Profile</h2>
+                <TextField
+                  id="name"
+                  label="Display name"
+                  value={name}
+                  onValueChange={setName}
+                  placeholder="Your name"
+                />
+                <TextField
+                  id="username"
+                  label="Username"
+                  prefix="@"
+                  value={username}
+                  onValueChange={(v) => setUsername(v.toLowerCase().replace(/[^a-z0-9_]/g, ""))}
+                  placeholder="username"
+                  hint="Letters, numbers, and underscores only. This is your public profile URL."
+                />
+                <TextArea
+                  id="bio"
+                  label="Bio"
+                  value={bio}
+                  onValueChange={setBio}
+                  placeholder="A few words about yourself…"
+                  maxLength={160}
+                  rows={4}
+                />
+              </section>
+
+              {/* Appearance section */}
+              <section className="space-y-4">
+                <h2 className="font-serif text-xl font-medium">Appearance</h2>
+                <p className="text-sm text-stone">Choose how Mise looks to you.</p>
+                <div className="grid grid-cols-3 gap-3">
+                  <ThemeOption
+                    icon={SunIcon}
+                    label="Light"
+                    active={preference === "light"}
+                    onClick={() => setTheme("light")}
+                  />
+                  <ThemeOption
+                    icon={MoonIcon}
+                    label="Dark"
+                    active={preference === "dark"}
+                    onClick={() => setTheme("dark")}
+                  />
+                  <ThemeOption
+                    icon={ComputerDesktopIcon}
+                    label="System"
+                    active={preference === "system"}
+                    onClick={() => setTheme("system")}
+                  />
+                </div>
+              </section>
+
+              {/* Danger zone */}
+              <section className="space-y-4 pt-6 border-t border-subtle">
+                <h2 className="font-serif text-xl font-medium text-terracotta">Danger zone</h2>
+                <div className="flex flex-col sm:flex-row gap-3">
+                  <button
+                    type="button"
+                    onClick={handleSignOut}
+                    className="flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg border border-field text-sm text-secondary hover:bg-cream-dark transition-colors"
+                  >
+                    <ArrowRightOnRectangleIcon className="w-4 h-4" />
+                    Sign out
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => toast("Account deletion is not yet available", "error")}
+                    className="flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg border border-terracotta/30 text-sm text-terracotta hover:bg-terracotta/5 transition-colors"
+                  >
+                    <TrashIcon className="w-4 h-4" />
+                    Delete account
+                  </button>
+                </div>
+              </section>
+
+              {/* Save — mobile */}
+              <div className="lg:hidden flex justify-end pt-4">
+                <button type="submit" disabled={saving || !hasChanges} className="btn-primary disabled:opacity-50">
+                  {saving ? "Saving…" : "Save changes"}
+                </button>
+              </div>
+            </div>
+
+            {/* Right column — sidebar */}
+            <aside className="lg:self-start">
+              <div className="sticky top-24 space-y-6">
+                {/* Account info */}
+                <section className="rounded-xl surface-muted p-6 space-y-4">
+                  <h3 className="text-xs font-semibold uppercase tracking-wider text-stone">Account</h3>
+                  <dl className="space-y-4 text-sm">
+                    <div>
+                      <dt className="text-xs text-stone mb-1 flex items-center gap-1.5">
+                        <EnvelopeIcon className="w-3.5 h-3.5" /> Email
+                      </dt>
+                      <dd className="text-primary font-medium truncate">{user.email}</dd>
+                    </div>
+                    <div>
+                      <dt className="text-xs text-stone mb-1 flex items-center gap-1.5">
+                        <CalendarIcon className="w-3.5 h-3.5" /> Joined
+                      </dt>
+                      <dd className="text-primary">
+                        {new Date(user._creationTime).toLocaleDateString("en-US", { month: "long", year: "numeric" })}
+                      </dd>
+                    </div>
+                  </dl>
+                </section>
+
+                {/* Quick stats */}
+                <section className="rounded-xl surface-muted p-6 space-y-4">
+                  <h3 className="text-xs font-semibold uppercase tracking-wider text-stone">Your kitchen</h3>
+                  <QuickStats />
+                </section>
+
+                {/* Save — desktop */}
+                <div className="hidden lg:block">
+                  <button type="submit" disabled={saving || !hasChanges} className="btn-primary w-full disabled:opacity-50">
+                    {saving ? "Saving…" : "Save changes"}
+                  </button>
+                  {hasChanges && (
+                    <p className="text-xs text-sage text-center mt-2">You have unsaved changes</p>
+                  )}
+                </div>
+              </div>
+            </aside>
+          </div>
+        </form>
+      </div>
+    </div>
+  );
+}
+
+function ThemeOption({ icon: Icon, label, active, onClick }: { icon: React.ComponentType<{ className?: string }>; label: string; active: boolean; onClick: () => void }) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className={`flex flex-col items-center gap-2 p-4 rounded-xl border-2 transition-all ${
+        active
+          ? "border-sage bg-sage/5 dark:bg-sage/10"
+          : "border-stone-light/40 hover:border-stone-light dark:border-d-border-strong dark:hover:border-d-border-hover"
+      }`}
+    >
+      <Icon className={`w-5 h-5 ${active ? "text-sage" : "text-stone"}`} />
+      <span className={`text-xs font-medium ${active ? "text-sage" : "text-stone"}`}>{label}</span>
+    </button>
+  );
+}
+
+function QuickStats() {
+  const recipes = useQuery(api.recipes.myRecipes);
+  const bookmarks = useQuery(api.recipes.myBookmarks);
+
+  const published = recipes?.filter((r) => r.status === "published").length ?? 0;
+  const drafts = recipes?.filter((r) => r.status === "draft").length ?? 0;
+  const saved = bookmarks?.length ?? 0;
+
+  return (
+    <div className="grid grid-cols-3 gap-2 text-center">
+      <div>
+        <p className="text-lg font-semibold text-primary">{published}</p>
+        <p className="text-[11px] text-stone">Published</p>
+      </div>
+      <div>
+        <p className="text-lg font-semibold text-primary">{drafts}</p>
+        <p className="text-[11px] text-stone">Drafts</p>
+      </div>
+      <div>
+        <p className="text-lg font-semibold text-primary">{saved}</p>
+        <p className="text-[11px] text-stone">Saved</p>
+      </div>
     </div>
   );
 }
