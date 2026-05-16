@@ -1,6 +1,6 @@
 import { ConvexError } from "convex/values";
-import type { MutationCtx } from "./_generated/server";
 import type { Id } from "./_generated/dataModel";
+import type { MutationCtx } from "./_generated/server";
 
 const LIMITS: Record<string, { max: number; windowMs: number }> = {
   "recipe:create": { max: 10, windowMs: 60 * 60 * 1000 }, // 10/hour
@@ -9,11 +9,7 @@ const LIMITS: Record<string, { max: number; windowMs: number }> = {
   signup: { max: 5, windowMs: 60 * 60 * 1000 }, // 5/hour
 };
 
-export async function checkRateLimit(
-  ctx: MutationCtx,
-  userId: Id<"users">,
-  action: string,
-) {
+export async function checkRateLimit(ctx: MutationCtx, userId: Id<"users">, action: string) {
   const limit = LIMITS[action];
   if (!limit) return;
 

@@ -1,8 +1,8 @@
-import { useConvexAuth } from "convex/react";
 import { createFileRoute, Link, Navigate } from "@tanstack/react-router";
+import { useConvexAuth } from "convex/react";
 import { z } from "zod";
-import { APP_TITLE_SUFFIX } from "@/lib/constants";
 import { SignupForm } from "@/components/auth/AuthForms";
+import { APP_TITLE_SUFFIX } from "@/lib/constants";
 
 const searchSchema = z.object({
   redirect: z.string().optional(),

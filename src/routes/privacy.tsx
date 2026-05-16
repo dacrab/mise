@@ -21,8 +21,7 @@ function PrivacyPage() {
         <section>
           <h2 className="font-serif text-xl font-medium mb-3">1. Information We Collect</h2>
           <p>
-            We collect information you provide directly when you create an account, such as your name and email
-            address.
+            We collect information you provide directly when you create an account, such as your name and email address.
           </p>
         </section>
         <section>
@@ -37,9 +36,7 @@ function PrivacyPage() {
           <p>Your data is stored securely using Convex, a real-time backend platform with built-in file storage.</p>
         </section>
       </div>
-      <footer className="mt-16 pt-6 border-t border-cream-dark text-sm text-stone">
-        Last updated: January 2026
-      </footer>
+      <footer className="mt-16 pt-6 border-t border-cream-dark text-sm text-stone">Last updated: January 2026</footer>
     </StaticPageLayout>
   );
 }

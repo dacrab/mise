@@ -1,10 +1,27 @@
 const sizes = { sm: "w-8 h-8 text-xs", md: "w-10 h-10 text-sm", lg: "w-14 h-14 text-base" } as const;
 
-export function Avatar({ src, name, size = "md", className = "" }: { src?: string | null; name?: string | null; size?: keyof typeof sizes; className?: string }) {
-  const initials = (name ?? "?").split(" ").map(w => w[0]).join("").slice(0, 2).toUpperCase();
+export function Avatar({
+  src,
+  name,
+  size = "md",
+  className = "",
+}: {
+  src?: string | null;
+  name?: string | null;
+  size?: keyof typeof sizes;
+  className?: string;
+}) {
+  const initials = (name ?? "?")
+    .split(" ")
+    .map((w) => w[0])
+    .join("")
+    .slice(0, 2)
+    .toUpperCase();
 
   return (
-    <div className={`${sizes[size]} rounded-full overflow-hidden bg-sage/20 text-sage-dark flex items-center justify-center font-medium shrink-0 ${className}`}>
+    <div
+      className={`${sizes[size]} rounded-full overflow-hidden bg-sage/20 text-sage-dark flex items-center justify-center font-medium shrink-0 ${className}`}
+    >
       {src ? <img src={src} alt={name ?? "Avatar"} className="w-full h-full object-cover" /> : initials}
     </div>
   );
@@ -24,7 +41,13 @@ export function ProgressBar({ value, label, className = "" }: { value: number; l
   return (
     <div className={`space-y-1 ${className}`}>
       {label && <p className="text-xs text-stone">{label}</p>}
-      <div className="h-1.5 rounded-full surface-raised overflow-hidden" role="progressbar" aria-valuenow={pct} aria-valuemin={0} aria-valuemax={100}>
+      <div
+        className="h-1.5 rounded-full surface-raised overflow-hidden"
+        role="progressbar"
+        aria-valuenow={pct}
+        aria-valuemin={0}
+        aria-valuemax={100}
+      >
         <div className="h-full bg-sage rounded-full transition-all duration-300" style={{ width: `${pct}%` }} />
       </div>
     </div>

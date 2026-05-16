@@ -1,5 +1,5 @@
-import { useConvexAuth } from "convex/react";
 import { createFileRoute, Navigate, Outlet, useRouterState } from "@tanstack/react-router";
+import { useConvexAuth } from "convex/react";
 import { Header } from "@/components/layout/Header";
 import { Spinner } from "@/components/ui/Primitives";
 

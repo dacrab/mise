@@ -5,13 +5,18 @@ export function useFileUpload(
   options: {
     onSuccess?: (storageId: string, previewUrl: string) => void;
     onError?: (err: Error) => void;
-  } = {}
+  } = {},
 ) {
   const [uploading, setUploading] = useState(false);
   const [progress, setProgress] = useState(0);
   const abortRef = useRef<AbortController | null>(null);
 
-  useEffect(() => () => { abortRef.current?.abort(); }, []);
+  useEffect(
+    () => () => {
+      abortRef.current?.abort();
+    },
+    [],
+  );
 
   const upload = async (file: File): Promise<{ storageId: string; previewUrl: string } | null> => {
     abortRef.current = new AbortController();

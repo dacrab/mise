@@ -11,15 +11,34 @@ interface TextAreaProps extends Omit<React.TextareaHTMLAttributes<HTMLTextAreaEl
 }
 
 export const TextArea = forwardRef<HTMLTextAreaElement, TextAreaProps>(
-  ({ id, label, maxLength, onValueChange, onChange, className = "", onFocus, onBlur, value = "", rows = 3, placeholder, ...rest }, externalRef) => {
+  (
+    {
+      id,
+      label,
+      maxLength,
+      onValueChange,
+      onChange,
+      className = "",
+      onFocus,
+      onBlur,
+      value = "",
+      rows = 3,
+      placeholder,
+      ...rest
+    },
+    externalRef,
+  ) => {
     const internalRef = useRef<HTMLTextAreaElement>(null);
     const [focused, setFocused] = useState(false);
 
-    const setRef = useCallback((el: HTMLTextAreaElement | null) => {
-      (internalRef).current = el;
-      if (typeof externalRef === "function") externalRef(el);
-      else if (externalRef) (externalRef).current = el;
-    }, [externalRef]);
+    const setRef = useCallback(
+      (el: HTMLTextAreaElement | null) => {
+        internalRef.current = el;
+        if (typeof externalRef === "function") externalRef(el);
+        else if (externalRef) externalRef.current = el;
+      },
+      [externalRef],
+    );
 
     const autoResize = useCallback(() => {
       const el = internalRef.current;
@@ -28,7 +47,9 @@ export const TextArea = forwardRef<HTMLTextAreaElement, TextAreaProps>(
       el.style.height = `${el.scrollHeight}px`;
     }, []);
 
-    useEffect(() => { autoResize(); }, [value, autoResize]);
+    useEffect(() => {
+      autoResize();
+    }, [autoResize]);
 
     const strValue = typeof value === "string" ? value : "";
     const charRatio = maxLength ? strValue.length / maxLength : 0;
@@ -59,8 +80,14 @@ export const TextArea = forwardRef<HTMLTextAreaElement, TextAreaProps>(
             onChange?.(e);
             onValueChange?.(v);
           }}
-          onFocus={(e) => { setFocused(true); (onFocus as React.FocusEventHandler<HTMLTextAreaElement>)?.(e); }}
-          onBlur={(e) => { setFocused(false); (onBlur as React.FocusEventHandler<HTMLTextAreaElement>)?.(e); }}
+          onFocus={(e) => {
+            setFocused(true);
+            (onFocus as React.FocusEventHandler<HTMLTextAreaElement>)?.(e);
+          }}
+          onBlur={(e) => {
+            setFocused(false);
+            (onBlur as React.FocusEventHandler<HTMLTextAreaElement>)?.(e);
+          }}
           placeholder={label ? (focused ? placeholder : undefined) : placeholder}
           rows={rows}
           maxLength={maxLength}
@@ -68,15 +95,17 @@ export const TextArea = forwardRef<HTMLTextAreaElement, TextAreaProps>(
           {...rest}
         />
         {maxLength && (
-          <div className={`absolute bottom-2 right-3 text-[11px] tabular-nums transition-opacity ${
-            focused || hasValue ? "opacity-100" : "opacity-0"
-          } ${counterColor}`}>
+          <div
+            className={`absolute bottom-2 right-3 text-[11px] tabular-nums transition-opacity ${
+              focused || hasValue ? "opacity-100" : "opacity-0"
+            } ${counterColor}`}
+          >
             {strValue.length}/{maxLength}
           </div>
         )}
       </div>
     );
-  }
+  },
 );
 
 TextArea.displayName = "TextArea";

@@ -50,6 +50,5 @@ export default defineSchema({
   rateLimits: defineTable({
     userId: v.id("users"),
     action: v.string(),
-  })
-    .index("by_user_action", ["userId", "action"]),
+  }).index("by_user_action", ["userId", "action"]),
 });

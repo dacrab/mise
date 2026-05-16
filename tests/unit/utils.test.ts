@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { formatSeconds, timeAgo, getErrorMessage } from "@/lib/utils";
+import { formatSeconds, getErrorMessage, timeAgo } from "@/lib/utils";
 
 describe("formatSeconds", () => {
   it.each([

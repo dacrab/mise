@@ -1,5 +1,5 @@
 import { convexQuery } from "@convex-dev/react-query";
-import { ClockIcon, FireIcon, UserGroupIcon, PrinterIcon } from "@heroicons/react/24/outline";
+import { ClockIcon, FireIcon, PrinterIcon, UserGroupIcon } from "@heroicons/react/24/outline";
 import { useSuspenseQuery } from "@tanstack/react-query";
 import { createFileRoute, notFound } from "@tanstack/react-router";
 import { api } from "convex/_generated/api";
@@ -18,7 +18,7 @@ function PrintRecipe() {
 
   return (
     <div className="max-w-2xl mx-auto p-8 print:p-0 bg-white min-h-screen">
-      <style>{`@media print { body { -webkit-print-color-adjust: exact; } }`}</style>
+      <style>{"@media print { body { -webkit-print-color-adjust: exact; } }"}</style>
 
       <header className="mb-8 pb-6 border-b-2 border-charcoal">
         <h1 className="text-3xl font-bold mb-2">{recipe.title}</h1>

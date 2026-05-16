@@ -1,9 +1,9 @@
 import { BookmarkIcon, CakeIcon } from "@heroicons/react/24/outline";
 import { BookmarkIcon as BookmarkSolidIcon } from "@heroicons/react/24/solid";
 import { Link } from "@tanstack/react-router";
-import { useMutation, useQuery } from "convex/react";
 import { api } from "convex/_generated/api";
 import type { Id } from "convex/_generated/dataModel";
+import { useMutation, useQuery } from "convex/react";
 import { useState } from "react";
 import { useToast } from "@/components/ui/Toast";
 
@@ -73,12 +73,12 @@ export function RecipeCard({
             <RecipePlaceholder size={32} />
           </div>
         )}
-        <span className="absolute top-3 left-3 tag bg-warm-white/90 dark:bg-d-surface/90 backdrop-blur-sm">{category}</span>
+        <span className="absolute top-3 left-3 tag bg-warm-white/90 dark:bg-d-surface/90 backdrop-blur-sm">
+          {category}
+        </span>
         <div className="absolute top-3 right-3 flex items-center gap-1.5">
           {badge && (
-            <div className="center w-7 h-7 rounded-full bg-charcoal text-cream text-sm font-medium">
-              {badge}
-            </div>
+            <div className="center w-7 h-7 rounded-full bg-charcoal text-cream text-sm font-medium">{badge}</div>
           )}
           {recipeId && (
             <div className="opacity-0 group-hover:opacity-100 focus-within:opacity-100 transition-opacity duration-200">

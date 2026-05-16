@@ -7,7 +7,9 @@ import { RecipeEditor } from "@/components/recipe/RecipeEditor";
 
 export const Route = createFileRoute("/_authed/dashboard/edit/$id")({
   loader: async ({ params, context: { queryClient } }) => {
-    const recipe = await queryClient.ensureQueryData(convexQuery(api.recipes.getById, { id: params.id as Id<"recipes"> }));
+    const recipe = await queryClient.ensureQueryData(
+      convexQuery(api.recipes.getById, { id: params.id as Id<"recipes"> }),
+    );
     if (!recipe) throw redirect({ to: "/dashboard", replace: true });
   },
   component: EditRecipePage,

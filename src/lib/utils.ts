@@ -1,4 +1,4 @@
-const FRACTIONS: Array<[number, string]> = [
+const FRACTIONS: [number, string][] = [
   [0.125, "⅛"],
   [0.25, "¼"],
   [0.333, "⅓"],

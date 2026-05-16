@@ -1,17 +1,16 @@
+import { useAuthActions } from "@convex-dev/auth/react";
 import {
+  ArrowRightOnRectangleIcon,
   CalendarIcon,
   CameraIcon,
+  ComputerDesktopIcon,
   EnvelopeIcon,
   MoonIcon,
   SunIcon,
-  ComputerDesktopIcon,
-  ArrowRightOnRectangleIcon,
   TrashIcon,
 } from "@heroicons/react/24/outline";
-import { useAuthActions } from "@convex-dev/auth/react";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { api } from "convex/_generated/api";
-import { APP_TITLE_SUFFIX } from "@/lib/constants";
 import type { Id } from "convex/_generated/dataModel";
 import { useMutation, useQuery } from "convex/react";
 import { useEffect, useRef, useState } from "react";
@@ -21,6 +20,7 @@ import { TextField } from "@/components/ui/TextField";
 import { useToast } from "@/components/ui/Toast";
 import { useFileUpload } from "@/hooks/useFileUpload";
 import { useTheme } from "@/hooks/useTheme";
+import { APP_TITLE_SUFFIX } from "@/lib/constants";
 
 export const Route = createFileRoute("/_authed/settings")({
   head: () => ({
@@ -90,7 +90,10 @@ function Settings() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!hasChanges || saving) return;
-    if (!name.trim()) { toast("Name cannot be empty", "error"); return; }
+    if (!name.trim()) {
+      toast("Name cannot be empty", "error");
+      return;
+    }
     if (username.trim() && !/^[a-z0-9_]+$/.test(username.trim())) {
       toast("Username can only contain letters, numbers, and underscores", "error");
       return;
@@ -119,8 +122,14 @@ function Settings() {
   const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
-    if (!file.type.startsWith("image/")) { toast("Please select an image file", "error"); return; }
-    if (file.size > 5 * 1024 * 1024) { toast("Image must be under 5MB", "error"); return; }
+    if (!file.type.startsWith("image/")) {
+      toast("Please select an image file", "error");
+      return;
+    }
+    if (file.size > 5 * 1024 * 1024) {
+      toast("Image must be under 5MB", "error");
+      return;
+    }
     await upload(file);
   };
 
@@ -302,12 +311,14 @@ function Settings() {
 
                 {/* Save — desktop */}
                 <div className="hidden lg:block">
-                  <button type="submit" disabled={saving || !hasChanges} className="btn-primary w-full disabled:opacity-50">
+                  <button
+                    type="submit"
+                    disabled={saving || !hasChanges}
+                    className="btn-primary w-full disabled:opacity-50"
+                  >
                     {saving ? "Saving…" : "Save changes"}
                   </button>
-                  {hasChanges && (
-                    <p className="text-xs text-sage text-center mt-2">You have unsaved changes</p>
-                  )}
+                  {hasChanges && <p className="text-xs text-sage text-center mt-2">You have unsaved changes</p>}
                 </div>
               </div>
             </aside>
@@ -318,7 +329,17 @@ function Settings() {
   );
 }
 
-function ThemeOption({ icon: Icon, label, active, onClick }: { icon: React.ComponentType<{ className?: string }>; label: string; active: boolean; onClick: () => void }) {
+function ThemeOption({
+  icon: Icon,
+  label,
+  active,
+  onClick,
+}: {
+  icon: React.ComponentType<{ className?: string }>;
+  label: string;
+  active: boolean;
+  onClick: () => void;
+}) {
   return (
     <button
       type="button"

@@ -28,8 +28,8 @@ function TermsPage() {
         <section>
           <h2 className="font-serif text-xl font-medium mb-3">2. Prohibited Conduct</h2>
           <p>
-            You agree not to upload content that is illegal, offensive, or infringes on the intellectual property
-            of others.
+            You agree not to upload content that is illegal, offensive, or infringes on the intellectual property of
+            others.
           </p>
         </section>
         <section>
@@ -37,9 +37,7 @@ function TermsPage() {
           <p>We reserve the right to suspend or terminate accounts that violate these terms.</p>
         </section>
       </div>
-      <footer className="mt-16 pt-6 border-t border-cream-dark text-sm text-stone">
-        Last updated: January 2026
-      </footer>
+      <footer className="mt-16 pt-6 border-t border-cream-dark text-sm text-stone">Last updated: January 2026</footer>
     </StaticPageLayout>
   );
 }

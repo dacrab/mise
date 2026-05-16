@@ -36,11 +36,7 @@ export function Select({
         <BaseSelect.Positioner className="z-50" sideOffset={4}>
           <BaseSelect.Popup className="max-h-60 overflow-y-auto bg-warm-white rounded-lg shadow-card border border-cream-dark py-1 dark:bg-d-surface dark:border-d-border-strong">
             {options.map((opt) => (
-              <BaseSelect.Item
-                key={opt.value}
-                value={opt.value}
-                className="menu-item cursor-pointer"
-              >
+              <BaseSelect.Item key={opt.value} value={opt.value} className="menu-item cursor-pointer">
                 <BaseSelect.ItemIndicator className="w-4">
                   <CheckIcon className="w-4 h-4 text-sage" />
                 </BaseSelect.ItemIndicator>
