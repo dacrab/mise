@@ -14,7 +14,7 @@ const ICONS: Record<ToastType, React.ElementType> = {
 const STYLES: Record<ToastType, string> = {
   success: "bg-sage/10 border-sage/20 text-sage-dark",
   error: "bg-terracotta/10 border-terracotta/20 text-terracotta",
-  info: "bg-honey/10 border-honey/20 text-charcoal",
+  info: "bg-honey/10 border-honey/20 text-primary",
 };
 
 function ToastItem({

@@ -5,9 +5,9 @@ import {
   Bars3Icon,
   ChevronDownIcon,
   Cog6ToothIcon,
+  ComputerDesktopIcon,
   HomeIcon,
   MoonIcon,
-  PlusIcon,
   SunIcon,
   XMarkIcon,
 } from "@heroicons/react/24/outline";
@@ -54,11 +54,11 @@ function UserMenu({ onClose }: { onClose?: () => void }) {
           </Menu.Trigger>
           <Menu.Portal>
             <Menu.Positioner className="z-50" sideOffset={8} align="end">
-              <Menu.Popup className="min-w-[200px] bg-warm-white rounded-xl shadow-card border border-cream-dark py-1.5 animate-scale-in">
+              <Menu.Popup className="min-w-[200px] bg-warm-white dark:bg-d-surface rounded-xl shadow-card border border-cream-dark dark:border-d-border py-1.5 animate-scale-in">
                 <div className="flex items-center gap-3 px-4 py-2.5 border-b border-cream-dark mb-1">
                   <Avatar src={user?.profileImageUrl ?? user?.image} name={user?.name} size="sm" />
                   <div className="min-w-0">
-                    <p className="text-sm font-medium text-charcoal truncate">{user?.name ?? "Chef"}</p>
+                    <p className="text-sm font-medium text-primary truncate">{user?.name ?? "Chef"}</p>
                     {user?.username && <p className="text-xs text-stone truncate">@{user.username}</p>}
                   </div>
                 </div>
@@ -71,7 +71,7 @@ function UserMenu({ onClose }: { onClose?: () => void }) {
                     <Icon className="w-4 h-4 text-stone" /> {label}
                   </Menu.Item>
                 ))}
-                <Menu.Separator className="h-px bg-cream-dark my-1" />
+                <Menu.Separator className="h-px bg-cream-dark dark:bg-d-border my-1" />
                 <Menu.Item
                   onClick={handleSignOut}
                   className="flex items-center gap-2.5 px-4 py-2 text-sm text-terracotta hover:bg-terracotta/5 outline-none cursor-pointer data-[highlighted]:bg-terracotta/5 transition-colors"
@@ -82,27 +82,21 @@ function UserMenu({ onClose }: { onClose?: () => void }) {
             </Menu.Positioner>
           </Menu.Portal>
         </Menu.Root>
-        <Link to="/dashboard/create" className="btn-primary text-sm flex items-center gap-1.5">
-          <PlusIcon className="w-4 h-4" /> New Recipe
-        </Link>
       </div>
 
       {/* Mobile */}
       <div className="sm:hidden">
-        <div className="flex items-center gap-3 p-3 mb-4 bg-cream-dark rounded-xl">
+        <div className="flex items-center gap-3 p-3 mb-4 surface-raised rounded-xl">
           <Avatar src={user?.profileImageUrl ?? user?.image} name={user?.name} size="md" />
           <div className="min-w-0">
-            <p className="font-medium text-charcoal truncate">{user?.name ?? "Chef"}</p>
+            <p className="font-medium text-primary truncate">{user?.name ?? "Chef"}</p>
             {user?.username
               ? <p className="text-xs text-stone truncate">@{user.username}</p>
               : user?.email && <p className="text-xs text-stone truncate">{user.email}</p>}
           </div>
         </div>
-        <Link to="/dashboard/create" onClick={onClose} className="btn-primary w-full justify-center mb-3 flex items-center gap-2">
-          <PlusIcon className="w-4 h-4" /> New Recipe
-        </Link>
         {USER_MENU_LINKS.map(({ to, label, icon: Icon }) => (
-          <Link key={to} to={to} onClick={onClose} className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-charcoal hover:bg-cream-dark transition-colors">
+          <Link key={to} to={to} onClick={onClose} className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-primary hover:bg-cream-dark dark:hover:bg-d-surface-raised transition-colors">
             <Icon className="w-5 h-5 text-stone" /> {label}
           </Link>
         ))}
@@ -132,10 +126,20 @@ function GuestNav({ onClose }: { onClose?: () => void }) {
 }
 
 function ThemeToggle() {
-  const { theme, toggle } = useTheme();
+  const { preference, setTheme } = useTheme();
+
+  const cycle = () => {
+    if (preference === "light") setTheme("dark");
+    else if (preference === "dark") setTheme("system");
+    else setTheme("light");
+  };
+
+  const label = preference === "system" ? "System theme" : preference === "dark" ? "Dark mode" : "Light mode";
+  const Icon = preference === "dark" ? MoonIcon : preference === "system" ? ComputerDesktopIcon : SunIcon;
+
   return (
-    <button onClick={toggle} className="btn-ghost p-2" aria-label={`Switch to ${theme === "dark" ? "light" : "dark"} mode`}>
-      {theme === "dark" ? <SunIcon className="w-5 h-5" /> : <MoonIcon className="w-5 h-5" />}
+    <button onClick={cycle} className="btn-ghost p-2" aria-label={label} title={label}>
+      <Icon className="w-5 h-5" />
     </button>
   );
 }
@@ -171,7 +175,7 @@ export function Header() {
     <>
       <header className="fixed top-0 w-full z-50 glass">
         <div className="wrapper h-16 flex items-center justify-between">
-          <Link to="/" className="font-serif text-2xl font-semibold tracking-tight text-charcoal hover:text-sage transition-colors">
+          <Link to="/" className="font-serif text-2xl font-semibold tracking-tight text-primary hover:text-sage transition-colors">
             mise
           </Link>
           <nav className="hidden sm:flex items-center gap-2">
@@ -181,7 +185,7 @@ export function Header() {
           </nav>
           <div className="flex sm:hidden items-center gap-2">
             <ThemeToggle />
-            <button onClick={() => setMobileOpen(true)} className="p-2 hover:bg-cream-dark rounded-lg transition-colors" aria-label="Open menu" aria-expanded={mobileOpen} aria-controls="mobile-menu">
+            <button onClick={() => setMobileOpen(true)} className="p-2 hover:bg-cream-dark dark:hover:bg-d-surface-raised rounded-lg transition-colors" aria-label="Open menu" aria-expanded={mobileOpen} aria-controls="mobile-menu">
               <Bars3Icon className="w-5 h-5" />
             </button>
           </div>
@@ -201,8 +205,8 @@ export function Header() {
         className={`fixed top-0 right-0 bottom-0 z-50 w-72 bg-warm-white shadow-hover flex flex-col sm:hidden transition-transform duration-300 ${mobileOpen ? "translate-x-0" : "translate-x-full"}`}
       >
         <div className="flex items-center justify-between px-5 h-16 border-b border-cream-dark">
-          <span className="font-serif text-xl font-semibold text-charcoal">mise</span>
-          <button onClick={() => setMobileOpen(false)} className="p-2 hover:bg-cream-dark rounded-lg" aria-label="Close menu">
+          <span className="font-serif text-xl font-semibold text-primary">mise</span>
+          <button onClick={() => setMobileOpen(false)} className="p-2 hover:bg-cream-dark dark:hover:bg-d-surface-raised rounded-lg" aria-label="Close menu">
             <XMarkIcon className="w-5 h-5" />
           </button>
         </div>
@@ -213,7 +217,7 @@ export function Header() {
         <div className="p-5 border-t border-cream-dark">
           <nav className="flex gap-4 text-sm text-stone">
             {FOOTER_LINKS.map(({ to, label }) => (
-              <Link key={to} to={to} onClick={() => setMobileOpen(false)} className="hover:text-charcoal transition-colors">{label}</Link>
+              <Link key={to} to={to} onClick={() => setMobileOpen(false)} className="hover:text-primary transition-colors">{label}</Link>
             ))}
           </nav>
         </div>

@@ -64,7 +64,7 @@ function PasswordField({
           aria-describedby={strengthMeter ? `${id}-strength` : undefined}
         />
         <button type="button" onClick={onToggleShow}
-          className="absolute right-3 top-1/2 -translate-y-1/2 text-stone hover:text-charcoal"
+          className="absolute right-3 top-1/2 -translate-y-1/2 text-stone hover:text-primary"
           aria-label={show ? "Hide password" : "Show password"}
         >
           {show ? <EyeSlashIcon className="w-5 h-5" /> : <EyeIcon className="w-5 h-5" />}
@@ -74,7 +74,7 @@ function PasswordField({
         <div id={`${id}-strength`} className="mt-3 space-y-1" aria-live="polite">
           <div className="flex gap-1 h-1" role="progressbar" aria-valuenow={strengthMeter.strength} aria-valuemin={0} aria-valuemax={4}>
             {[1, 2, 3, 4].map((i) => (
-              <div key={i} className={`flex-1 rounded-full ${i <= strengthMeter.strength ? strengthMeter.colors[strengthMeter.strength] ?? "bg-sage" : "bg-cream-dark"}`} />
+              <div key={i} className={`flex-1 rounded-full ${i <= strengthMeter.strength ? strengthMeter.colors[strengthMeter.strength] ?? "bg-sage" : "surface-raised"}`} />
             ))}
           </div>
           <p className="text-xs text-stone">{strengthMeter.labels[strengthMeter.strength]}</p>
@@ -106,7 +106,6 @@ function mapAuthError(errors: Record<string, string>, error: unknown): string {
 export function LoginForm() {
   const { signIn } = useAuthActions();
   const { toast } = useToast();
-  const router = useRouter();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
@@ -117,14 +116,11 @@ export function LoginForm() {
     if (!email || !password || isPending) return;
     setIsPending(true);
     try {
-      const result = await signIn("password", { email, password, flow: "signIn" });
-      if (result.signingIn) {
-        toast("Welcome back! 👨‍🍳", "success");
-        await router.navigate({ to: "/dashboard", replace: true });
-      }
+      await signIn("password", { email, password, flow: "signIn" });
+      toast("Welcome back! 👨‍🍳", "success");
+      // Navigation is handled by the page-level redirect once isAuthenticated flips
     } catch (err) {
       toast(mapAuthError(LOGIN_ERRORS, err), "error");
-    } finally {
       setIsPending(false);
     }
   };
@@ -150,31 +146,27 @@ export function LoginForm() {
 export function SignupForm() {
   const { signIn } = useAuthActions();
   const { toast } = useToast();
-  const router = useRouter();
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [isPending, setIsPending] = useState(false);
 
   const strength = calculatePasswordStrength(password);
+  const passwordsMatch = !confirmPassword || password === confirmPassword;
+  const canSubmit = !isPending && !!name && !!email && password.length >= MIN_PASSWORD_LENGTH && password === confirmPassword;
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!name || !email || !password || password.length < MIN_PASSWORD_LENGTH || isPending) return;
+    if (!canSubmit) return;
     setIsPending(true);
     try {
-      const result = await signIn("password", { email, password, name, flow: "signUp" });
-      if (result.signingIn) {
-        toast("Account created! Welcome to Mise 🎉", "success");
-        await router.navigate({ to: "/dashboard", replace: true });
-      } else {
-        toast("Account created! Please check your email to verify.", "info");
-        await router.navigate({ to: "/login", replace: true });
-      }
+      await signIn("password", { email, password, name, flow: "signUp" });
+      toast("Account created! Welcome to Mise 🎉", "success");
+      // Navigation is handled by the page-level redirect once isAuthenticated flips
     } catch (err) {
       toast(mapAuthError(SIGNUP_ERRORS_MAP, err), "error");
-    } finally {
       setIsPending(false);
     }
   };
@@ -189,9 +181,21 @@ export function SignupForm() {
         autoComplete="new-password"
         strengthMeter={{ strength, colors: STRENGTH_COLORS, labels: STRENGTH_LABELS }}
       />
+      <div>
+        <label htmlFor="signup-confirm" className="label">Confirm password</label>
+        <input
+          id="signup-confirm" type={showPassword ? "text" : "password"} value={confirmPassword}
+          onChange={(e) => setConfirmPassword(e.target.value)}
+          className={`input-field w-full${!passwordsMatch ? " border-terracotta" : ""}`}
+          placeholder="••••••••" autoComplete="new-password"
+          aria-invalid={!passwordsMatch}
+          aria-describedby={!passwordsMatch ? "confirm-error" : undefined}
+        />
+        {!passwordsMatch && <p id="confirm-error" className="text-xs text-terracotta mt-1">Passwords don't match</p>}
+      </div>
       <button
         type="submit"
-        disabled={isPending || !name || !email || password.length < MIN_PASSWORD_LENGTH}
+        disabled={!canSubmit}
         className="btn-primary w-full disabled:opacity-50"
       >
         {isPending ? <span className="flex items-center justify-center gap-2"><Spinner /> Creating…</span> : "Sign up"}

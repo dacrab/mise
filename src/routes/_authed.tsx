@@ -1,5 +1,5 @@
 import { useConvexAuth } from "convex/react";
-import { createFileRoute, Navigate, Outlet } from "@tanstack/react-router";
+import { createFileRoute, Navigate, Outlet, useRouterState } from "@tanstack/react-router";
 import { Header } from "@/components/layout/Header";
 import { Spinner } from "@/components/ui/Primitives";
 
@@ -9,6 +9,7 @@ export const Route = createFileRoute("/_authed")({
 
 function AuthedLayout() {
   const { isLoading, isAuthenticated } = useConvexAuth();
+  const location = useRouterState({ select: (s) => s.location });
 
   if (isLoading) {
     return (
@@ -19,7 +20,7 @@ function AuthedLayout() {
   }
 
   if (!isAuthenticated) {
-    return <Navigate to="/login" replace />;
+    return <Navigate to="/login" search={{ redirect: location.href }} replace />;
   }
 
   return (

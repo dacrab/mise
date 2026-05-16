@@ -63,10 +63,10 @@ function HomePage() {
 
   const recipes = isSearching ? (searchResults ?? []) : paginated.results;
 
-  // Featured hero only on clean unfiltered home
-  const showFeatured = !isFiltered && recipes.length > 0;
-  const featured = showFeatured ? recipes[0] : undefined;
-  const grid = showFeatured ? recipes.slice(1) : recipes;
+  // Featured hero — always the first recipe from the full list, independent of filters
+  const featured = paginated.results.length > 0 ? paginated.results[0] : undefined;
+  // Grid shows filtered results (search or category), excluding featured when unfiltered
+  const grid = isFiltered ? recipes : recipes.slice(1);
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
@@ -96,7 +96,7 @@ function HomePage() {
               <br />
               with <span className="italic text-sage">real love</span>
             </h1>
-            <p className="text-lg text-charcoal-light leading-relaxed mb-8 max-w-md">
+            <p className="text-lg text-secondary leading-relaxed mb-8 max-w-md">
               No algorithms. No ads. Just home cooks sharing dishes that actually matter.
             </p>
             <div className="flex flex-wrap gap-3">
@@ -125,7 +125,7 @@ function HomePage() {
           <button
             onClick={() => handleCategoryClick(undefined)}
             className={`shrink-0 px-4 py-2 rounded-full text-sm font-medium transition-colors ${
-              !category ? "bg-charcoal text-cream" : "bg-cream-dark text-stone hover:text-charcoal"
+              !category ? "bg-charcoal text-cream dark:bg-cream dark:text-charcoal" : "bg-cream-dark dark:bg-d-surface-raised text-stone hover:text-charcoal dark:hover:text-d-text"
             }`}
           >
             All
@@ -135,7 +135,7 @@ function HomePage() {
               key={c}
               onClick={() => handleCategoryClick(category === c ? undefined : c)}
               className={`shrink-0 flex items-center gap-1.5 px-4 py-2 rounded-full text-sm font-medium transition-colors ${
-                category === c ? "bg-charcoal text-cream" : "bg-cream-dark text-stone hover:text-charcoal"
+                category === c ? "bg-charcoal text-cream dark:bg-cream dark:text-charcoal" : "bg-cream-dark dark:bg-d-surface-raised text-stone hover:text-charcoal dark:hover:text-d-text"
               }`}
             >
               <span>{CATEGORY_ICONS[c]}</span>
@@ -156,7 +156,7 @@ function HomePage() {
               name="q"
               placeholder="What are you craving?"
               defaultValue={q}
-              className="w-full pl-10 pr-4 py-2.5 bg-transparent border-0 focus:outline-none text-charcoal placeholder:text-stone"
+              className="w-full pl-10 pr-4 py-2.5 bg-transparent border-0 focus:outline-none text-primary placeholder:text-stone"
             />
           </div>
           <div className="flex gap-2">
@@ -169,8 +169,8 @@ function HomePage() {
           <div className="mt-4 flex items-center gap-3 text-sm">
             <span className="text-stone">
               {recipes.length} result{recipes.length !== 1 ? "s" : ""}
-              {q && <> for "<span className="text-charcoal font-medium">{q}</span>"</>}
-              {category && <> in <span className="text-charcoal font-medium">{category}</span></>}
+              {q && <> for "<span className="text-primary font-medium">{q}</span>"</>}
+              {category && <> in <span className="text-primary font-medium">{category}</span></>}
             </span>
             <button
               onClick={clearFilters}
@@ -230,7 +230,7 @@ function HomePage() {
           <div className="py-20 text-center">
             {isFiltered ? (
               <>
-                <p className="font-serif text-2xl font-medium text-charcoal mb-2">No recipes found</p>
+                <p className="font-serif text-2xl font-medium text-primary mb-2">No recipes found</p>
                 <p className="text-stone mb-6">
                   {category ? `No ${category} recipes yet.` : "Try different keywords."}
                 </p>

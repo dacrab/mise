@@ -22,7 +22,7 @@ function AboutPage() {
         global community.
       </p>
 
-      <div className="aspect-video rounded-xl bg-cream-dark overflow-hidden mb-12">
+      <div className="aspect-video rounded-xl surface-raised overflow-hidden mb-12">
         <img
           src="https://images.unsplash.com/photo-1556910103-1c02745a3002?q=80&w=2070&auto=format&fit=crop"
           className="w-full h-full object-cover"

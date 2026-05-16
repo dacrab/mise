@@ -4,6 +4,7 @@
   --font-sans: "Inter", system-ui, sans-serif;
   --font-serif: "Playfair Display", "Georgia", serif;
 
+  /* Light palette */
   --color-cream: #FAF7F2;
   --color-cream-dark: #F3EDE4;
   --color-warm-white: #FFFDFB;
@@ -12,97 +13,211 @@
   --color-sage: #8B9A7D;
   --color-sage-light: #A8B89A;
   --color-terracotta: #C4846C;
+  --color-honey: #D4A853;
   --color-stone: #9C9488;
   --color-stone-light: #C4BEB4;
+
+  /* Dark palette */
+  --color-d-bg: #1a1a1a;
+  --color-d-surface: #222222;
+  --color-d-surface-raised: #2a2a2a;
+  --color-d-surface-muted: #1f1f1f;
+  --color-d-border: #333333;
+  --color-d-border-strong: #444444;
+  --color-d-border-hover: #555555;
+  --color-d-text: #e8e4df;
+  --color-d-text-heading: #f0ece7;
+  --color-d-text-secondary: #cccccc;
+  --color-d-text-muted: #888888;
 }
 
 @custom-variant dark (&:where(.dark, .dark *));
 
 @layer base {
   body {
-    @apply bg-cream text-charcoal font-sans antialiased dark:bg-[#1a1a1a] dark:text-[#e8e4df];
+    @apply bg-cream text-charcoal font-sans antialiased dark:bg-d-bg dark:text-d-text;
   }
   h1, h2, h3, h4 {
-    @apply font-serif text-charcoal dark:text-[#f0ece7];
+    @apply font-serif text-charcoal dark:text-d-text-heading;
+  }
+  a, button, [role="button"], select, label[for], input[type="file"], input[type="checkbox"], input[type="radio"] {
+    cursor: pointer;
   }
 }
+
+/* ─── Layout ─── */
 
 @utility wrapper {
   @apply max-w-6xl mx-auto px-5 sm:px-8;
-}
-
-@utility btn {
-  @apply inline-flex items-center justify-center gap-2 font-medium transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed;
-}
-
-@utility btn-primary {
-  @apply btn px-5 py-2.5 bg-charcoal text-cream rounded-lg hover:bg-charcoal-light active:scale-[0.98] dark:bg-[#e8e4df] dark:text-[#1a1a1a] dark:hover:bg-[#d4cfc7];
-}
-
-@utility btn-secondary {
-  @apply btn px-5 py-2.5 bg-cream-dark text-charcoal rounded-lg hover:bg-stone-light/50 border border-stone-light/50 dark:bg-[#2a2a2a] dark:text-[#e8e4df] dark:border-[#444] dark:hover:bg-[#333];
-}
-
-@utility btn-ghost {
-  @apply btn px-4 py-2 text-charcoal-light hover:text-charcoal hover:bg-cream-dark rounded-lg dark:text-[#aaa] dark:hover:text-[#e8e4df] dark:hover:bg-[#2a2a2a];
-}
-
-@utility input-field {
-  @apply w-full px-4 py-3 bg-warm-white border border-stone-light/60 rounded-lg text-charcoal placeholder:text-stone focus:outline-none focus:border-sage focus:ring-2 focus:ring-sage/20 dark:bg-[#222] dark:border-[#444] dark:text-[#e8e4df] dark:placeholder:text-[#777];
-}
-
-@utility card {
-  @apply bg-warm-white rounded-xl border border-cream-dark dark:bg-[#222] dark:border-[#333];
-}
-
-@utility card-hover {
-  @apply card transition-all duration-300 hover:shadow-[0_4px_20px_rgba(45,42,38,0.08)] hover:border-stone-light/60 dark:hover:shadow-[0_4px_20px_rgba(0,0,0,0.3)] dark:hover:border-[#444];
-}
-
-@utility tag {
-  @apply inline-flex items-center px-2.5 py-1 text-xs font-medium rounded-md bg-cream-dark text-charcoal-light dark:bg-[#2a2a2a] dark:text-[#aaa];
-}
-
-@utility glass {
-  @apply bg-cream/80 backdrop-blur-md border-b border-cream-dark dark:bg-[#1a1a1a]/80 dark:border-[#333];
-}
-
-@utility label {
-  @apply block text-sm font-medium text-charcoal-light mb-2;
-}
-
-@utility stat-box {
-  @apply flex flex-col items-center gap-1 px-4 py-3 bg-cream-dark rounded-xl text-center;
 }
 
 @utility center {
   @apply flex items-center justify-center;
 }
 
+/* ─── Buttons ─── */
+
+@utility btn {
+  @apply inline-flex items-center justify-center gap-2 font-medium transition-all duration-200 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed;
+}
+
+@utility btn-primary {
+  @apply btn px-5 py-2.5 bg-charcoal text-cream rounded-lg hover:bg-charcoal-light active:scale-[0.98] dark:bg-d-text dark:text-d-bg dark:hover:bg-d-text-secondary;
+}
+
+@utility btn-secondary {
+  @apply btn px-5 py-2.5 bg-cream-dark text-charcoal rounded-lg hover:bg-stone-light/50 border border-stone-light/50 dark:bg-d-surface-raised dark:text-d-text dark:border-d-border-strong dark:hover:bg-d-border;
+}
+
+@utility btn-ghost {
+  @apply btn px-4 py-2 text-charcoal-light hover:text-charcoal hover:bg-cream-dark rounded-lg dark:text-d-text-muted dark:hover:text-d-text dark:hover:bg-d-surface-raised;
+}
+
+/* ─── Surfaces ─── */
+
+@utility card {
+  --field-bg: var(--color-warm-white);
+  @apply bg-warm-white rounded-xl border border-cream-dark dark:bg-d-surface dark:border-d-border;
+}
+:is(.dark) .card {
+  --field-bg: var(--color-d-surface);
+}
+
+@utility card-hover {
+  @apply card transition-all duration-300 hover:shadow-[0_4px_20px_rgba(45,42,38,0.08)] hover:border-stone-light/60 dark:hover:shadow-[0_4px_20px_rgba(0,0,0,0.3)] dark:hover:border-d-border-strong;
+}
+
+@utility surface-muted {
+  @apply bg-cream-dark/50 dark:bg-d-surface-muted;
+}
+
+@utility surface-raised {
+  @apply bg-cream-dark dark:bg-d-surface-raised;
+}
+
+@utility glass {
+  @apply bg-cream/80 backdrop-blur-md border-b border-cream-dark dark:bg-d-bg/80 dark:border-d-border;
+}
+
+@utility hero-banner {
+  @apply bg-gradient-to-br from-charcoal to-charcoal-light dark:from-d-surface dark:to-d-bg;
+}
+
+/* ─── Typography ─── */
+
+@utility text-primary {
+  @apply text-charcoal dark:text-d-text;
+}
+
+@utility text-secondary {
+  @apply text-charcoal-light dark:text-d-text-secondary;
+}
+
+@utility text-muted {
+  @apply text-stone dark:text-d-text-muted;
+}
+
+/* ─── Borders ─── */
+
+@utility border-subtle {
+  @apply border-cream-dark dark:border-d-border;
+}
+
+@utility border-field {
+  @apply border-stone-light/60 dark:border-d-border-strong;
+}
+
+/* ─── Form elements ─── */
+
+@utility label {
+  @apply block text-sm font-medium text-charcoal-light mb-2 dark:text-d-text-muted;
+}
+
+@utility input-field {
+  @apply w-full px-4 py-3 bg-warm-white border border-stone-light/60 rounded-lg text-charcoal placeholder:text-stone focus:outline-none focus:border-sage focus:ring-2 focus:ring-sage/20 dark:bg-d-surface dark:border-d-border-strong dark:text-d-text dark:placeholder:text-d-text-muted;
+}
+
+@utility field-base {
+  @apply w-full px-3 py-3 bg-transparent border border-stone-light/60 rounded-lg text-sm transition-all duration-200 outline-none text-charcoal placeholder:text-stone/50 hover:border-stone-light dark:border-d-border-strong dark:hover:border-d-border-hover dark:text-d-text;
+}
+
+@utility field-focus {
+  @apply border-sage ring-2 ring-sage/15;
+}
+
+@utility floating-label-bg {
+  background-color: var(--field-bg, var(--color-cream));
+}
+:is(.dark) .floating-label-bg {
+  background-color: var(--field-bg, var(--color-d-bg));
+}
+
+/* ─── Components ─── */
+
+@utility tag {
+  @apply inline-flex items-center px-2.5 py-1 text-xs font-medium rounded-md bg-cream-dark text-charcoal-light dark:bg-d-surface-raised dark:text-d-text-muted;
+}
+
+@utility stat-box {
+  @apply flex flex-col items-center gap-1 px-4 py-3 bg-cream-dark rounded-xl text-center dark:bg-d-surface-raised;
+}
+
+@utility step-number {
+  @apply rounded-full bg-charcoal text-cream font-semibold flex items-center justify-center shrink-0 dark:bg-d-text dark:text-d-bg;
+}
+
+@utility step-line {
+  @apply w-px flex-1 bg-stone-light/40 dark:bg-d-border-strong;
+}
+
 @utility link-muted {
-  @apply text-sm text-stone hover:text-charcoal transition-colors;
+  @apply text-sm text-stone hover:text-charcoal transition-colors dark:hover:text-d-text;
 }
 
 @utility menu-item {
-  @apply flex items-center gap-2.5 px-4 py-2 text-sm text-charcoal hover:bg-cream-dark outline-none data-[highlighted]:bg-cream-dark;
+  @apply flex items-center gap-2.5 px-4 py-2 text-sm text-charcoal hover:bg-cream-dark outline-none data-[highlighted]:bg-cream-dark dark:text-d-text dark:hover:bg-d-surface-raised dark:data-[highlighted]:bg-d-surface-raised;
 }
 
+/* ─── Recipe cards ─── */
+
+.recipe-card {
+  @apply card overflow-hidden transition-all duration-300;
+}
+.recipe-card:hover {
+  @apply shadow-[0_8px_30px_rgba(45,42,38,0.1)] -translate-y-1;
+  border-color: var(--color-stone-light);
+}
+:is(.dark) .recipe-card:hover {
+  @apply shadow-[0_8px_30px_rgba(0,0,0,0.4)];
+  border-color: var(--color-d-border-strong);
+}
+.recipe-card-image {
+  @apply w-full aspect-[4/3] object-cover transition-transform duration-500;
+}
 .group:hover .recipe-card-image {
   transform: scale(1.05);
 }
+
+/* ─── Animations ─── */
 
 @keyframes scaleIn {
   from { opacity: 0; transform: scale(0.96); }
   to { opacity: 1; transform: scale(1); }
 }
-
 @utility animate-scale-in { animation: scaleIn 0.2s ease-out both; }
 
 @keyframes pageEnter {
   from { opacity: 0; transform: translateY(8px); }
   to { opacity: 1; transform: translateY(0); }
 }
-
 .page-enter {
   animation: pageEnter 0.35s cubic-bezier(0.25, 0.46, 0.45, 0.94) both;
+}
+
+/* Minimal scrollbar for horizontal scroll areas */
+.scrollbar-minimal {
+  scrollbar-width: none;
+}
+.scrollbar-minimal::-webkit-scrollbar {
+  display: none;
 }

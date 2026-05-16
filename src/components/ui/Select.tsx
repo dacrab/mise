@@ -25,7 +25,7 @@ export function Select({
     <BaseSelect.Root value={value} onValueChange={(v) => onChange(v ?? "")} name={name}>
       <BaseSelect.Trigger
         id={id}
-        className={`flex items-center justify-between gap-2 px-3 py-2.5 bg-cream-dark rounded-lg text-sm text-charcoal focus:outline-none focus:ring-2 focus:ring-sage/20 cursor-pointer ${className}`}
+        className={`flex items-center justify-between gap-2 px-3 py-2.5 bg-cream-dark rounded-lg text-sm text-charcoal focus:outline-none focus:ring-2 focus:ring-sage/20 cursor-pointer dark:bg-d-surface-raised dark:text-d-text ${className}`}
       >
         <span className={!value ? "text-stone" : ""}>{displayValue}</span>
         <BaseSelect.Icon>
@@ -34,7 +34,7 @@ export function Select({
       </BaseSelect.Trigger>
       <BaseSelect.Portal>
         <BaseSelect.Positioner className="z-50" sideOffset={4}>
-          <BaseSelect.Popup className="max-h-60 overflow-y-auto bg-warm-white rounded-lg shadow-card border border-cream-dark py-1">
+          <BaseSelect.Popup className="max-h-60 overflow-y-auto bg-warm-white rounded-lg shadow-card border border-cream-dark py-1 dark:bg-d-surface dark:border-d-border-strong">
             {options.map((opt) => (
               <BaseSelect.Item
                 key={opt.value}

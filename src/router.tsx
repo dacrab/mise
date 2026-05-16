@@ -87,7 +87,7 @@ import { ConvexAuthProvider } from "@convex-dev/auth/react";
 import { ConvexQueryClient } from "@convex-dev/react-query";
 import { QueryClient } from "@tanstack/react-query";
 import { createRouter } from "@tanstack/react-router";
-import { routerWithQueryClient } from "@tanstack/react-router-with-query";
+import { setupRouterSsrQueryIntegration } from "@tanstack/react-router-ssr-query";
 import { ToastProvider } from "@/components/ui/Toast";
 import { routeTree } from "./routeTree.gen";
 
@@ -108,20 +108,21 @@ function createAppRouter() {
   });
   convexQueryClient.connect(queryClient);
 
-  return routerWithQueryClient(
-    createRouter({
-      routeTree,
-      defaultPreload: "intent",
-      context: { queryClient },
-      scrollRestoration: true,
-      Wrap: ({ children }) => (
-        <ConvexAuthProvider client={convexQueryClient.convexClient}>
-          <ToastProvider>{children}</ToastProvider>
-        </ConvexAuthProvider>
-      ),
-    }),
-    queryClient
-  );
+  const router = createRouter({
+    routeTree,
+    defaultPreload: "intent",
+    context: { queryClient },
+    scrollRestoration: true,
+    Wrap: ({ children }) => (
+      <ConvexAuthProvider client={convexQueryClient.convexClient}>
+        <ToastProvider>{children}</ToastProvider>
+      </ConvexAuthProvider>
+    ),
+  });
+
+  setupRouterSsrQueryIntegration({ router, queryClient });
+
+  return router;
 }
 
 // Singleton on client — preserves WS connection and auth state across navigations.

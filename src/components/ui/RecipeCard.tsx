@@ -69,11 +69,11 @@ export function RecipeCard({
         {coverImageUrl ? (
           <img src={coverImageUrl} alt={title} className="recipe-card-image" />
         ) : (
-          <div className="center aspect-[4/3] bg-cream-dark">
+          <div className="center aspect-[4/3] bg-cream-dark dark:bg-d-surface-raised">
             <RecipePlaceholder size={32} />
           </div>
         )}
-        <span className="absolute top-3 left-3 tag bg-warm-white/90 backdrop-blur-sm">{category}</span>
+        <span className="absolute top-3 left-3 tag bg-warm-white/90 dark:bg-d-surface/90 backdrop-blur-sm">{category}</span>
         <div className="absolute top-3 right-3 flex items-center gap-1.5">
           {badge && (
             <div className="center w-7 h-7 rounded-full bg-charcoal text-cream text-sm font-medium">
@@ -109,7 +109,7 @@ export function FeaturedRecipeCard({
 }) {
   return (
     <Link to="/recipe/$slug" params={{ slug }} className="group relative block">
-      <div className="aspect-[4/3] rounded-2xl overflow-hidden bg-cream-dark">
+      <div className="aspect-[4/3] rounded-2xl overflow-hidden bg-cream-dark dark:bg-d-surface-raised">
         {coverImageUrl ? (
           <img
             src={coverImageUrl}
@@ -120,7 +120,7 @@ export function FeaturedRecipeCard({
           <RecipePlaceholder size={64} />
         )}
       </div>
-      <div className="absolute bottom-4 left-4 right-4 bg-warm-white/95 backdrop-blur-sm rounded-xl p-4 shadow-card">
+      <div className="absolute bottom-4 left-4 right-4 bg-warm-white/95 dark:bg-d-surface/95 backdrop-blur-sm rounded-xl p-4 shadow-card">
         {badge && <span className="tag-sage text-[10px] mb-2">{badge}</span>}
         <h3 className="font-serif text-lg font-medium group-hover:text-sage transition-colors">{title}</h3>
       </div>
@@ -133,10 +133,10 @@ export function RecipeGridSkeleton({ count = 6 }: { count?: number }) {
     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
       {Array.from({ length: count }).map((_, i) => (
         <div key={i} className="card overflow-hidden animate-pulse">
-          <div className="w-full aspect-[4/3] bg-cream-dark" />
+          <div className="w-full aspect-[4/3] bg-cream-dark dark:bg-d-surface-raised" />
           <div className="p-4 space-y-2">
-            <div className="h-4 bg-cream-dark rounded w-3/4" />
-            <div className="h-3 bg-cream-dark rounded w-1/2" />
+            <div className="h-4 surface-raised rounded w-3/4" />
+            <div className="h-3 surface-raised rounded w-1/2" />
           </div>
         </div>
       ))}
