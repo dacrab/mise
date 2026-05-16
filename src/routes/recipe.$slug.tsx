@@ -1,21 +1,25 @@
 import { convexQuery } from "@convex-dev/react-query";
-import { ClockIcon, FireIcon, PrinterIcon, UserGroupIcon } from "@heroicons/react/24/outline";
-import { PlayIcon as PlayIconSolid } from "@heroicons/react/24/solid";
+import {
+  BookmarkIcon as BookmarkOutlineIcon,
+  ClockIcon,
+  FireIcon,
+  PrinterIcon,
+  UserGroupIcon,
+} from "@heroicons/react/24/outline";
+import { BookmarkIcon as BookmarkSolidIcon, PlayIcon as PlayIconSolid } from "@heroicons/react/24/solid";
 import { useSuspenseQuery } from "@tanstack/react-query";
 import { createFileRoute, Link, notFound } from "@tanstack/react-router";
-import { useMutation, useQuery } from "convex/react";
 import { api } from "convex/_generated/api";
+import type { Id } from "convex/_generated/dataModel";
+import { useMutation, useQuery } from "convex/react";
+import { useState } from "react";
 import { PageLayout } from "@/components/layout/PageLayout";
-import { APP_TITLE_SUFFIX } from "@/lib/constants";
 import { ShareButton } from "@/components/recipe/RecipeActions";
 import { IngredientScaler } from "@/components/recipe/RecipeWidgets";
 import { Avatar } from "@/components/ui/Primitives";
-import { BookmarkIcon as BookmarkOutlineIcon } from "@heroicons/react/24/outline";
-import { BookmarkIcon as BookmarkSolidIcon } from "@heroicons/react/24/solid";
-import type { Id } from "convex/_generated/dataModel";
-import { useState } from "react";
-import { useToast } from "@/components/ui/Toast";
 import { RouteError } from "@/components/ui/RouteError";
+import { useToast } from "@/components/ui/Toast";
+import { APP_TITLE_SUFFIX } from "@/lib/constants";
 
 export const Route = createFileRoute("/recipe/$slug")({
   loader: ({ params, context: { queryClient } }) =>
@@ -73,7 +77,15 @@ function SaveButton({ recipeId }: { recipeId: Id<"recipes"> }) {
   );
 }
 
-function MetaStat({ icon: Icon, label, value }: { icon: React.ComponentType<{ className?: string }>; label: string; value: string }) {
+function MetaStat({
+  icon: Icon,
+  label,
+  value,
+}: {
+  icon: React.ComponentType<{ className?: string }>;
+  label: string;
+  value: string;
+}) {
   return (
     <div className="flex flex-col items-center gap-1 min-w-[70px]">
       <Icon className="w-5 h-5 text-sage" />
@@ -97,11 +109,7 @@ function RecipePage() {
         {/* Hero section */}
         {recipe.coverImageUrl ? (
           <div className="relative w-full h-[40vh] sm:h-[50vh] lg:h-[60vh] bg-charcoal overflow-hidden">
-            <img
-              src={recipe.coverImageUrl}
-              alt={recipe.title}
-              className="w-full h-full object-cover opacity-90"
-            />
+            <img src={recipe.coverImageUrl} alt={recipe.title} className="w-full h-full object-cover opacity-90" />
             <div className="absolute inset-0 bg-gradient-to-t from-charcoal/80 via-charcoal/20 to-transparent" />
             {recipe.videoUrl && (
               <a
@@ -158,7 +166,11 @@ function RecipePage() {
                   {recipe.author?.name ?? "Chef"}
                 </span>
                 <time className="block text-xs text-stone">
-                  {new Date(recipe._creationTime).toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric" })}
+                  {new Date(recipe._creationTime).toLocaleDateString("en-US", {
+                    month: "long",
+                    day: "numeric",
+                    year: "numeric",
+                  })}
                 </time>
               </div>
             </Link>
@@ -181,9 +193,7 @@ function RecipePage() {
           {/* Description + stats */}
           <div className="py-8 space-y-6">
             {recipe.description && (
-              <p className="text-lg text-secondary leading-relaxed max-w-2xl">
-                {recipe.description}
-              </p>
+              <p className="text-lg text-secondary leading-relaxed max-w-2xl">{recipe.description}</p>
             )}
 
             {(recipe.prepTime || recipe.cookTime || recipe.servings || recipe.difficulty) && (
@@ -191,7 +201,9 @@ function RecipePage() {
                 {recipe.prepTime != null && <MetaStat icon={ClockIcon} label="Prep" value={`${recipe.prepTime}m`} />}
                 {recipe.cookTime != null && <MetaStat icon={FireIcon} label="Cook" value={`${recipe.cookTime}m`} />}
                 {totalTime > 0 && <MetaStat icon={ClockIcon} label="Total" value={`${totalTime}m`} />}
-                {recipe.servings != null && <MetaStat icon={UserGroupIcon} label="Serves" value={`${recipe.servings}`} />}
+                {recipe.servings != null && (
+                  <MetaStat icon={UserGroupIcon} label="Serves" value={`${recipe.servings}`} />
+                )}
                 {recipe.difficulty && <MetaStat icon={FireIcon} label="Level" value={recipe.difficulty} />}
               </div>
             )}
@@ -216,12 +228,8 @@ function RecipePage() {
                 {recipe.steps.map((step, i) => (
                   <li key={i} className="flex gap-4">
                     <div className="flex flex-col items-center">
-                      <span className="w-8 h-8 step-number text-sm">
-                        {i + 1}
-                      </span>
-                      {i < recipe.steps.length - 1 && (
-                        <div className="step-line mt-2" />
-                      )}
+                      <span className="w-8 h-8 step-number text-sm">{i + 1}</span>
+                      {i < recipe.steps.length - 1 && <div className="step-line mt-2" />}
                     </div>
                     <div className="pt-1 pb-2">
                       <p className="text-charcoal-light dark:text-d-text-secondary leading-relaxed">{step}</p>

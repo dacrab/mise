@@ -76,10 +76,7 @@ export const getBySlug = query({
       .first();
     if (!recipe) return null;
 
-    const [author, userId] = await Promise.all([
-      ctx.db.get(recipe.userId),
-      getAuthUserId(ctx),
-    ]);
+    const [author, userId] = await Promise.all([ctx.db.get(recipe.userId), getAuthUserId(ctx)]);
 
     const isBookmarked = userId
       ? !!(await ctx.db
@@ -147,7 +144,7 @@ export const myBookmarks = query({
       .order("desc")
       .take(100);
     const recipes = (await Promise.all(bookmarks.map((b) => ctx.db.get(b.recipeId)))).filter(
-      (r): r is NonNullable<typeof r> => r !== null
+      (r): r is NonNullable<typeof r> => r !== null,
     );
     return withCoverUrls(ctx, recipes);
   },
@@ -164,7 +161,7 @@ export const myBookmarksPaginated = query({
       .order("desc")
       .paginate(paginationOpts);
     const recipes = (await Promise.all(results.page.map((b) => ctx.db.get(b.recipeId)))).filter(
-      (r): r is NonNullable<typeof r> => r !== null
+      (r): r is NonNullable<typeof r> => r !== null,
     );
     return { ...results, page: await withCoverUrls(ctx, recipes) };
   },

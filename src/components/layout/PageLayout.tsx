@@ -20,7 +20,10 @@ function Footer() {
             <Link to="/terms" className="text-stone hover:text-charcoal dark:hover:text-d-text transition-colors">
               Terms
             </Link>
-            <a href="https://github.com/dacrab/mise" className="text-stone hover:text-charcoal dark:hover:text-d-text transition-colors">
+            <a
+              href="https://github.com/dacrab/mise"
+              className="text-stone hover:text-charcoal dark:hover:text-d-text transition-colors"
+            >
               GitHub
             </a>
           </nav>

@@ -20,19 +20,35 @@ function calculatePasswordStrength(password: string): number {
   return Math.min(score, 4);
 }
 
-
 function FormField({
-  label, id, type = "text", value, onChange, placeholder, error, autoComplete,
+  label,
+  id,
+  type = "text",
+  value,
+  onChange,
+  placeholder,
+  error,
+  autoComplete,
 }: {
-  label: string; id: string; type?: string; value: string;
-  onChange: (v: string) => void; placeholder?: string; error?: string; autoComplete?: string;
+  label: string;
+  id: string;
+  type?: string;
+  value: string;
+  onChange: (v: string) => void;
+  placeholder?: string;
+  error?: string;
+  autoComplete?: string;
 }) {
   const errorId = `${id}-error`;
   return (
     <div>
-      <label htmlFor={id} className="label">{label}</label>
+      <label htmlFor={id} className="label">
+        {label}
+      </label>
       <input
-        id={id} type={type} value={value}
+        id={id}
+        type={type}
+        value={value}
         onChange={(e) => onChange(e.target.value)}
         className={`input-field w-full${error ? " border-terracotta" : ""}`}
         placeholder={placeholder}
@@ -40,30 +56,53 @@ function FormField({
         aria-describedby={error ? errorId : undefined}
         autoComplete={autoComplete}
       />
-      {error && <p id={errorId} className="text-xs text-terracotta mt-1">{error}</p>}
+      {error && (
+        <p id={errorId} className="text-xs text-terracotta mt-1">
+          {error}
+        </p>
+      )}
     </div>
   );
 }
 
 function PasswordField({
-  label, id = "password", value, onChange, show, onToggleShow, autoComplete, strengthMeter,
+  label,
+  id = "password",
+  value,
+  onChange,
+  show,
+  onToggleShow,
+  autoComplete,
+  strengthMeter,
 }: {
-  label: string; id?: string; value: string; onChange: (v: string) => void;
-  show: boolean; onToggleShow: () => void; autoComplete?: string;
+  label: string;
+  id?: string;
+  value: string;
+  onChange: (v: string) => void;
+  show: boolean;
+  onToggleShow: () => void;
+  autoComplete?: string;
   strengthMeter?: { strength: number; colors: string[]; labels: string[] };
 }) {
   return (
     <div>
-      <label htmlFor={id} className="label">{label}</label>
+      <label htmlFor={id} className="label">
+        {label}
+      </label>
       <div className="relative">
         <input
-          id={id} type={show ? "text" : "password"} value={value}
+          id={id}
+          type={show ? "text" : "password"}
+          value={value}
           onChange={(e) => onChange(e.target.value)}
-          className="input-field w-full pr-10" placeholder="••••••••"
+          className="input-field w-full pr-10"
+          placeholder="••••••••"
           autoComplete={autoComplete ?? "current-password"}
           aria-describedby={strengthMeter ? `${id}-strength` : undefined}
         />
-        <button type="button" onClick={onToggleShow}
+        <button
+          type="button"
+          onClick={onToggleShow}
           className="absolute right-3 top-1/2 -translate-y-1/2 text-stone hover:text-primary"
           aria-label={show ? "Hide password" : "Show password"}
         >
@@ -72,9 +111,18 @@ function PasswordField({
       </div>
       {strengthMeter && value && (
         <div id={`${id}-strength`} className="mt-3 space-y-1" aria-live="polite">
-          <div className="flex gap-1 h-1" role="progressbar" aria-valuenow={strengthMeter.strength} aria-valuemin={0} aria-valuemax={4}>
+          <div
+            className="flex gap-1 h-1"
+            role="progressbar"
+            aria-valuenow={strengthMeter.strength}
+            aria-valuemin={0}
+            aria-valuemax={4}
+          >
             {[1, 2, 3, 4].map((i) => (
-              <div key={i} className={`flex-1 rounded-full ${i <= strengthMeter.strength ? strengthMeter.colors[strengthMeter.strength] ?? "bg-sage" : "surface-raised"}`} />
+              <div
+                key={i}
+                className={`flex-1 rounded-full ${i <= strengthMeter.strength ? (strengthMeter.colors[strengthMeter.strength] ?? "bg-sage") : "surface-raised"}`}
+              />
             ))}
           </div>
           <p className="text-xs text-stone">{strengthMeter.labels[strengthMeter.strength]}</p>
@@ -83,7 +131,6 @@ function PasswordField({
     </div>
   );
 }
-
 
 const LOGIN_ERRORS: Record<string, string> = {
   InvalidAccountId: "No account found with this email. Please sign up first.",
@@ -99,9 +146,12 @@ const SIGNUP_ERRORS_MAP: Record<string, string> = {
 
 function mapAuthError(errors: Record<string, string>, error: unknown): string {
   const msg = error instanceof Error ? error.message : String(error);
-  return Object.entries(errors).find(([key]) => key !== "default" && msg.includes(key))?.[1] ?? errors["default"] ?? "An error occurred";
+  return (
+    Object.entries(errors).find(([key]) => key !== "default" && msg.includes(key))?.[1] ??
+    errors["default"] ??
+    "An error occurred"
+  );
 }
-
 
 export function LoginForm() {
   const { signIn } = useAuthActions();
@@ -127,17 +177,40 @@ export function LoginForm() {
 
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
-      <FormField id="login-email" label="Email" type="email" value={email} onChange={setEmail} placeholder="you@example.com" />
+      <FormField
+        id="login-email"
+        label="Email"
+        type="email"
+        value={email}
+        onChange={setEmail}
+        placeholder="you@example.com"
+      />
       <PasswordField
-        id="login-password" label="Password" value={password} onChange={setPassword}
-        show={showPassword} onToggleShow={() => setShowPassword((s) => !s)}
+        id="login-password"
+        label="Password"
+        value={password}
+        onChange={setPassword}
+        show={showPassword}
+        onToggleShow={() => setShowPassword((s) => !s)}
         autoComplete="current-password"
       />
       <div className="text-right">
-        <Link to="/forgot-password" className="text-sm text-sage hover:text-sage-light">Forgot password?</Link>
+        <Link to="/forgot-password" className="text-sm text-sage hover:text-sage-light">
+          Forgot password?
+        </Link>
       </div>
-      <button type="submit" disabled={isPending || !email || !password} className="btn-primary w-full disabled:opacity-50">
-        {isPending ? <span className="flex items-center justify-center gap-2"><Spinner /> Signing in…</span> : "Sign in"}
+      <button
+        type="submit"
+        disabled={isPending || !email || !password}
+        className="btn-primary w-full disabled:opacity-50"
+      >
+        {isPending ? (
+          <span className="flex items-center justify-center gap-2">
+            <Spinner /> Signing in…
+          </span>
+        ) : (
+          "Sign in"
+        )}
       </button>
     </form>
   );
@@ -155,7 +228,8 @@ export function SignupForm() {
 
   const strength = calculatePasswordStrength(password);
   const passwordsMatch = !confirmPassword || password === confirmPassword;
-  const canSubmit = !isPending && !!name && !!email && password.length >= MIN_PASSWORD_LENGTH && password === confirmPassword;
+  const canSubmit =
+    !isPending && !!name && !!email && password.length >= MIN_PASSWORD_LENGTH && password === confirmPassword;
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -173,37 +247,66 @@ export function SignupForm() {
 
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
-      <FormField id="signup-name" label="Name" type="text" value={name} onChange={setName} placeholder="Your name" autoComplete="name" />
-      <FormField id="signup-email" label="Email" type="email" value={email} onChange={setEmail} placeholder="you@example.com" />
+      <FormField
+        id="signup-name"
+        label="Name"
+        type="text"
+        value={name}
+        onChange={setName}
+        placeholder="Your name"
+        autoComplete="name"
+      />
+      <FormField
+        id="signup-email"
+        label="Email"
+        type="email"
+        value={email}
+        onChange={setEmail}
+        placeholder="you@example.com"
+      />
       <PasswordField
-        id="signup-password" label="Password" value={password} onChange={setPassword}
-        show={showPassword} onToggleShow={() => setShowPassword((s) => !s)}
+        id="signup-password"
+        label="Password"
+        value={password}
+        onChange={setPassword}
+        show={showPassword}
+        onToggleShow={() => setShowPassword((s) => !s)}
         autoComplete="new-password"
         strengthMeter={{ strength, colors: STRENGTH_COLORS, labels: STRENGTH_LABELS }}
       />
       <div>
-        <label htmlFor="signup-confirm" className="label">Confirm password</label>
+        <label htmlFor="signup-confirm" className="label">
+          Confirm password
+        </label>
         <input
-          id="signup-confirm" type={showPassword ? "text" : "password"} value={confirmPassword}
+          id="signup-confirm"
+          type={showPassword ? "text" : "password"}
+          value={confirmPassword}
           onChange={(e) => setConfirmPassword(e.target.value)}
           className={`input-field w-full${!passwordsMatch ? " border-terracotta" : ""}`}
-          placeholder="••••••••" autoComplete="new-password"
+          placeholder="••••••••"
+          autoComplete="new-password"
           aria-invalid={!passwordsMatch}
           aria-describedby={!passwordsMatch ? "confirm-error" : undefined}
         />
-        {!passwordsMatch && <p id="confirm-error" className="text-xs text-terracotta mt-1">Passwords don't match</p>}
+        {!passwordsMatch && (
+          <p id="confirm-error" className="text-xs text-terracotta mt-1">
+            Passwords don't match
+          </p>
+        )}
       </div>
-      <button
-        type="submit"
-        disabled={!canSubmit}
-        className="btn-primary w-full disabled:opacity-50"
-      >
-        {isPending ? <span className="flex items-center justify-center gap-2"><Spinner /> Creating…</span> : "Sign up"}
+      <button type="submit" disabled={!canSubmit} className="btn-primary w-full disabled:opacity-50">
+        {isPending ? (
+          <span className="flex items-center justify-center gap-2">
+            <Spinner /> Creating…
+          </span>
+        ) : (
+          "Sign up"
+        )}
       </button>
     </form>
   );
 }
-
 
 export function ForgotPasswordForm() {
   const { signIn } = useAuthActions();
@@ -265,10 +368,36 @@ export function ForgotPasswordForm() {
         <h1 className="font-serif text-2xl font-medium mb-2">Enter reset code</h1>
         <p className="text-stone mb-6">We sent a code to {email}</p>
         <form onSubmit={handleResetPassword} className="space-y-4">
-          <FormField id="reset-code" label="Reset code" type="text" value={code} onChange={setCode} placeholder="Enter code" autoComplete="one-time-code" />
-          <FormField id="reset-password" label="New password" type="password" value={newPassword} onChange={setNewPassword} placeholder="At least 8 characters" autoComplete="new-password" />
-          <button type="submit" disabled={resetting || !code.trim() || newPassword.length < MIN_PASSWORD_LENGTH} className="btn-primary w-full disabled:opacity-50">
-            {resetting ? <span className="flex items-center justify-center gap-2"><Spinner /> Resetting…</span> : "Reset password"}
+          <FormField
+            id="reset-code"
+            label="Reset code"
+            type="text"
+            value={code}
+            onChange={setCode}
+            placeholder="Enter code"
+            autoComplete="one-time-code"
+          />
+          <FormField
+            id="reset-password"
+            label="New password"
+            type="password"
+            value={newPassword}
+            onChange={setNewPassword}
+            placeholder="At least 8 characters"
+            autoComplete="new-password"
+          />
+          <button
+            type="submit"
+            disabled={resetting || !code.trim() || newPassword.length < MIN_PASSWORD_LENGTH}
+            className="btn-primary w-full disabled:opacity-50"
+          >
+            {resetting ? (
+              <span className="flex items-center justify-center gap-2">
+                <Spinner /> Resetting…
+              </span>
+            ) : (
+              "Reset password"
+            )}
           </button>
         </form>
       </div>
@@ -283,9 +412,26 @@ export function ForgotPasswordForm() {
       <h1 className="font-serif text-2xl font-medium mb-2">Forgot password?</h1>
       <p className="text-stone mb-6">Enter your email and we'll send you a reset code.</p>
       <form onSubmit={handleRequestReset} className="space-y-4">
-        <FormField id="forgot-email" label="Email" type="email" value={email} onChange={setEmail} placeholder="you@example.com" />
-        <button type="submit" disabled={sendingCode || !email.trim()} className="btn-primary w-full disabled:opacity-50">
-          {sendingCode ? <span className="flex items-center justify-center gap-2"><Spinner /> Sending…</span> : "Send reset code"}
+        <FormField
+          id="forgot-email"
+          label="Email"
+          type="email"
+          value={email}
+          onChange={setEmail}
+          placeholder="you@example.com"
+        />
+        <button
+          type="submit"
+          disabled={sendingCode || !email.trim()}
+          className="btn-primary w-full disabled:opacity-50"
+        >
+          {sendingCode ? (
+            <span className="flex items-center justify-center gap-2">
+              <Spinner /> Sending…
+            </span>
+          ) : (
+            "Send reset code"
+          )}
         </button>
       </form>
     </div>

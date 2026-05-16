@@ -5,17 +5,17 @@
   --font-serif: "Playfair Display", "Georgia", serif;
 
   /* Light palette */
-  --color-cream: #FAF7F2;
-  --color-cream-dark: #F3EDE4;
-  --color-warm-white: #FFFDFB;
-  --color-charcoal: #2D2A26;
-  --color-charcoal-light: #4A4640;
-  --color-sage: #8B9A7D;
-  --color-sage-light: #A8B89A;
-  --color-terracotta: #C4846C;
-  --color-honey: #D4A853;
-  --color-stone: #9C9488;
-  --color-stone-light: #C4BEB4;
+  --color-cream: #faf7f2;
+  --color-cream-dark: #f3ede4;
+  --color-warm-white: #fffdfb;
+  --color-charcoal: #2d2a26;
+  --color-charcoal-light: #4a4640;
+  --color-sage: #8b9a7d;
+  --color-sage-light: #a8b89a;
+  --color-terracotta: #c4846c;
+  --color-honey: #d4a853;
+  --color-stone: #9c9488;
+  --color-stone-light: #c4beb4;
 
   /* Dark palette */
   --color-d-bg: #1a1a1a;
@@ -37,10 +37,20 @@
   body {
     @apply bg-cream text-charcoal font-sans antialiased dark:bg-d-bg dark:text-d-text;
   }
-  h1, h2, h3, h4 {
+  h1,
+  h2,
+  h3,
+  h4 {
     @apply font-serif text-charcoal dark:text-d-text-heading;
   }
-  a, button, [role="button"], select, label[for], input[type="file"], input[type="checkbox"], input[type="radio"] {
+  a,
+  button,
+  [role="button"],
+  select,
+  label[for],
+  input[type="file"],
+  input[type="checkbox"],
+  input[type="radio"] {
     cursor: pointer;
   }
 }
@@ -201,14 +211,28 @@
 /* ─── Animations ─── */
 
 @keyframes scaleIn {
-  from { opacity: 0; transform: scale(0.96); }
-  to { opacity: 1; transform: scale(1); }
+  from {
+    opacity: 0;
+    transform: scale(0.96);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
 }
-@utility animate-scale-in { animation: scaleIn 0.2s ease-out both; }
+@utility animate-scale-in {
+  animation: scaleIn 0.2s ease-out both;
+}
 
 @keyframes pageEnter {
-  from { opacity: 0; transform: translateY(8px); }
-  to { opacity: 1; transform: translateY(0); }
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 .page-enter {
   animation: pageEnter 0.35s cubic-bezier(0.25, 0.46, 0.45, 0.94) both;

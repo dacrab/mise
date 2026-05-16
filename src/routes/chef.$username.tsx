@@ -2,12 +2,11 @@ import { convexQuery } from "@convex-dev/react-query";
 import { useSuspenseQuery } from "@tanstack/react-query";
 import { createFileRoute, notFound } from "@tanstack/react-router";
 import { api } from "convex/_generated/api";
-
-import { APP_TITLE_SUFFIX } from "@/lib/constants";
 import { PageLayout } from "@/components/layout/PageLayout";
 import { Avatar } from "@/components/ui/Primitives";
 import { RecipeCard, RecipeGridSkeleton } from "@/components/ui/RecipeCard";
 import { RouteError } from "@/components/ui/RouteError";
+import { APP_TITLE_SUFFIX } from "@/lib/constants";
 
 function ChefSkeleton() {
   return (
@@ -30,13 +29,13 @@ function ChefSkeleton() {
 
 /**
  * Chef profile route with SSR support.
- * 
+ *
  * SSR Pattern:
  * - loader: Prefetches chef data on the server using ensureQueryData
  * - useSuspenseQuery: Reads from cache (populated by loader) without waterfalls
  * - pendingComponent: Shows skeleton while navigating client-side
  * - errorComponent: Gracefully handles loader failures and notFound() errors
- * 
+ *
  * This ensures the chef profile HTML is rendered on the server for SEO and fast FCP.
  */
 export const Route = createFileRoute("/chef/$username")({
@@ -48,7 +47,10 @@ export const Route = createFileRoute("/chef/$username")({
   head: ({ loaderData }) => ({
     meta: [
       { title: loaderData?.name ? `${loaderData.name}'s Kitchen${APP_TITLE_SUFFIX}` : `Chef${APP_TITLE_SUFFIX}` },
-      { name: "description", content: loaderData?.bio ?? (loaderData?.name ? `Recipes by ${loaderData.name} on Mise` : "Chef on Mise") },
+      {
+        name: "description",
+        content: loaderData?.bio ?? (loaderData?.name ? `Recipes by ${loaderData.name} on Mise` : "Chef on Mise"),
+      },
       { property: "og:title", content: loaderData?.name ? `${loaderData.name}'s Kitchen` : "Chef" },
       { property: "og:type", content: "profile" },
     ],
@@ -68,7 +70,12 @@ function ChefPage() {
       {/* Hero Banner */}
       <div className="hero-banner py-14 md:py-20 px-5">
         <div className="max-w-6xl mx-auto flex flex-col sm:flex-row items-center sm:items-end gap-6">
-          <Avatar src={chef.profileImageUrl ?? chef.image} name={chef.name} size="lg" className="!w-28 !h-28 text-3xl ring-4 ring-white/20" />
+          <Avatar
+            src={chef.profileImageUrl ?? chef.image}
+            name={chef.name}
+            size="lg"
+            className="!w-28 !h-28 text-3xl ring-4 ring-white/20"
+          />
           <div className="text-center sm:text-left">
             <h1 className="font-serif text-3xl md:text-4xl font-medium text-cream mb-1">{chef.name}</h1>
             {chef.username && <p className="text-sage-light text-sm mb-3">@{chef.username}</p>}
@@ -101,8 +108,18 @@ function ChefPage() {
         ) : (
           <div className="card p-16 text-center">
             <div className="w-20 h-20 bg-sage/10 rounded-full flex items-center justify-center mx-auto mb-6">
-              <svg className="w-9 h-9 text-sage" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" d="M12 6.042A8.967 8.967 0 0 0 6 3.75c-1.052 0-2.062.18-3 .512v14.25A8.987 8.987 0 0 1 6 18c2.305 0 4.408.867 6 2.292m0-14.25a8.966 8.966 0 0 1 6-2.292c1.052 0 2.062.18 3 .512v14.25A8.987 8.987 0 0 0 18 18a8.967 8.967 0 0 0-6 2.292m0-14.25v14.25" />
+              <svg
+                className="w-9 h-9 text-sage"
+                fill="none"
+                viewBox="0 0 24 24"
+                strokeWidth={1.5}
+                stroke="currentColor"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  d="M12 6.042A8.967 8.967 0 0 0 6 3.75c-1.052 0-2.062.18-3 .512v14.25A8.987 8.987 0 0 1 6 18c2.305 0 4.408.867 6 2.292m0-14.25a8.966 8.966 0 0 1 6-2.292c1.052 0 2.062.18 3 .512v14.25A8.987 8.987 0 0 0 18 18a8.967 8.967 0 0 0-6 2.292m0-14.25v14.25"
+                />
               </svg>
             </div>
             <h3 className="font-serif text-2xl font-medium mb-2">No recipes yet</h3>

@@ -5,8 +5,8 @@ import { usePaginatedQuery, useQuery } from "convex/react";
 import { useRef } from "react";
 import { z } from "zod";
 import { PageLayout } from "@/components/layout/PageLayout";
-import { RecipeCard, FeaturedRecipeCard, RecipeGridSkeleton } from "@/components/ui/RecipeCard";
 import { Spinner } from "@/components/ui/Primitives";
+import { FeaturedRecipeCard, RecipeCard, RecipeGridSkeleton } from "@/components/ui/RecipeCard";
 import { CATEGORIES, CATEGORY_ICONS } from "@/lib/constants";
 
 const searchSchema = z.object({
@@ -22,7 +22,8 @@ export const Route = createFileRoute("/")({
       { title: "Mise - Share Your Recipes" },
       {
         name: "description",
-        content: "Discover and share delicious recipes. From mise en place — the chef's practice of preparing everything before cooking.",
+        content:
+          "Discover and share delicious recipes. From mise en place — the chef's practice of preparing everything before cooking.",
       },
       { property: "og:title", content: "Mise - Share Your Recipes" },
       { property: "og:description", content: "Discover and share delicious recipes with the community." },
@@ -44,22 +45,18 @@ function HomePage() {
   // Search query — only active when q is set
   const searchResults = useQuery(
     api.recipes.list,
-    isSearching
-      ? { search: q, category: category ?? undefined, limit: 50 }
-      : "skip"
+    isSearching ? { search: q, category: category ?? undefined, limit: 50 } : "skip",
   );
 
   // Paginated browse — always active, respects category filter
   const paginated = usePaginatedQuery(
     api.recipes.listPaginated,
     { category: category ?? undefined },
-    { initialNumItems: 20 }
+    { initialNumItems: 20 },
   );
 
   // Determine what to show
-  const isLoading = isSearching
-    ? searchResults === undefined
-    : paginated.status === "LoadingFirstPage";
+  const isLoading = isSearching ? searchResults === undefined : paginated.status === "LoadingFirstPage";
 
   const recipes = isSearching ? (searchResults ?? []) : paginated.results;
 
@@ -100,8 +97,12 @@ function HomePage() {
               No algorithms. No ads. Just home cooks sharing dishes that actually matter.
             </p>
             <div className="flex flex-wrap gap-3">
-              <Link to="/dashboard/create" className="btn-primary">Share a recipe</Link>
-              <a href="#recipes" className="btn-ghost">Browse recipes ↓</a>
+              <Link to="/dashboard/create" className="btn-primary">
+                Share a recipe
+              </Link>
+              <a href="#recipes" className="btn-ghost">
+                Browse recipes ↓
+              </a>
             </div>
           </div>
           {featured ? (
@@ -125,7 +126,9 @@ function HomePage() {
           <button
             onClick={() => handleCategoryClick(undefined)}
             className={`shrink-0 px-4 py-2 rounded-full text-sm font-medium transition-colors ${
-              !category ? "bg-charcoal text-cream dark:bg-cream dark:text-charcoal" : "bg-cream-dark dark:bg-d-surface-raised text-stone hover:text-charcoal dark:hover:text-d-text"
+              !category
+                ? "bg-charcoal text-cream dark:bg-cream dark:text-charcoal"
+                : "bg-cream-dark dark:bg-d-surface-raised text-stone hover:text-charcoal dark:hover:text-d-text"
             }`}
           >
             All
@@ -135,7 +138,9 @@ function HomePage() {
               key={c}
               onClick={() => handleCategoryClick(category === c ? undefined : c)}
               className={`shrink-0 flex items-center gap-1.5 px-4 py-2 rounded-full text-sm font-medium transition-colors ${
-                category === c ? "bg-charcoal text-cream dark:bg-cream dark:text-charcoal" : "bg-cream-dark dark:bg-d-surface-raised text-stone hover:text-charcoal dark:hover:text-d-text"
+                category === c
+                  ? "bg-charcoal text-cream dark:bg-cream dark:text-charcoal"
+                  : "bg-cream-dark dark:bg-d-surface-raised text-stone hover:text-charcoal dark:hover:text-d-text"
               }`}
             >
               <span>{CATEGORY_ICONS[c]}</span>
@@ -160,7 +165,9 @@ function HomePage() {
             />
           </div>
           <div className="flex gap-2">
-            <button type="submit" className="btn-primary px-6">Search</button>
+            <button type="submit" className="btn-primary px-6">
+              Search
+            </button>
           </div>
         </form>
 
@@ -169,13 +176,20 @@ function HomePage() {
           <div className="mt-4 flex items-center gap-3 text-sm">
             <span className="text-stone">
               {recipes.length} result{recipes.length !== 1 ? "s" : ""}
-              {q && <> for "<span className="text-primary font-medium">{q}</span>"</>}
-              {category && <> in <span className="text-primary font-medium">{category}</span></>}
+              {q && (
+                <>
+                  {" "}
+                  for "<span className="text-primary font-medium">{q}</span>"
+                </>
+              )}
+              {category && (
+                <>
+                  {" "}
+                  in <span className="text-primary font-medium">{category}</span>
+                </>
+              )}
             </span>
-            <button
-              onClick={clearFilters}
-              className="flex items-center gap-1 text-sage hover:underline"
-            >
+            <button onClick={clearFilters} className="flex items-center gap-1 text-sage hover:underline">
               <XMarkIcon className="w-3.5 h-3.5" /> Clear
             </button>
           </div>
@@ -234,12 +248,16 @@ function HomePage() {
                 <p className="text-stone mb-6">
                   {category ? `No ${category} recipes yet.` : "Try different keywords."}
                 </p>
-                <button onClick={clearFilters} className="btn-ghost">Clear filters</button>
+                <button onClick={clearFilters} className="btn-ghost">
+                  Clear filters
+                </button>
               </>
             ) : (
               <>
                 <p className="text-stone mb-4">No recipes yet.</p>
-                <Link to="/dashboard/create" className="btn-primary">Be the first to share</Link>
+                <Link to="/dashboard/create" className="btn-primary">
+                  Be the first to share
+                </Link>
               </>
             )}
           </div>

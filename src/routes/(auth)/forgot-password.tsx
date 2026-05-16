@@ -1,6 +1,6 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { APP_TITLE_SUFFIX } from "@/lib/constants";
 import { ForgotPasswordForm } from "@/components/auth/AuthForms";
+import { APP_TITLE_SUFFIX } from "@/lib/constants";
 
 export const Route = createFileRoute("/(auth)/forgot-password")({
   head: () => ({

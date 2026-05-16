@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { APP_TITLE_SUFFIX } from "@/lib/constants";
 import { RecipeEditor } from "@/components/recipe/RecipeEditor";
+import { APP_TITLE_SUFFIX } from "@/lib/constants";
 
 export const Route = createFileRoute("/_authed/dashboard/create")({
   head: () => ({

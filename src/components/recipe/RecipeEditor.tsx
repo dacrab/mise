@@ -54,7 +54,7 @@ function buildPayload(
   data: RecipeFormData,
   coverImage: Id<"_storage"> | null,
   validIngredients: string[],
-  validSteps: string[]
+  validSteps: string[],
 ) {
   return {
     title: data.title.trim() || "Untitled",
@@ -132,11 +132,7 @@ export function RecipeEditor({
     remove: removeIngredient,
   } = useFieldArray({ control, name: "ingredients" });
 
-  const {
-    fields: stepFields,
-    append: appendStep,
-    remove: removeStep,
-  } = useFieldArray({ control, name: "steps" });
+  const { fields: stepFields, append: appendStep, remove: removeStep } = useFieldArray({ control, name: "steps" });
 
   const unwrap = (arr: Array<{ value: string }>) => arr.map((x) => x.value);
   const watchedValues = watch();
@@ -181,16 +177,18 @@ export function RecipeEditor({
           status: "draft",
         });
         setLastSaved(new Date());
-      } catch { /* silent */ }
+      } catch {
+        /* silent */
+      }
     }, 30_000);
     return () => clearInterval(interval);
-  }, [isEditing, initialData?.id, isDirty, coverImage, watchedValues, updateRecipe]);
+  }, [isEditing, initialData?.id, isDirty, coverImage, watchedValues, updateRecipe, unwrap]);
 
   useEffect(
     () => () => {
       if (coverImageUrl?.startsWith("blob:")) URL.revokeObjectURL(coverImageUrl);
     },
-    [coverImageUrl]
+    [coverImageUrl],
   );
 
   useEffect(() => {
@@ -254,9 +252,16 @@ export function RecipeEditor({
       <div className="sticky top-16 z-30 glass border-b border-cream-dark dark:border-d-border">
         <div className="max-w-7xl mx-auto px-5 sm:px-8 flex items-center justify-between h-14">
           <div className="flex items-center gap-4">
-            <Link to="/dashboard" className="cursor-pointer text-stone hover:text-charcoal dark:hover:text-d-text transition-colors">
+            <Link
+              to="/dashboard"
+              className="cursor-pointer text-stone hover:text-charcoal dark:hover:text-d-text transition-colors"
+            >
               <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="w-5 h-5">
-                <path fillRule="evenodd" d="M17 10a.75.75 0 01-.75.75H5.612l4.158 3.96a.75.75 0 11-1.04 1.08l-5.5-5.25a.75.75 0 010-1.08l5.5-5.25a.75.75 0 111.04 1.08L5.612 9.25H16.25A.75.75 0 0117 10z" clipRule="evenodd" />
+                <path
+                  fillRule="evenodd"
+                  d="M17 10a.75.75 0 01-.75.75H5.612l4.158 3.96a.75.75 0 11-1.04 1.08l-5.5-5.25a.75.75 0 010-1.08l5.5-5.25a.75.75 0 111.04 1.08L5.612 9.25H16.25A.75.75 0 0117 10z"
+                  clipRule="evenodd"
+                />
               </svg>
             </Link>
             <h1 className="font-serif text-lg font-medium">{isEditing ? "Edit recipe" : "New recipe"}</h1>
@@ -267,10 +272,18 @@ export function RecipeEditor({
             )}
           </div>
           <div className="flex items-center gap-2">
-            <button onClick={() => triggerSubmit("draft")} disabled={loading} className="btn-secondary text-sm px-4 py-2 cursor-pointer">
+            <button
+              onClick={() => triggerSubmit("draft")}
+              disabled={loading}
+              className="btn-secondary text-sm px-4 py-2 cursor-pointer"
+            >
               {loading ? "Saving…" : "Save draft"}
             </button>
-            <button onClick={() => triggerSubmit("published")} disabled={loading} className="btn-primary text-sm px-4 py-2 cursor-pointer">
+            <button
+              onClick={() => triggerSubmit("published")}
+              disabled={loading}
+              className="btn-primary text-sm px-4 py-2 cursor-pointer"
+            >
               {loading ? "Saving…" : isEditing ? "Update" : "Publish"}
             </button>
           </div>
@@ -296,17 +309,40 @@ export function RecipeEditor({
                   <div className="absolute inset-0 bg-gradient-to-t from-charcoal/60 via-transparent to-transparent" />
                   <label className="absolute bottom-4 right-4 btn-secondary text-xs px-3 py-1.5 cursor-pointer bg-warm-white/90 backdrop-blur-sm">
                     Change image
-                    <input type="file" accept="image/*" onChange={handleUpload} className="hidden" aria-label="Change cover image" />
+                    <input
+                      type="file"
+                      accept="image/*"
+                      onChange={handleUpload}
+                      className="hidden"
+                      aria-label="Change cover image"
+                    />
                   </label>
                 </>
               ) : (
                 <label className="absolute inset-0 flex flex-col items-center justify-center cursor-pointer text-stone hover:text-sage transition-colors gap-2">
-                  <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-10 h-10">
-                    <path strokeLinecap="round" strokeLinejoin="round" d="m2.25 15.75 5.159-5.159a2.25 2.25 0 0 1 3.182 0l5.159 5.159m-1.5-1.5 1.409-1.409a2.25 2.25 0 0 1 3.182 0l2.909 2.909M3.75 21h16.5A2.25 2.25 0 0 0 22.5 18.75V5.25A2.25 2.25 0 0 0 20.25 3H3.75A2.25 2.25 0 0 0 1.5 5.25v13.5A2.25 2.25 0 0 0 3.75 21Z" />
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    strokeWidth={1.5}
+                    stroke="currentColor"
+                    className="w-10 h-10"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      d="m2.25 15.75 5.159-5.159a2.25 2.25 0 0 1 3.182 0l5.159 5.159m-1.5-1.5 1.409-1.409a2.25 2.25 0 0 1 3.182 0l2.909 2.909M3.75 21h16.5A2.25 2.25 0 0 0 22.5 18.75V5.25A2.25 2.25 0 0 0 20.25 3H3.75A2.25 2.25 0 0 0 1.5 5.25v13.5A2.25 2.25 0 0 0 3.75 21Z"
+                    />
                   </svg>
                   <span className="text-sm font-medium">Add a cover photo</span>
                   <span className="text-xs text-stone">Recommended: 1200×600px or wider</span>
-                  <input type="file" accept="image/*" onChange={handleUpload} className="hidden" aria-label="Upload cover image" />
+                  <input
+                    type="file"
+                    accept="image/*"
+                    onChange={handleUpload}
+                    className="hidden"
+                    aria-label="Upload cover image"
+                  />
                 </label>
               )}
             </div>
@@ -341,7 +377,9 @@ export function RecipeEditor({
             <section className="card p-6 space-y-4">
               <div className="flex items-center justify-between">
                 <h2 className="font-serif text-xl font-medium">Ingredients</h2>
-                <span className="text-xs text-stone">{ingredientFields.filter((_, i) => watchedValues.ingredients?.[i]?.value).length} items</span>
+                <span className="text-xs text-stone">
+                  {ingredientFields.filter((_, i) => watchedValues.ingredients?.[i]?.value).length} items
+                </span>
               </div>
               <div className="space-y-2">
                 {ingredientFields.map((field, i) => (
@@ -360,7 +398,12 @@ export function RecipeEditor({
                       aria-label={`Remove ingredient ${i + 1}`}
                       type="button"
                     >
-                      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="w-4 h-4">
+                      <svg
+                        xmlns="http://www.w3.org/2000/svg"
+                        viewBox="0 0 20 20"
+                        fill="currentColor"
+                        className="w-4 h-4"
+                      >
                         <path d="M6.28 5.22a.75.75 0 00-1.06 1.06L8.94 10l-3.72 3.72a.75.75 0 101.06 1.06L10 11.06l3.72 3.72a.75.75 0 101.06-1.06L11.06 10l3.72-3.72a.75.75 0 00-1.06-1.06L10 8.94 6.28 5.22z" />
                       </svg>
                     </button>
@@ -383,15 +426,15 @@ export function RecipeEditor({
             <section className="card p-6 space-y-4">
               <div className="flex items-center justify-between">
                 <h2 className="font-serif text-xl font-medium">Instructions</h2>
-                <span className="text-xs text-stone">{stepFields.filter((_, i) => watchedValues.steps?.[i]?.value).length} steps</span>
+                <span className="text-xs text-stone">
+                  {stepFields.filter((_, i) => watchedValues.steps?.[i]?.value).length} steps
+                </span>
               </div>
               <div className="space-y-4">
                 {stepFields.map((field, i) => (
                   <div key={field.id} className="group flex gap-4">
                     <div className="flex flex-col items-center">
-                      <span className="w-8 h-8 step-number text-sm">
-                        {i + 1}
-                      </span>
+                      <span className="w-8 h-8 step-number text-sm">{i + 1}</span>
                       {i < stepFields.length - 1 && <div className="step-line mt-2" />}
                     </div>
                     <div className="flex-1 pb-4">
@@ -434,7 +477,9 @@ export function RecipeEditor({
                 <h3 className="font-serif text-base font-medium">Details</h3>
                 <div className="space-y-4">
                   <div>
-                    <label htmlFor="recipe-category" className="label">Category</label>
+                    <label htmlFor="recipe-category" className="label">
+                      Category
+                    </label>
                     <Controller
                       name="category"
                       control={control}
@@ -450,7 +495,9 @@ export function RecipeEditor({
                     />
                   </div>
                   <div>
-                    <label htmlFor="recipe-difficulty" className="label">Difficulty</label>
+                    <label htmlFor="recipe-difficulty" className="label">
+                      Difficulty
+                    </label>
                     <Controller
                       name="difficulty"
                       control={control}
@@ -459,7 +506,10 @@ export function RecipeEditor({
                           id="recipe-difficulty"
                           value={field.value}
                           onChange={field.onChange}
-                          options={[{ label: "Select…", value: "" }, ...DIFFICULTIES.map((d) => ({ label: d, value: d }))]}
+                          options={[
+                            { label: "Select…", value: "" },
+                            ...DIFFICULTIES.map((d) => ({ label: d, value: d })),
+                          ]}
                           className="w-full"
                         />
                       )}
@@ -473,7 +523,9 @@ export function RecipeEditor({
                 <h3 className="font-serif text-base font-medium">Timing & Servings</h3>
                 <div className="grid grid-cols-2 gap-3">
                   <div>
-                    <label htmlFor="recipe-prep-time" className="label text-xs">Prep (min)</label>
+                    <label htmlFor="recipe-prep-time" className="label text-xs">
+                      Prep (min)
+                    </label>
                     <input
                       id="recipe-prep-time"
                       type="number"
@@ -486,7 +538,9 @@ export function RecipeEditor({
                     <FieldError error={errors.prepTime} />
                   </div>
                   <div>
-                    <label htmlFor="recipe-cook-time" className="label text-xs">Cook (min)</label>
+                    <label htmlFor="recipe-cook-time" className="label text-xs">
+                      Cook (min)
+                    </label>
                     <input
                       id="recipe-cook-time"
                       type="number"
@@ -500,7 +554,9 @@ export function RecipeEditor({
                   </div>
                 </div>
                 <div>
-                  <label htmlFor="recipe-servings" className="label text-xs">Servings</label>
+                  <label htmlFor="recipe-servings" className="label text-xs">
+                    Servings
+                  </label>
                   <input
                     id="recipe-servings"
                     type="number"

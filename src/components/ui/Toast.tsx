@@ -1,5 +1,5 @@
-import { createContext, useCallback, useContext, useEffect, useRef, useState } from "react";
 import { CheckCircleIcon, ExclamationCircleIcon, InformationCircleIcon, XMarkIcon } from "@heroicons/react/24/outline";
+import { createContext, useCallback, useContext, useEffect, useRef, useState } from "react";
 
 type ToastType = "success" | "error" | "info";
 
@@ -58,13 +58,16 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
     }
   }, []);
 
-  const toast = useCallback((message: string, type: ToastType = "info") => {
-    const id = ++nextId.current;
-    setToasts((prev) => [...prev, { id, message, type }]);
-    const duration = type === "error" ? 5000 : type === "success" ? 3500 : 4000;
-    const timer = setTimeout(() => dismiss(id), duration);
-    timers.current.set(id, timer);
-  }, [dismiss]);
+  const toast = useCallback(
+    (message: string, type: ToastType = "info") => {
+      const id = ++nextId.current;
+      setToasts((prev) => [...prev, { id, message, type }]);
+      const duration = type === "error" ? 5000 : type === "success" ? 3500 : 4000;
+      const timer = setTimeout(() => dismiss(id), duration);
+      timers.current.set(id, timer);
+    },
+    [dismiss],
+  );
 
   useEffect(() => {
     const currentTimers = timers.current;
