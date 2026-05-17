@@ -1,5 +1,6 @@
 import { defineConfig } from "vite";
 import { tanstackStart } from "@tanstack/react-start/plugin/vite";
+import { nitro } from "nitro/vite";
 import tailwindcss from "@tailwindcss/vite";
 import { resolve } from "path";
 
@@ -10,7 +11,7 @@ export default defineConfig({
       "convex/_generated/": `${resolve(import.meta.dirname!, "convex/_generated")}/`,
     },
   },
-  plugins: [tanstackStart(), tailwindcss()],
+  plugins: [tanstackStart(), nitro({ preset: "vercel" }), tailwindcss()],
   build: {
     rollupOptions: {
       onwarn(warning, warn) {
