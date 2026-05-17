@@ -21,7 +21,7 @@ jobs:
       test-cmd: 'bun run test:run'
       build-cmd: 'bun run build'
     secrets:
-      env-vars: '{"VITE_CONVEX_URL":"${{ secrets.VITE_CONVEX_URL }}"}'
+      env_vars: '{"VITE_CONVEX_URL":"${{ secrets.VITE_CONVEX_URL }}"}'
 
   auto-merge:
     needs: ci
