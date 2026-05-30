@@ -24,7 +24,7 @@ A recipe sharing platform for home cooks. No ads, no algorithms — just good fo
 
 ## Tech Stack
 
-- **Frontend**: React 19, TanStack Start (SSR), Tailwind CSS v4
+- **Frontend**: React, TanStack Start (SSR), Tailwind CSS
 - **Backend**: Convex (database, auth, file storage, real-time)
 - **Testing**: Vitest, Playwright
 
