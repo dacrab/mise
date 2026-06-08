@@ -5,13 +5,8 @@ import { Analytics } from "@vercel/analytics/react";
 import { SpeedInsights } from "@vercel/speed-insights/react";
 import { useEffect, useRef } from "react";
 import { ErrorPage } from "@/components/layout/PageLayout";
-import { initClientSentry } from "@/sentry.client";
 import * as Sentry from "@sentry/react";
 import appCss from "../styles.css?url";
-
-if (typeof window !== "undefined") {
-  initClientSentry();
-}
 
 function RootComponent() {
   const { isLoading, location } = useRouterState();

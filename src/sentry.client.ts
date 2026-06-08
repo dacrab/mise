@@ -9,10 +9,7 @@ export function initClientSentry() {
       replaysSessionSampleRate: 0.05,
       replaysOnErrorSampleRate: 1.0,
       debug: false,
-      integrations: [
-        Sentry.browserTracingIntegration(),
-        Sentry.replayIntegration(),
-      ],
+      integrations: [Sentry.browserTracingIntegration(), Sentry.replayIntegration()],
     });
   }
 }
