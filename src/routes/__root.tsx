@@ -5,7 +5,13 @@ import { Analytics } from "@vercel/analytics/react";
 import { SpeedInsights } from "@vercel/speed-insights/react";
 import { useEffect, useRef } from "react";
 import { ErrorPage } from "@/components/layout/PageLayout";
+import { initClientSentry } from "@/sentry.client";
+import * as Sentry from "@sentry/react";
 import appCss from "../styles.css?url";
+
+if (typeof window !== "undefined") {
+  initClientSentry();
+}
 
 function RootComponent() {
   const { isLoading, location } = useRouterState();
@@ -41,7 +47,9 @@ function RootComponent() {
           <div className="fixed top-0 left-0 w-full h-0.5 bg-gradient-to-r from-sage via-sage-light to-sage z-50 animate-pulse" />
         )}
         <div ref={wrapperRef}>
-          <Outlet />
+          <Sentry.ErrorBoundary fallback={<div>Something went wrong</div>}>
+            <Outlet />
+          </Sentry.ErrorBoundary>
         </div>
         <Analytics />
         <SpeedInsights />
