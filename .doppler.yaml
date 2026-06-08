@@ -1,0 +1,3 @@
+setup:
+  project: mise
+  config: dev_app

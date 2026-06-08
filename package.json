@@ -3,8 +3,8 @@
   "type": "module",
   "version": "0.0.1",
   "scripts": {
-    "dev": "vite dev",
-    "build": "vite build",
+    "dev": "doppler run -- vite dev",
+    "build": "doppler run -- vite build",
     "start": "vite preview",
     "lint": "biome check",
     "lint:fix": "biome check --write",
