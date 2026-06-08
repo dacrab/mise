@@ -83,10 +83,6 @@
  * - Real-time updates only work client-side (SSR serves static snapshot)
  */
 
-import { initServerSentry } from "./sentry.server";
-
-initServerSentry();
-
 import { ConvexAuthProvider } from "@convex-dev/auth/react";
 import { ConvexQueryClient } from "@convex-dev/react-query";
 import { QueryClient } from "@tanstack/react-query";
