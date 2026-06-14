@@ -26,9 +26,10 @@ jobs:
         run: bun run typecheck && bun run lint
       - name: Test
         run: bun run test:run
+
       - uses: dopplerhq/cli-action@v4
+
       - name: Build
-        run: doppler run -- bun run build
+        run: bun run build
         env:
           DOPPLER_TOKEN: ${{ secrets.DOPPLER_TOKEN }}
-
