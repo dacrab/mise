@@ -2,6 +2,7 @@ import { createFileRoute, Link, Navigate } from "@tanstack/react-router";
 import { useConvexAuth } from "convex/react";
 import { z } from "zod";
 import { SignupForm } from "@/components/auth/AuthForms";
+import { AuthLayout } from "@/components/layout/AuthLayout";
 import { APP_TITLE_SUFFIX } from "@/lib/constants";
 
 const searchSchema = z.object({
@@ -28,19 +29,13 @@ function SignupPage() {
   }
 
   return (
-    <div className="min-h-screen flex">
-      <div className="hidden lg:flex lg:w-1/2 bg-sage p-12 flex-col justify-between">
-        <Link to="/" className="font-serif text-2xl font-semibold text-warm-white">
-          mise
-        </Link>
-        <div>
-          <p className="font-hand text-3xl text-cream mb-4">join the kitchen</p>
-          <p className="text-cream/80 text-lg max-w-md">Share your favorite recipes with home cooks who care.</p>
-        </div>
-        <p className="text-cream/60 text-sm">© {new Date().getFullYear()} mise</p>
-      </div>
-      <div className="center flex-1 p-8 bg-cream dark:bg-d-bg">
-        <div className="w-full max-w-md">
+    <AuthLayout
+      heroBg="bg-sage"
+      heroHeading="join the kitchen"
+      heroDescription="Share your favorite recipes with home cooks who care."
+      heroFooterClass="text-cream/60"
+      form={
+        <>
           <Link to="/" className="lg:hidden font-serif text-2xl font-semibold text-primary block mb-8">
             mise
           </Link>
@@ -52,8 +47,8 @@ function SignupPage() {
             </Link>
           </p>
           <SignupForm />
-        </div>
-      </div>
-    </div>
+        </>
+      }
+    />
   );
 }

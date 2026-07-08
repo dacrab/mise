@@ -22,10 +22,18 @@ function RootComponent() {
     if (!el) return;
 
     el.classList.remove("page-enter");
-    requestAnimationFrame(() => el.classList.add("page-enter"));
+    let cancelled = false;
+    requestAnimationFrame(() => {
+      if (!cancelled) el.classList.add("page-enter");
+    });
 
-    const timer = setTimeout(() => el.classList.remove("page-enter"), 400);
-    return () => clearTimeout(timer);
+    const timer = setTimeout(() => {
+      if (!cancelled) el.classList.remove("page-enter");
+    }, 400);
+    return () => {
+      cancelled = true;
+      clearTimeout(timer);
+    };
   }, [location.pathname]);
 
   return (

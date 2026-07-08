@@ -34,6 +34,7 @@ function ToastItem({
       <Icon className="w-4 h-4 shrink-0 mt-0.5" aria-hidden="true" />
       <span className="flex-1 leading-relaxed">{t.message}</span>
       <button
+        type="button"
         onClick={() => onDismiss(t.id)}
         className="shrink-0 opacity-50 hover:opacity-100 transition-opacity -mr-1"
         aria-label="Dismiss notification"

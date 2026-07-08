@@ -31,11 +31,11 @@ export function RouteError({ error, reset }: RouteErrorProps) {
         <p className="text-charcoal-light mb-8">We encountered an error while loading this page.</p>
         <div className="flex gap-4 justify-center">
           {reset && (
-            <button onClick={reset} className="btn-primary">
+            <button type="button" onClick={reset} className="btn-primary">
               Try Again
             </button>
           )}
-          <button onClick={() => router.history.back()} className="btn-secondary">
+          <button type="button" onClick={() => router.history.back()} className="btn-secondary">
             Go Back
           </button>
         </div>

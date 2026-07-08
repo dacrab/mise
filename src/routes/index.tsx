@@ -34,7 +34,6 @@ export const Route = createFileRoute("/")({
 });
 
 function HomePage() {
-  // Everything is derived from URL — single source of truth
   const { q, category } = Route.useSearch();
   const navigate = useNavigate();
   const searchInputRef = useRef<HTMLInputElement>(null);
@@ -43,19 +42,11 @@ function HomePage() {
   const isFiltered = !!q || !!category;
 
   // Search query — only active when q is set
-  const searchResults = useQuery(
-    api.recipes.list,
-    isSearching ? { search: q, category: category ?? undefined, limit: 50 } : "skip",
-  );
+  const searchResults = useQuery(api.recipes.list, isSearching ? { search: q, category: category, limit: 50 } : "skip");
 
   // Paginated browse — always active, respects category filter
-  const paginated = usePaginatedQuery(
-    api.recipes.listPaginated,
-    { category: category ?? undefined },
-    { initialNumItems: 20 },
-  );
+  const paginated = usePaginatedQuery(api.recipes.listPaginated, { category: category }, { initialNumItems: 20 });
 
-  // Determine what to show
   const isLoading = isSearching ? searchResults === undefined : paginated.status === "LoadingFirstPage";
 
   const recipes = isSearching ? (searchResults ?? []) : paginated.results;
@@ -69,11 +60,11 @@ function HomePage() {
     e.preventDefault();
     const form = e.currentTarget as HTMLFormElement;
     const q = (form.elements.namedItem("q") as HTMLInputElement).value.trim();
-    navigate({ to: "/", search: { q: q || undefined, category: category ?? undefined } });
+    navigate({ to: "/", search: { q: q || undefined, category: category } });
   };
 
   const handleCategoryClick = (cat: string | undefined) => {
-    navigate({ to: "/", search: { q: q ?? undefined, category: cat } });
+    navigate({ to: "/", search: { q: q, category: cat } });
   };
 
   const clearFilters = () => {
@@ -83,7 +74,6 @@ function HomePage() {
 
   return (
     <PageLayout>
-      {/* Hero */}
       <section className="wrapper">
         <div className="grid lg:grid-cols-2 gap-8 lg:gap-16 py-12 md:py-20 items-center">
           <div>
@@ -120,10 +110,10 @@ function HomePage() {
         </div>
       </section>
 
-      {/* Category pills */}
       <section className="wrapper -mt-4 mb-6">
         <div className="flex gap-2 overflow-x-auto pb-2 scrollbar-minimal">
           <button
+            type="button"
             onClick={() => handleCategoryClick(undefined)}
             className={`shrink-0 px-4 py-2 rounded-full text-sm font-medium transition-colors ${
               !category
@@ -135,6 +125,7 @@ function HomePage() {
           </button>
           {CATEGORIES.map((c) => (
             <button
+              type="button"
               key={c}
               onClick={() => handleCategoryClick(category === c ? undefined : c)}
               className={`shrink-0 flex items-center gap-1.5 px-4 py-2 rounded-full text-sm font-medium transition-colors ${
@@ -150,7 +141,6 @@ function HomePage() {
         </div>
       </section>
 
-      {/* Search bar */}
       <section className="wrapper -mt-2 mb-12">
         <form onSubmit={handleSearch} className="card p-3 flex flex-col sm:flex-row gap-2">
           <div className="relative flex-1">
@@ -171,7 +161,6 @@ function HomePage() {
           </div>
         </form>
 
-        {/* Active filter summary */}
         {isFiltered && (
           <div className="mt-4 flex items-center gap-3 text-sm">
             <span className="text-stone">
@@ -189,14 +178,13 @@ function HomePage() {
                 </>
               )}
             </span>
-            <button onClick={clearFilters} className="flex items-center gap-1 text-sage hover:underline">
+            <button type="button" onClick={clearFilters} className="flex items-center gap-1 text-sage hover:underline">
               <XMarkIcon className="w-3.5 h-3.5" /> Clear
             </button>
           </div>
         )}
       </section>
 
-      {/* Recipe grid */}
       <section id="recipes" className="wrapper pb-24">
         <div className="flex items-baseline justify-between mb-6">
           <h2 className="font-serif text-xl font-medium">
@@ -222,10 +210,10 @@ function HomePage() {
                 />
               ))}
             </div>
-            {/* Load more — only for paginated (not search) */}
             {!isSearching && paginated.status === "CanLoadMore" && (
               <div className="py-8 text-center">
                 <button
+                  type="button"
                   onClick={() => paginated.loadMore(20)}
                   disabled={paginated.status !== "CanLoadMore"}
                   className="btn-ghost disabled:opacity-50"
@@ -248,7 +236,7 @@ function HomePage() {
                 <p className="text-stone mb-6">
                   {category ? `No ${category} recipes yet.` : "Try different keywords."}
                 </p>
-                <button onClick={clearFilters} className="btn-ghost">
+                <button type="button" onClick={clearFilters} className="btn-ghost">
                   Clear filters
                 </button>
               </>

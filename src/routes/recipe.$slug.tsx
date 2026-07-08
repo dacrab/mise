@@ -11,20 +11,19 @@ import { useSuspenseQuery } from "@tanstack/react-query";
 import { createFileRoute, Link, notFound } from "@tanstack/react-router";
 import { api } from "convex/_generated/api";
 import type { Id } from "convex/_generated/dataModel";
-import { useMutation, useQuery } from "convex/react";
-import { useState } from "react";
 import { PageLayout } from "@/components/layout/PageLayout";
 import { ShareButton } from "@/components/recipe/RecipeActions";
 import { IngredientScaler } from "@/components/recipe/RecipeWidgets";
 import { Avatar } from "@/components/ui/Primitives";
 import { RouteError } from "@/components/ui/RouteError";
-import { useToast } from "@/components/ui/Toast";
+import { useBookmark } from "@/hooks/useBookmark";
 import { APP_TITLE_SUFFIX } from "@/lib/constants";
 
 export const Route = createFileRoute("/recipe/$slug")({
   loader: ({ params, context: { queryClient } }) =>
     queryClient.ensureQueryData(convexQuery(api.recipes.getBySlug, { slug: params.slug })),
   component: RecipePage,
+  pendingComponent: () => <div className="center min-h-[60vh] text-stone animate-pulse">Loading…</div>,
   errorComponent: ({ error, reset }) => <RouteError error={error} reset={reset} />,
   head: ({ loaderData }) => ({
     meta: [
@@ -40,28 +39,12 @@ export const Route = createFileRoute("/recipe/$slug")({
 });
 
 function SaveButton({ recipeId }: { recipeId: Id<"recipes"> }) {
-  const bookmarks = useQuery(api.recipes.myBookmarks);
-  const toggleBookmarkMutation = useMutation(api.social.toggleBookmark);
-  const { toast } = useToast();
-  const [isPending, setIsPending] = useState(false);
-
-  const isBookmarked = bookmarks?.some((recipe) => recipe._id === recipeId) ?? false;
-
-  const handleClick = async () => {
-    if (isPending) return;
-    setIsPending(true);
-    try {
-      await toggleBookmarkMutation({ recipeId });
-    } catch {
-      toast("Sign in to save recipes", "error");
-    } finally {
-      setIsPending(false);
-    }
-  };
+  const { isBookmarked, isPending, handleToggle } = useBookmark(recipeId);
 
   return (
     <button
-      onClick={handleClick}
+      type="button"
+      onClick={handleToggle}
       disabled={isPending}
       aria-label={isBookmarked ? "Remove from saved" : "Save recipe"}
       aria-pressed={isBookmarked}
@@ -106,7 +89,6 @@ function RecipePage() {
   return (
     <PageLayout>
       <article>
-        {/* Hero section */}
         {recipe.coverImageUrl ? (
           <div className="relative w-full h-[40vh] sm:h-[50vh] lg:h-[60vh] bg-charcoal overflow-hidden">
             <img src={recipe.coverImageUrl} alt={recipe.title} className="w-full h-full object-cover opacity-90" />
@@ -122,7 +104,6 @@ function RecipePage() {
                 Watch video
               </a>
             )}
-            {/* Title overlay on image */}
             <div className="absolute bottom-0 left-0 right-0 p-6 sm:p-10 lg:p-12">
               <div className="max-w-5xl mx-auto">
                 <span className="inline-block px-3 py-1 rounded-full bg-white/20 backdrop-blur-sm text-white text-xs font-medium mb-4">
@@ -145,37 +126,54 @@ function RecipePage() {
           </div>
         )}
 
-        {/* Content area */}
         <div className="max-w-5xl mx-auto px-5 sm:px-8">
-          {/* Meta bar */}
           <div className="flex flex-wrap items-center justify-between gap-4 py-6 border-b border-subtle">
-            {/* Author */}
-            <Link
-              to="/chef/$username"
-              params={{ username: recipe.author?.username ?? "unknown" }}
-              className="flex items-center gap-3 group"
-            >
-              <Avatar
-                src={recipe.author?.image}
-                name={recipe.author?.name ?? "Chef"}
-                size="md"
-                className="ring-2 ring-cream-dark dark:ring-d-border"
-              />
-              <div>
-                <span className="block text-sm font-medium text-primary group-hover:text-sage transition-colors">
-                  {recipe.author?.name ?? "Chef"}
-                </span>
-                <time className="block text-xs text-stone">
-                  {new Date(recipe._creationTime).toLocaleDateString("en-US", {
-                    month: "long",
-                    day: "numeric",
-                    year: "numeric",
-                  })}
-                </time>
+            {recipe.author?.username ? (
+              <Link
+                to="/chef/$username"
+                params={{ username: recipe.author.username }}
+                className="flex items-center gap-3 group"
+              >
+                <Avatar
+                  src={recipe.author?.image}
+                  name={recipe.author?.name ?? "Chef"}
+                  size="md"
+                  className="ring-2 ring-cream-dark dark:ring-d-border"
+                />
+                <div>
+                  <span className="block text-sm font-medium text-primary group-hover:text-sage transition-colors">
+                    {recipe.author?.name ?? "Chef"}
+                  </span>
+                  <time className="block text-xs text-stone">
+                    {new Date(recipe._creationTime).toLocaleDateString("en-US", {
+                      month: "long",
+                      day: "numeric",
+                      year: "numeric",
+                    })}
+                  </time>
+                </div>
+              </Link>
+            ) : (
+              <div className="flex items-center gap-3">
+                <Avatar
+                  src={recipe.author?.image}
+                  name={recipe.author?.name ?? "Chef"}
+                  size="md"
+                  className="ring-2 ring-cream-dark dark:ring-d-border"
+                />
+                <div>
+                  <span className="block text-sm font-medium text-primary">{recipe.author?.name ?? "Chef"}</span>
+                  <time className="block text-xs text-stone">
+                    {new Date(recipe._creationTime).toLocaleDateString("en-US", {
+                      month: "long",
+                      day: "numeric",
+                      year: "numeric",
+                    })}
+                  </time>
+                </div>
               </div>
-            </Link>
+            )}
 
-            {/* Actions */}
             <div className="flex items-center gap-2">
               <SaveButton recipeId={recipe._id} />
               <ShareButton title={recipe.title} />
@@ -190,7 +188,6 @@ function RecipePage() {
             </div>
           </div>
 
-          {/* Description + stats */}
           <div className="py-8 space-y-6">
             {recipe.description && (
               <p className="text-lg text-secondary leading-relaxed max-w-2xl">{recipe.description}</p>
@@ -209,9 +206,7 @@ function RecipePage() {
             )}
           </div>
 
-          {/* Two-column: Ingredients + Instructions */}
           <div className="grid lg:grid-cols-[340px_1fr] gap-10 lg:gap-14 pb-16">
-            {/* Ingredients — sticky sidebar */}
             <aside className="lg:self-start">
               <div className="sticky top-24">
                 <div className="card p-6">
@@ -221,12 +216,11 @@ function RecipePage() {
               </div>
             </aside>
 
-            {/* Instructions */}
             <section>
               <h2 className="font-serif text-xl font-medium mb-8">Instructions</h2>
               <ol className="space-y-6">
                 {recipe.steps.map((step, i) => (
-                  <li key={i} className="flex gap-4">
+                  <li key={step} className="flex gap-4">
                     <div className="flex flex-col items-center">
                       <span className="w-8 h-8 step-number text-sm">{i + 1}</span>
                       {i < recipe.steps.length - 1 && <div className="step-line mt-2" />}

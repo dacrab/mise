@@ -14,7 +14,7 @@ import {
 import { Link, useRouter } from "@tanstack/react-router";
 import { api } from "convex/_generated/api";
 import { Authenticated, Unauthenticated, useQuery } from "convex/react";
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { Avatar } from "@/components/ui/Primitives";
 import { useTheme } from "@/hooks/useTheme";
 
@@ -42,7 +42,6 @@ function UserMenu({ onClose }: { onClose?: () => void }) {
 
   return (
     <>
-      {/* Desktop */}
       <div className="hidden sm:flex items-center gap-2">
         <Menu.Root>
           <Menu.Trigger className="btn-ghost text-sm flex items-center gap-2">
@@ -80,7 +79,6 @@ function UserMenu({ onClose }: { onClose?: () => void }) {
         </Menu.Root>
       </div>
 
-      {/* Mobile */}
       <div className="sm:hidden">
         <div className="flex items-center gap-3 p-3 mb-4 surface-raised rounded-xl">
           <Avatar src={user?.profileImageUrl ?? user?.image} name={user?.name} size="md" />
@@ -105,6 +103,7 @@ function UserMenu({ onClose }: { onClose?: () => void }) {
         ))}
         <div className="pt-3 mt-3 border-t border-cream-dark">
           <button
+            type="button"
             onClick={handleSignOut}
             className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-terracotta hover:bg-terracotta/5 transition-colors w-full text-left"
           >
@@ -152,7 +151,7 @@ function ThemeToggle() {
   const Icon = preference === "dark" ? MoonIcon : preference === "system" ? ComputerDesktopIcon : SunIcon;
 
   return (
-    <button onClick={cycle} className="btn-ghost p-2" aria-label={label} title={label}>
+    <button type="button" onClick={cycle} className="btn-ghost p-2" aria-label={label} title={label}>
       <Icon className="w-5 h-5" />
     </button>
   );
@@ -160,7 +159,7 @@ function ThemeToggle() {
 
 export function Header() {
   const [mobileOpen, setMobileOpen] = useState(false);
-  const closeMobile = () => setMobileOpen(false);
+  const closeMobile = useCallback(() => setMobileOpen(false), []);
   const menuRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -207,6 +206,7 @@ export function Header() {
           <div className="flex sm:hidden items-center gap-2">
             <ThemeToggle />
             <button
+              type="button"
               onClick={() => setMobileOpen(true)}
               className="p-2 hover:bg-cream-dark dark:hover:bg-d-surface-raised rounded-lg transition-colors"
               aria-label="Open menu"
@@ -238,6 +238,7 @@ export function Header() {
         <div className="flex items-center justify-between px-5 h-16 border-b border-cream-dark">
           <span className="font-serif text-xl font-semibold text-primary">mise</span>
           <button
+            type="button"
             onClick={() => setMobileOpen(false)}
             className="p-2 hover:bg-cream-dark dark:hover:bg-d-surface-raised rounded-lg"
             aria-label="Close menu"

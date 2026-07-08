@@ -3,7 +3,7 @@ import { api } from "./_generated/api";
 import { httpAction } from "./_generated/server";
 import { auth } from "./auth";
 
-const SITE_URL = "https://mise.cooking";
+const SITE_URL = process.env["SITE_URL"] ?? "https://mise.cooking";
 
 const http = httpRouter();
 auth.addHttpRoutes(http);

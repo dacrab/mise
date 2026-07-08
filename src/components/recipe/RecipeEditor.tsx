@@ -4,7 +4,7 @@ import { api } from "convex/_generated/api";
 import type { Id } from "convex/_generated/dataModel";
 import { useMutation, useQuery } from "convex/react";
 import { useEffect, useRef, useState } from "react";
-import { Controller, useFieldArray, useForm } from "react-hook-form";
+import { Controller, useFieldArray, useForm, useWatch } from "react-hook-form";
 import { z } from "zod";
 import { FieldError } from "@/components/ui/FieldError";
 import { ProgressBar } from "@/components/ui/Primitives";
@@ -49,6 +49,8 @@ const recipeSchema = z.object({
   ingredients: z.array(z.object({ value: z.string() })),
   steps: z.array(z.object({ value: z.string() })),
 });
+
+const unwrap = (arr?: Array<{ value?: string }>) => (arr ?? []).map((x) => x.value ?? "");
 
 function buildPayload(
   data: RecipeFormData,
@@ -108,7 +110,6 @@ export function RecipeEditor({
     register,
     control,
     handleSubmit: rhfHandleSubmit,
-    watch,
     formState: { errors, isDirty },
   } = useForm<RecipeFormData>({
     resolver: zodResolver(recipeSchema),
@@ -134,8 +135,9 @@ export function RecipeEditor({
 
   const { fields: stepFields, append: appendStep, remove: removeStep } = useFieldArray({ control, name: "steps" });
 
-  const unwrap = (arr: Array<{ value: string }>) => arr.map((x) => x.value);
-  const watchedValues = watch();
+  const watchedValues = useWatch<RecipeFormData>({ control });
+  const watchedValuesRef = useRef(watchedValues);
+  watchedValuesRef.current = watchedValues;
 
   useEffect(() => {
     const handler = (e: BeforeUnloadEvent) => {
@@ -168,21 +170,23 @@ export function RecipeEditor({
     const recipeId = initialData.id;
     const interval = setInterval(async () => {
       if (!isDirty) return;
+      const vals = watchedValuesRef.current;
+      const validIngredients = unwrap(vals.ingredients);
+      const validSteps = unwrap(vals.steps);
       try {
-        const validIngredients = unwrap(watchedValues.ingredients).filter(Boolean);
-        const validSteps = unwrap(watchedValues.steps).filter(Boolean);
         await updateRecipe({
           id: recipeId,
-          ...buildPayload(watchedValues, coverImage, validIngredients, validSteps),
+          ...buildPayload(vals as RecipeFormData, coverImage, validIngredients, validSteps),
           status: "draft",
         });
         setLastSaved(new Date());
       } catch {
-        /* silent */
+        // biome-ignore lint/suspicious/noConsole: required error logging
+        console.error("Auto-save failed");
       }
     }, 30_000);
     return () => clearInterval(interval);
-  }, [isEditing, initialData?.id, isDirty, coverImage, watchedValues, updateRecipe, unwrap]);
+  }, [isEditing, initialData?.id, isDirty, coverImage, updateRecipe]);
 
   useEffect(
     () => () => {
@@ -248,7 +252,6 @@ export function RecipeEditor({
 
   return (
     <div className="min-h-[calc(100vh-4rem)]">
-      {/* Sticky top bar */}
       <div className="sticky top-16 z-30 glass border-b border-cream-dark dark:border-d-border">
         <div className="max-w-7xl mx-auto px-5 sm:px-8 flex items-center justify-between h-14">
           <div className="flex items-center gap-4">
@@ -273,6 +276,7 @@ export function RecipeEditor({
           </div>
           <div className="flex items-center gap-2">
             <button
+              type="button"
               onClick={() => triggerSubmit("draft")}
               disabled={loading}
               className="btn-secondary text-sm px-4 py-2 cursor-pointer"
@@ -280,6 +284,7 @@ export function RecipeEditor({
               {loading ? "Saving…" : "Save draft"}
             </button>
             <button
+              type="button"
               onClick={() => triggerSubmit("published")}
               disabled={loading}
               className="btn-primary text-sm px-4 py-2 cursor-pointer"
@@ -290,12 +295,9 @@ export function RecipeEditor({
         </div>
       </div>
 
-      {/* Main content — full-width two-column layout */}
       <div className="max-w-7xl mx-auto px-5 sm:px-8 py-8">
         <div className="grid lg:grid-cols-[1fr_380px] gap-8">
-          {/* Left column — form */}
           <div className="space-y-6">
-            {/* Cover image — hero-style at the top */}
             <div
               className={`relative w-full rounded-xl overflow-hidden border-2 border-dashed transition-colors ${
                 coverImageUrl
@@ -348,7 +350,6 @@ export function RecipeEditor({
             </div>
             {uploading && <ProgressBar value={uploadProgress} label="Uploading" />}
 
-            {/* Title — large and prominent */}
             <div>
               <input
                 id="recipe-title"
@@ -361,7 +362,6 @@ export function RecipeEditor({
               <FieldError error={errors.title} />
             </div>
 
-            {/* Description */}
             <div>
               <textarea
                 id="recipe-description"
@@ -373,7 +373,6 @@ export function RecipeEditor({
               <FieldError error={errors.description} />
             </div>
 
-            {/* Ingredients */}
             <section className="card p-6 space-y-4">
               <div className="flex items-center justify-between">
                 <h2 className="font-serif text-xl font-medium">Ingredients</h2>
@@ -422,7 +421,6 @@ export function RecipeEditor({
               </button>
             </section>
 
-            {/* Instructions */}
             <section className="card p-6 space-y-4">
               <div className="flex items-center justify-between">
                 <h2 className="font-serif text-xl font-medium">Instructions</h2>
@@ -469,10 +467,8 @@ export function RecipeEditor({
             </section>
           </div>
 
-          {/* Right column — sticky sidebar with metadata */}
           <aside className="lg:self-start">
             <div className="sticky top-[7.5rem] space-y-6">
-              {/* Details card */}
               <div className="card p-6 space-y-5">
                 <h3 className="font-serif text-base font-medium">Details</h3>
                 <div className="space-y-4">
@@ -518,7 +514,6 @@ export function RecipeEditor({
                 </div>
               </div>
 
-              {/* Timing card */}
               <div className="card p-6 space-y-5">
                 <h3 className="font-serif text-base font-medium">Timing & Servings</h3>
                 <div className="grid grid-cols-2 gap-3">
@@ -570,7 +565,6 @@ export function RecipeEditor({
                 </div>
               </div>
 
-              {/* Video URL card */}
               <div className="card p-6 space-y-4">
                 <h3 className="font-serif text-base font-medium">Video</h3>
                 <div>

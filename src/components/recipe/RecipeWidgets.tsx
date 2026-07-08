@@ -19,6 +19,7 @@ export function IngredientScaler({
           Servings:
         </label>
         <button
+          type="button"
           onClick={() => setServings(Math.max(1, servings - 1))}
           className="w-8 h-8 rounded-lg surface-raised hover:bg-stone-light/50 dark:hover:bg-d-border flex items-center justify-center text-primary transition-colors"
           aria-label="Decrease servings"
@@ -39,6 +40,7 @@ export function IngredientScaler({
           aria-label="Number of servings"
         />
         <button
+          type="button"
           onClick={() => setServings(servings + 1)}
           className="w-8 h-8 rounded-lg surface-raised hover:bg-stone-light/50 dark:hover:bg-d-border flex items-center justify-center text-primary transition-colors"
           aria-label="Increase servings"
@@ -46,14 +48,18 @@ export function IngredientScaler({
           +
         </button>
         {servings !== defaultServings && (
-          <button onClick={() => setServings(defaultServings)} className="text-xs text-sage hover:text-sage-light">
+          <button
+            type="button"
+            onClick={() => setServings(defaultServings)}
+            className="text-xs text-sage hover:text-sage-light"
+          >
             Reset
           </button>
         )}
       </div>
       <ul className="space-y-2">
-        {scaled.map((ing, i) => (
-          <li key={i} className="text-sm text-secondary flex gap-2">
+        {scaled.map((ing) => (
+          <li key={ing} className="text-sm text-secondary flex gap-2">
             <span className="text-stone mt-0.5">·</span>
             <span>{ing}</span>
           </li>

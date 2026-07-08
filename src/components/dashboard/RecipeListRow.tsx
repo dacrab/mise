@@ -45,6 +45,7 @@ export function RecipeListRow({
             Edit
           </Link>
           <button
+            type="button"
             onClick={() => onDelete(recipe._id)}
             className={`btn-ghost text-xs py-1.5 px-3 text-terracotta ${pendingDeleteId === recipe._id ? "font-semibold" : ""}`}
           >
