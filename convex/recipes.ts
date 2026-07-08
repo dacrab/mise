@@ -107,19 +107,6 @@ export const getByUser = query({
   },
 });
 
-export const getByUserPaginated = query({
-  args: { userId: v.id("users"), paginationOpts: paginationOptsValidator },
-  handler: async (ctx, { userId, paginationOpts }) => {
-    const currentUserId = await getAuthUserId(ctx);
-    const isOwner = currentUserId === userId;
-    const base = ctx.db.query("recipes").withIndex("by_user", (q) => q.eq("userId", userId));
-    const results = await (isOwner ? base : base.filter((q) => q.eq(q.field("status"), "published")))
-      .order("desc")
-      .paginate(paginationOpts);
-    return { ...results, page: await withCoverUrls(ctx, results.page) };
-  },
-});
-
 export const myRecipes = query({
   args: {},
   handler: async (ctx) => {
@@ -148,23 +135,6 @@ export const myBookmarks = query({
       (r): r is NonNullable<typeof r> => r !== null,
     );
     return withCoverUrls(ctx, recipes);
-  },
-});
-
-export const myBookmarksPaginated = query({
-  args: { paginationOpts: paginationOptsValidator },
-  handler: async (ctx, { paginationOpts }) => {
-    const userId = await getAuthUserId(ctx);
-    if (!userId) return { page: [], isDone: true, continueCursor: "" };
-    const results = await ctx.db
-      .query("bookmarks")
-      .withIndex("by_user", (q) => q.eq("userId", userId))
-      .order("desc")
-      .paginate(paginationOpts);
-    const recipes = (await Promise.all(results.page.map((b) => ctx.db.get(b.recipeId)))).filter(
-      (r): r is NonNullable<typeof r> => r !== null,
-    );
-    return { ...results, page: await withCoverUrls(ctx, recipes) };
   },
 });
 
