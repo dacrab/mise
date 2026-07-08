@@ -1,4 +1,4 @@
-export const APP_NAME = "Mise";
+const APP_NAME = "Mise";
 export const APP_TITLE_SUFFIX = ` | ${APP_NAME}`;
 
 export const CATEGORIES = [
@@ -30,5 +30,3 @@ export const CATEGORY_ICONS: Record<Category, string> = {
 };
 
 export const DIFFICULTIES = ["Easy", "Medium", "Hard", "Expert"] as const;
-
-export type Difficulty = (typeof DIFFICULTIES)[number];

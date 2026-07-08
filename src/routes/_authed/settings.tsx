@@ -13,7 +13,7 @@ import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { api } from "convex/_generated/api";
 import type { Id } from "convex/_generated/dataModel";
 import { useMutation, useQuery } from "convex/react";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { ProgressBar } from "@/components/ui/Primitives";
 import { TextArea } from "@/components/ui/TextArea";
 import { TextField } from "@/components/ui/TextField";
@@ -80,12 +80,15 @@ function Settings() {
     };
   }, []);
 
-  const hasChanges =
-    !!user &&
-    (name !== (user.name ?? "") ||
-      username !== (user.username ?? "") ||
-      bio !== (user.bio ?? "") ||
-      newProfileImage !== null);
+  const hasChanges = useMemo(
+    () =>
+      !!user &&
+      (name !== (user.name ?? "") ||
+        username !== (user.username ?? "") ||
+        bio !== (user.bio ?? "") ||
+        newProfileImage !== null),
+    [user, name, username, bio, newProfileImage],
+  );
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -142,7 +145,6 @@ function Settings() {
 
   return (
     <div className="min-h-[calc(100vh-4rem)]">
-      {/* Header banner */}
       <div className="hero-banner py-12 px-5 sm:px-8">
         <div className="max-w-5xl mx-auto flex items-center gap-6">
           <div className="relative w-24 h-24 sm:w-28 sm:h-28 rounded-full overflow-hidden surface-raised shrink-0 ring-4 ring-cream/20">
@@ -186,13 +188,10 @@ function Settings() {
         </div>
       </div>
 
-      {/* Content */}
       <div className="max-w-5xl mx-auto px-5 sm:px-8 py-8">
         <form onSubmit={handleSubmit}>
           <div className="grid lg:grid-cols-[1fr_320px] gap-8">
-            {/* Left column */}
             <div className="space-y-10">
-              {/* Profile section */}
               <section className="space-y-6">
                 <h2 className="font-serif text-xl font-medium">Profile</h2>
                 <TextField
@@ -222,7 +221,6 @@ function Settings() {
                 />
               </section>
 
-              {/* Appearance section */}
               <section className="space-y-4">
                 <h2 className="font-serif text-xl font-medium">Appearance</h2>
                 <p className="text-sm text-stone">Choose how Mise looks to you.</p>
@@ -248,7 +246,6 @@ function Settings() {
                 </div>
               </section>
 
-              {/* Danger zone */}
               <section className="space-y-4 pt-6 border-t border-subtle">
                 <h2 className="font-serif text-xl font-medium text-terracotta">Danger zone</h2>
                 <div className="flex flex-col sm:flex-row gap-3">
@@ -271,7 +268,6 @@ function Settings() {
                 </div>
               </section>
 
-              {/* Save — mobile */}
               <div className="lg:hidden flex justify-end pt-4">
                 <button type="submit" disabled={saving || !hasChanges} className="btn-primary disabled:opacity-50">
                   {saving ? "Saving…" : "Save changes"}
@@ -279,10 +275,8 @@ function Settings() {
               </div>
             </div>
 
-            {/* Right column — sidebar */}
             <aside className="lg:self-start">
               <div className="sticky top-24 space-y-6">
-                {/* Account info */}
                 <section className="rounded-xl surface-muted p-6 space-y-4">
                   <h3 className="text-xs font-semibold uppercase tracking-wider text-stone">Account</h3>
                   <dl className="space-y-4 text-sm">
@@ -303,13 +297,11 @@ function Settings() {
                   </dl>
                 </section>
 
-                {/* Quick stats */}
                 <section className="rounded-xl surface-muted p-6 space-y-4">
                   <h3 className="text-xs font-semibold uppercase tracking-wider text-stone">Your kitchen</h3>
                   <QuickStats />
                 </section>
 
-                {/* Save — desktop */}
                 <div className="hidden lg:block">
                   <button
                     type="submit"

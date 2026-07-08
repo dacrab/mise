@@ -3,37 +3,24 @@ import { BookmarkIcon as BookmarkSolidIcon } from "@heroicons/react/24/solid";
 import { Link } from "@tanstack/react-router";
 import { api } from "convex/_generated/api";
 import type { Id } from "convex/_generated/dataModel";
-import { useMutation, useQuery } from "convex/react";
-import { useState } from "react";
-import { useToast } from "@/components/ui/Toast";
+import { useQuery } from "convex/react";
+import { useBookmark } from "@/hooks/useBookmark";
 
 function QuickBookmark({ recipeId }: { recipeId: Id<"recipes"> }) {
   const currentUser = useQuery(api.users.currentUser);
-  const bookmarks = useQuery(api.recipes.myBookmarks);
-  const toggleBookmarkMutation = useMutation(api.social.toggleBookmark);
-  const { toast } = useToast();
-  const [isPending, setIsPending] = useState(false);
-
-  const isBookmarked = bookmarks?.some((recipe) => recipe._id === recipeId) ?? false;
+  const { isBookmarked, isPending, handleToggle } = useBookmark(recipeId);
 
   if (currentUser === null) return null;
 
-  const handleClick = async (e: React.MouseEvent) => {
+  const handleClick = (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
-    if (isPending) return;
-    setIsPending(true);
-    try {
-      await toggleBookmarkMutation({ recipeId });
-    } catch {
-      toast("Sign in to save recipes", "error");
-    } finally {
-      setIsPending(false);
-    }
+    handleToggle();
   };
 
   return (
     <button
+      type="button"
       onClick={handleClick}
       disabled={isPending}
       aria-label={isBookmarked ? "Remove from saved" : "Save recipe"}
@@ -131,15 +118,18 @@ export function FeaturedRecipeCard({
 export function RecipeGridSkeleton({ count = 6 }: { count?: number }) {
   return (
     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
-      {Array.from({ length: count }).map((_, i) => (
-        <div key={i} className="card overflow-hidden animate-pulse">
-          <div className="w-full aspect-[4/3] bg-cream-dark dark:bg-d-surface-raised" />
-          <div className="p-4 space-y-2">
-            <div className="h-4 surface-raised rounded w-3/4" />
-            <div className="h-3 surface-raised rounded w-1/2" />
+      {Array.from({ length: count }).map((_, i) => {
+        return (
+          // biome-ignore lint/suspicious/noArrayIndexKey: static skeleton with fixed count
+          <div key={i} className="card overflow-hidden animate-pulse">
+            <div className="w-full aspect-[4/3] bg-cream-dark dark:bg-d-surface-raised" />
+            <div className="p-4 space-y-2">
+              <div className="h-4 surface-raised rounded w-3/4" />
+              <div className="h-3 surface-raised rounded w-1/2" />
+            </div>
           </div>
-        </div>
-      ))}
+        );
+      })}
     </div>
   );
 }

@@ -18,6 +18,7 @@ export function ShareButton({ title }: { title: string }) {
   };
   return (
     <button
+      type="button"
       onClick={() => void handleShare()}
       className="flex items-center gap-1.5 text-sm text-stone hover:text-sage transition-colors"
       aria-label="Share"

@@ -67,7 +67,6 @@ function ChefPage() {
 
   return (
     <PageLayout>
-      {/* Hero Banner */}
       <div className="hero-banner py-14 md:py-20 px-5">
         <div className="max-w-6xl mx-auto flex flex-col sm:flex-row items-center sm:items-end gap-6">
           <Avatar
@@ -88,7 +87,6 @@ function ChefPage() {
         </div>
       </div>
 
-      {/* Recipes */}
       <div className="max-w-6xl mx-auto px-5 py-10 md:py-14">
         <h2 className="font-serif text-xl font-medium mb-6">Recipes</h2>
         {recipes.length > 0 ? (

@@ -5,6 +5,6 @@ import { DashboardView } from "@/components/dashboard/DashboardView";
 const searchSchema = z.object({ tab: z.string().optional() });
 
 export const Route = createFileRoute("/_authed/dashboard/")({
-  validateSearch: searchSchema.parse,
+  validateSearch: searchSchema,
   component: DashboardView,
 });

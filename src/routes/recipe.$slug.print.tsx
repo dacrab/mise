@@ -8,6 +8,16 @@ export const Route = createFileRoute("/recipe/$slug/print")({
   loader: ({ params, context: { queryClient } }) =>
     queryClient.ensureQueryData(convexQuery(api.recipes.getBySlug, { slug: params.slug })),
   component: PrintRecipe,
+  pendingComponent: () => <div className="center min-h-screen text-stone animate-pulse">Loading…</div>,
+  errorComponent: ({ error, reset }) => (
+    <div className="max-w-2xl mx-auto p-8 text-center">
+      <h1 className="text-xl font-bold mb-4">Could not load recipe</h1>
+      <p className="text-stone mb-4">{error.message}</p>
+      <button type="button" onClick={() => reset()} className="btn-primary">
+        Try again
+      </button>
+    </div>
+  ),
 });
 
 function PrintRecipe() {
@@ -75,8 +85,8 @@ function PrintRecipe() {
       <section className="mb-8">
         <h2 className="text-xl font-semibold mb-4">Ingredients</h2>
         <ul className="space-y-2">
-          {recipe.ingredients.map((ing, i) => (
-            <li key={i} className="flex items-start gap-2">
+          {recipe.ingredients.map((ing) => (
+            <li key={ing} className="flex items-start gap-2">
               <span className="inline-block w-4 h-4 mt-0.5 border border-charcoal rounded-sm flex-shrink-0" />
               {ing}
             </li>
@@ -88,7 +98,7 @@ function PrintRecipe() {
         <h2 className="text-xl font-semibold mb-4">Instructions</h2>
         <ol className="space-y-4">
           {recipe.steps.map((step, i) => (
-            <li key={i} className="flex gap-4">
+            <li key={step} className="flex gap-4">
               <span className="font-bold text-sage">{i + 1}.</span>
               <span>{step}</span>
             </li>
@@ -101,7 +111,7 @@ function PrintRecipe() {
       </footer>
 
       <div className="mt-8 print:hidden">
-        <button onClick={() => window.print()} className="btn-primary flex items-center gap-2">
+        <button type="button" onClick={() => window.print()} className="btn-primary flex items-center gap-2">
           <PrinterIcon className="w-4 h-4" />
           Print Recipe
         </button>

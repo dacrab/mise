@@ -51,9 +51,11 @@ export function DashboardView() {
   const { toast } = useToast();
   const [pendingDelete, setPendingDelete] = useState<Id<"recipes"> | null>(null);
   const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const mounted = useRef(true);
 
   useEffect(() => {
     return () => {
+      mounted.current = false;
       if (timer.current) clearTimeout(timer.current);
     };
   }, []);
@@ -63,7 +65,9 @@ export function DashboardView() {
       setPendingDelete(id);
       toast("Tap delete again to confirm", "info");
       if (timer.current) clearTimeout(timer.current);
-      timer.current = setTimeout(() => setPendingDelete(null), 3000);
+      timer.current = setTimeout(() => {
+        if (mounted.current) setPendingDelete(null);
+      }, 3000);
       return;
     }
     if (timer.current) clearTimeout(timer.current);
@@ -88,7 +92,6 @@ export function DashboardView() {
 
   return (
     <div className="max-w-6xl mx-auto px-5 py-8">
-      {/* Header */}
       <div className="py-8 md:py-12 mb-8">
         <div className="flex flex-col md:flex-row md:items-start justify-between gap-6 mb-8">
           <div>
@@ -103,7 +106,6 @@ export function DashboardView() {
           </Link>
         </div>
 
-        {/* Stats Cards */}
         <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
           <div className="card p-5">
             <p className="font-serif text-3xl font-medium text-primary">{myRecipes.length}</p>
@@ -120,7 +122,6 @@ export function DashboardView() {
         </div>
       </div>
 
-      {/* Tabs */}
       <nav className="flex gap-1 mb-8 border-b border-subtle" aria-label="Dashboard sections">
         {TABS.map((tabItem) => {
           const Icon = tabItem.icon;
@@ -147,7 +148,6 @@ export function DashboardView() {
         })}
       </nav>
 
-      {/* Content */}
       {!recipes || recipes.length === 0 ? (
         <div className="card p-16 text-center">
           <div className="w-20 h-20 bg-sage/10 rounded-full flex items-center justify-center mx-auto mb-6">
