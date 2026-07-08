@@ -32,12 +32,6 @@ export function scaleIngredient(ingredient: string, scale: number): string {
   });
 }
 
-export function formatSeconds(seconds: number): string {
-  const m = Math.floor(seconds / 60);
-  const s = seconds % 60;
-  return `${m}:${s.toString().padStart(2, "0")}`;
-}
-
 export function timeAgo(ms: number): string {
   const diff = Date.now() - ms;
   const mins = Math.floor(diff / 60000);

@@ -1,15 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { formatSeconds, getErrorMessage, timeAgo } from "@/lib/utils";
-
-describe("formatSeconds", () => {
-  it.each([
-    [0, "0:00"],
-    [65, "1:05"],
-    [3600, "60:00"],
-  ])("formatSeconds(%i) → %s", (input, expected) => {
-    expect(formatSeconds(input)).toBe(expected);
-  });
-});
+import { getErrorMessage, timeAgo } from "@/lib/utils";
 
 describe("getErrorMessage", () => {
   it("extracts message from Error", () => {
