@@ -76,6 +76,10 @@ export const getBySlug = query({
       .withIndex("by_slug", (q) => q.eq("slug", slug))
       .first();
     if (!recipe) return null;
+    if (recipe.status !== "published") {
+      const userId = await getAuthUserId(ctx);
+      if (recipe.userId !== userId) return null;
+    }
 
     const [author, userId] = await Promise.all([ctx.db.get(recipe.userId), getAuthUserId(ctx)]);
 
