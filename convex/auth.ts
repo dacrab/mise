@@ -2,7 +2,7 @@ import { Password } from "@convex-dev/auth/providers/Password";
 import { convexAuth } from "@convex-dev/auth/server";
 import type { DataModel } from "./_generated/dataModel";
 
-export const { auth, signIn, signOut, store } = convexAuth({
+export const { auth } = convexAuth({
   providers: [
     Password<DataModel>({
       profile(params) {

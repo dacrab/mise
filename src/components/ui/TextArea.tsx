@@ -75,8 +75,7 @@ export const TextArea = forwardRef<HTMLTextAreaElement, TextAreaProps>(
           id={id}
           value={value}
           onChange={(e) => {
-            const v = maxLength ? e.target.value.slice(0, maxLength) : e.target.value;
-            if (maxLength && e.target.value.length > maxLength) e.target.value = v;
+            const v = e.target.value;
             onChange?.(e);
             onValueChange?.(v);
           }}
