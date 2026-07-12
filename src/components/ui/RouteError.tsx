@@ -1,16 +1,16 @@
-import { Link, useRouter } from "@tanstack/react-router";
+import { isNotFound, Link, useRouter } from "@tanstack/react-router";
 import { PageLayout } from "@/components/layout/PageLayout";
 
 interface RouteErrorProps {
-  error: Error;
+  error: unknown;
   reset?: () => void;
 }
 
 export function RouteError({ error, reset }: RouteErrorProps) {
   const router = useRouter();
-  const isNotFound = error.message.includes("notFound") || error.message.includes("404");
+  const notFound = isNotFound(error);
 
-  if (isNotFound) {
+  if (notFound) {
     return (
       <PageLayout>
         <div className="wrapper py-20 text-center">

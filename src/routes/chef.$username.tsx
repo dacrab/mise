@@ -1,4 +1,5 @@
 import { convexQuery } from "@convex-dev/react-query";
+import { BookOpenIcon } from "@heroicons/react/24/outline";
 import { useSuspenseQuery } from "@tanstack/react-query";
 import { createFileRoute, notFound } from "@tanstack/react-router";
 import { api } from "convex/_generated/api";
@@ -106,19 +107,7 @@ function ChefPage() {
         ) : (
           <div className="card p-16 text-center">
             <div className="w-20 h-20 bg-sage/10 rounded-full flex items-center justify-center mx-auto mb-6">
-              <svg
-                className="w-9 h-9 text-sage"
-                fill="none"
-                viewBox="0 0 24 24"
-                strokeWidth={1.5}
-                stroke="currentColor"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  d="M12 6.042A8.967 8.967 0 0 0 6 3.75c-1.052 0-2.062.18-3 .512v14.25A8.987 8.987 0 0 1 6 18c2.305 0 4.408.867 6 2.292m0-14.25a8.966 8.966 0 0 1 6-2.292c1.052 0 2.062.18 3 .512v14.25A8.987 8.987 0 0 0 18 18a8.967 8.967 0 0 0-6 2.292m0-14.25v14.25"
-                />
-              </svg>
+              <BookOpenIcon className="w-9 h-9 text-sage" />
             </div>
             <h3 className="font-serif text-2xl font-medium mb-2">No recipes yet</h3>
             <p className="text-stone max-w-sm mx-auto">This chef hasn't published any recipes yet. Check back soon!</p>

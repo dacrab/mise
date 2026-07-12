@@ -13,7 +13,7 @@ function applyTheme(resolved: ResolvedTheme) {
 
 export function useTheme() {
   const [preference, setPreferenceState] = useState<ThemePreference>("system");
-  const [resolved, setResolved] = useState<ResolvedTheme>("light");
+  const [, setResolved] = useState<ResolvedTheme>("light");
 
   useEffect(() => {
     const stored = localStorage.getItem("theme") as ThemePreference | null;
@@ -50,9 +50,5 @@ export function useTheme() {
     }
   }, []);
 
-  const toggle = useCallback(() => {
-    setTheme(resolved === "dark" ? "light" : "dark");
-  }, [resolved, setTheme]);
-
-  return { theme: resolved, preference, setTheme, toggle };
+  return { preference, setTheme };
 }

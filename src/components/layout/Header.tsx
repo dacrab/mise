@@ -1,5 +1,4 @@
 import { Menu } from "@base-ui-components/react/menu";
-import { useAuthActions } from "@convex-dev/auth/react";
 import {
   ArrowRightOnRectangleIcon,
   Bars3Icon,
@@ -11,11 +10,12 @@ import {
   SunIcon,
   XMarkIcon,
 } from "@heroicons/react/24/outline";
-import { Link, useRouter } from "@tanstack/react-router";
+import { Link } from "@tanstack/react-router";
 import { api } from "convex/_generated/api";
 import { Authenticated, Unauthenticated, useQuery } from "convex/react";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Avatar } from "@/components/ui/Primitives";
+import { useSignOut } from "@/hooks/useSignOut";
 import { useTheme } from "@/hooks/useTheme";
 
 const FOOTER_LINKS = [
@@ -31,13 +31,11 @@ const USER_MENU_LINKS = [
 
 function UserMenu({ onClose }: { onClose?: () => void }) {
   const user = useQuery(api.users.currentUser);
-  const { signOut } = useAuthActions();
-  const router = useRouter();
+  const signOut = useSignOut();
 
   const handleSignOut = async () => {
     onClose?.();
     await signOut();
-    await router.navigate({ to: "/", replace: true });
   };
 
   return (

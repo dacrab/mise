@@ -4,6 +4,7 @@ import { QueryClient } from "@tanstack/react-query";
 import { createRouter } from "@tanstack/react-router";
 import { setupRouterSsrQueryIntegration } from "@tanstack/react-router-ssr-query";
 import { ToastProvider } from "@/components/ui/Toast";
+import { BookmarksProvider } from "@/lib/bookmarks";
 import { routeTree } from "./routeTree.gen";
 
 const CONVEX_URL = import.meta.env["VITE_CONVEX_URL"] as string;
@@ -30,7 +31,9 @@ function createAppRouter() {
     scrollRestoration: true,
     Wrap: ({ children }) => (
       <ConvexAuthProvider client={convexQueryClient.convexClient}>
-        <ToastProvider>{children}</ToastProvider>
+        <ToastProvider>
+          <BookmarksProvider>{children}</BookmarksProvider>
+        </ToastProvider>
       </ConvexAuthProvider>
     ),
   });

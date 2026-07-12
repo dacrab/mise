@@ -1,22 +1,16 @@
 import { convexQuery } from "@convex-dev/react-query";
-import {
-  BookmarkIcon as BookmarkOutlineIcon,
-  ClockIcon,
-  FireIcon,
-  PrinterIcon,
-  UserGroupIcon,
-} from "@heroicons/react/24/outline";
-import { BookmarkIcon as BookmarkSolidIcon, PlayIcon as PlayIconSolid } from "@heroicons/react/24/solid";
+import { ClockIcon, FireIcon, PrinterIcon, UserGroupIcon } from "@heroicons/react/24/outline";
+import { PlayIcon as PlayIconSolid } from "@heroicons/react/24/solid";
 import { useSuspenseQuery } from "@tanstack/react-query";
 import { createFileRoute, Link, notFound } from "@tanstack/react-router";
 import { api } from "convex/_generated/api";
-import type { Id } from "convex/_generated/dataModel";
 import { PageLayout } from "@/components/layout/PageLayout";
+import { BookmarkButton } from "@/components/recipe/BookmarkButton";
 import { ShareButton } from "@/components/recipe/RecipeActions";
 import { IngredientScaler } from "@/components/recipe/RecipeWidgets";
+import { MetaStat } from "@/components/ui/MetaStat";
 import { Avatar } from "@/components/ui/Primitives";
 import { RouteError } from "@/components/ui/RouteError";
-import { useBookmark } from "@/hooks/useBookmark";
 import { APP_TITLE_SUFFIX } from "@/lib/constants";
 
 export const Route = createFileRoute("/recipe/$slug")({
@@ -38,44 +32,45 @@ export const Route = createFileRoute("/recipe/$slug")({
   }),
 });
 
-function SaveButton({ recipeId }: { recipeId: Id<"recipes"> }) {
-  const { isBookmarked, isPending, handleToggle } = useBookmark(recipeId);
-
-  return (
-    <button
-      type="button"
-      onClick={handleToggle}
-      disabled={isPending}
-      aria-label={isBookmarked ? "Remove from saved" : "Save recipe"}
-      aria-pressed={isBookmarked}
-      className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all ${
-        isBookmarked
-          ? "bg-sage/10 text-sage"
-          : "bg-cream-dark hover:bg-sage/10 text-stone hover:text-sage dark:bg-d-surface-raised dark:hover:bg-sage/10"
-      }`}
-    >
-      {isBookmarked ? <BookmarkSolidIcon className="w-4 h-4" /> : <BookmarkOutlineIcon className="w-4 h-4" />}
-      {isBookmarked ? "Saved" : "Save"}
-    </button>
-  );
-}
-
-function MetaStat({
-  icon: Icon,
-  label,
-  value,
+function RecipeAuthor({
+  author,
+  createdAt,
 }: {
-  icon: React.ComponentType<{ className?: string }>;
-  label: string;
-  value: string;
+  author?: { name?: string | null; username?: string | null; image?: string | null } | null;
+  createdAt: number;
 }) {
-  return (
-    <div className="flex flex-col items-center gap-1 min-w-[70px]">
-      <Icon className="w-5 h-5 text-sage" />
-      <span className="text-xs text-stone">{label}</span>
-      <span className="text-sm font-semibold text-primary">{value}</span>
-    </div>
+  const nameClass = author?.username
+    ? "block text-sm font-medium text-primary group-hover:text-sage transition-colors"
+    : "block text-sm font-medium text-primary";
+  const content = (
+    <>
+      <Avatar
+        src={author?.image}
+        name={author?.name ?? "Chef"}
+        size="md"
+        className="ring-2 ring-cream-dark dark:ring-d-border"
+      />
+      <div>
+        <span className={nameClass}>{author?.name ?? "Chef"}</span>
+        <time className="block text-xs text-stone">
+          {new Date(createdAt).toLocaleDateString("en-US", {
+            month: "long",
+            day: "numeric",
+            year: "numeric",
+          })}
+        </time>
+      </div>
+    </>
   );
+
+  if (author?.username) {
+    return (
+      <Link to="/chef/$username" params={{ username: author.username }} className="flex items-center gap-3 group">
+        {content}
+      </Link>
+    );
+  }
+  return <div className="flex items-center gap-3">{content}</div>;
 }
 
 function RecipePage() {
@@ -128,54 +123,10 @@ function RecipePage() {
 
         <div className="max-w-5xl mx-auto px-5 sm:px-8">
           <div className="flex flex-wrap items-center justify-between gap-4 py-6 border-b border-subtle">
-            {recipe.author?.username ? (
-              <Link
-                to="/chef/$username"
-                params={{ username: recipe.author.username }}
-                className="flex items-center gap-3 group"
-              >
-                <Avatar
-                  src={recipe.author?.image}
-                  name={recipe.author?.name ?? "Chef"}
-                  size="md"
-                  className="ring-2 ring-cream-dark dark:ring-d-border"
-                />
-                <div>
-                  <span className="block text-sm font-medium text-primary group-hover:text-sage transition-colors">
-                    {recipe.author?.name ?? "Chef"}
-                  </span>
-                  <time className="block text-xs text-stone">
-                    {new Date(recipe._creationTime).toLocaleDateString("en-US", {
-                      month: "long",
-                      day: "numeric",
-                      year: "numeric",
-                    })}
-                  </time>
-                </div>
-              </Link>
-            ) : (
-              <div className="flex items-center gap-3">
-                <Avatar
-                  src={recipe.author?.image}
-                  name={recipe.author?.name ?? "Chef"}
-                  size="md"
-                  className="ring-2 ring-cream-dark dark:ring-d-border"
-                />
-                <div>
-                  <span className="block text-sm font-medium text-primary">{recipe.author?.name ?? "Chef"}</span>
-                  <time className="block text-xs text-stone">
-                    {new Date(recipe._creationTime).toLocaleDateString("en-US", {
-                      month: "long",
-                      day: "numeric",
-                      year: "numeric",
-                    })}
-                  </time>
-                </div>
-              </div>
-            )}
+            <RecipeAuthor author={recipe.author} createdAt={recipe._creationTime} />
 
             <div className="flex items-center gap-2">
-              <SaveButton recipeId={recipe._id} />
+              <BookmarkButton recipeId={recipe._id} />
               <ShareButton title={recipe.title} />
               <Link
                 to="/recipe/$slug/print"

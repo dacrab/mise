@@ -6,6 +6,7 @@ import { useMutation, useQuery } from "convex/react";
 import { useEffect, useRef, useState } from "react";
 import { RecipeListRow } from "@/components/dashboard/RecipeListRow";
 import { useToast } from "@/components/ui/Toast";
+import { useBookmarks } from "@/lib/bookmarks";
 import { Route } from "@/routes/_authed/dashboard/index";
 
 const TABS = [
@@ -46,7 +47,7 @@ function DashboardSkeleton() {
 export function DashboardView() {
   const user = useQuery(api.users.currentUser);
   const myRecipes = useQuery(api.recipes.myRecipes);
-  const myBookmarks = useQuery(api.recipes.myBookmarks);
+  const { bookmarks: myBookmarks } = useBookmarks();
   const deleteRecipe = useMutation(api.recipes.remove);
   const { toast } = useToast();
   const [pendingDelete, setPendingDelete] = useState<Id<"recipes"> | null>(null);

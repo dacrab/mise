@@ -4,6 +4,7 @@ import { Link, useRouter } from "@tanstack/react-router";
 import { useState } from "react";
 import { Spinner } from "@/components/ui/Primitives";
 import { useToast } from "@/components/ui/Toast";
+import { getErrorMessage } from "@/lib/utils";
 
 const MIN_PASSWORD_LENGTH = 8;
 
@@ -333,8 +334,7 @@ export function ForgotPasswordForm() {
       setStep("code");
       toast("Reset code sent to your email 📬", "success");
     } catch (err) {
-      const message = err instanceof Error ? err.message : "Could not send reset code. Please try again.";
-      toast(message, "error");
+      toast(getErrorMessage(err), "error");
     } finally {
       setSendingCode(false);
     }
@@ -354,8 +354,7 @@ export function ForgotPasswordForm() {
       toast("Password reset successfully! Please sign in.", "success");
       await router.navigate({ to: "/login", replace: true });
     } catch (err) {
-      const message = err instanceof Error ? err.message : "Invalid or expired code. Please try again.";
-      toast(message, "error");
+      toast(getErrorMessage(err), "error");
     } finally {
       setResetting(false);
     }

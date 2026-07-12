@@ -12,7 +12,17 @@ import { Select } from "@/components/ui/Select";
 import { TextField } from "@/components/ui/TextField";
 import { useToast } from "@/components/ui/Toast";
 import { useFileUpload } from "@/hooks/useFileUpload";
-import { CATEGORIES as BASE_CATEGORIES, DIFFICULTIES } from "@/lib/constants";
+import {
+  CATEGORIES as BASE_CATEGORIES,
+  DIFFICULTIES,
+  MAX_COOK_MINUTES,
+  MAX_PREP_MINUTES,
+  MAX_SERVINGS,
+  MIN_COOK_MINUTES,
+  MIN_PREP_MINUTES,
+  MIN_SERVINGS,
+} from "@/lib/constants";
+import { getErrorMessage } from "@/lib/utils";
 
 const CATEGORIES = ["General", ...BASE_CATEGORIES];
 
@@ -40,9 +50,24 @@ const recipeSchema = z.object({
   description: z.string(),
   category: z.string(),
   difficulty: z.string(),
-  prepTime: numericStr(0, 24 * 60, "Prep time must be at least 0", "Prep time must be under 1440 minutes"),
-  cookTime: numericStr(0, 24 * 60, "Cook time must be at least 0", "Cook time must be under 1440 minutes"),
-  servings: numericStr(1, 100, "Servings must be at least 1", "Servings must be at most 100"),
+  prepTime: numericStr(
+    MIN_PREP_MINUTES,
+    MAX_PREP_MINUTES,
+    "Prep time cannot be negative",
+    `Prep time must be under ${MAX_PREP_MINUTES} minutes`,
+  ),
+  cookTime: numericStr(
+    MIN_COOK_MINUTES,
+    MAX_COOK_MINUTES,
+    "Cook time cannot be negative",
+    `Cook time must be under ${MAX_COOK_MINUTES} minutes`,
+  ),
+  servings: numericStr(
+    MIN_SERVINGS,
+    MAX_SERVINGS,
+    "Servings must be at least 1",
+    `Servings must be at most ${MAX_SERVINGS}`,
+  ),
   videoUrl: z
     .string()
     .refine((val) => !val || /^https?:\/\/.+/.test(val), { message: "Video URL must be a valid URL" }),
@@ -102,6 +127,8 @@ export function RecipeEditor({
   const [loading, setLoading] = useState(false);
   const [lastSaved, setLastSaved] = useState<Date | null>(null);
   const [coverImage, setCoverImage] = useState<Id<"_storage"> | null>(initialData?.coverImage ?? null);
+  const coverImageRef = useRef(coverImage);
+  coverImageRef.current = coverImage;
   const [coverImageUrl, setCoverImageUrl] = useState(initialData?.coverImageUrl ?? "");
 
   const pendingStatusRef = useRef<"draft" | "published" | null>(null);
@@ -158,7 +185,7 @@ export function RecipeEditor({
   } = useFileUpload(() => generateUploadUrl(), {
     onSuccess: (storageId, previewUrl) => {
       if (coverImageUrl?.startsWith("blob:")) URL.revokeObjectURL(coverImageUrl);
-      setCoverImage(storageId as Id<"_storage">);
+      setCoverImage(storageId);
       setCoverImageUrl(previewUrl);
       toast("Image uploaded", "success");
     },
@@ -176,7 +203,7 @@ export function RecipeEditor({
       try {
         await updateRecipe({
           id: recipeId,
-          ...buildPayload(vals as RecipeFormData, coverImage, validIngredients, validSteps),
+          ...buildPayload(vals as RecipeFormData, coverImageRef.current, validIngredients, validSteps),
           status: "draft",
         });
         setLastSaved(new Date());
@@ -186,7 +213,7 @@ export function RecipeEditor({
       }
     }, 30_000);
     return () => clearInterval(interval);
-  }, [isEditing, initialData?.id, isDirty, coverImage, updateRecipe]);
+  }, [isEditing, initialData?.id, isDirty, updateRecipe]);
 
   useEffect(
     () => () => {
@@ -238,7 +265,7 @@ export function RecipeEditor({
       }
       void navigate({ to: "/dashboard" });
     } catch (err) {
-      toast(err instanceof Error ? err.message : "Could not save recipe", "error");
+      toast(getErrorMessage(err), "error");
     } finally {
       setLoading(false);
       pendingStatusRef.current = null;
@@ -524,8 +551,8 @@ export function RecipeEditor({
                     <input
                       id="recipe-prep-time"
                       type="number"
-                      min={0}
-                      max={1440}
+                      min={MIN_PREP_MINUTES}
+                      max={MAX_PREP_MINUTES}
                       className="input-field text-sm py-2.5"
                       placeholder="15"
                       {...register("prepTime")}
@@ -539,8 +566,8 @@ export function RecipeEditor({
                     <input
                       id="recipe-cook-time"
                       type="number"
-                      min={0}
-                      max={1440}
+                      min={MIN_COOK_MINUTES}
+                      max={MAX_COOK_MINUTES}
                       className="input-field text-sm py-2.5"
                       placeholder="30"
                       {...register("cookTime")}
@@ -555,8 +582,8 @@ export function RecipeEditor({
                   <input
                     id="recipe-servings"
                     type="number"
-                    min={1}
-                    max={100}
+                    min={MIN_SERVINGS}
+                    max={MAX_SERVINGS}
                     className="input-field text-sm py-2.5"
                     placeholder="4"
                     {...register("servings")}

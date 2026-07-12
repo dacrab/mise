@@ -1,26 +1,24 @@
-import { useAuthActions } from "@convex-dev/auth/react";
 import {
   ArrowRightOnRectangleIcon,
   CalendarIcon,
   CameraIcon,
-  ComputerDesktopIcon,
   EnvelopeIcon,
-  MoonIcon,
-  SunIcon,
   TrashIcon,
 } from "@heroicons/react/24/outline";
-import { createFileRoute, useNavigate } from "@tanstack/react-router";
+import { createFileRoute } from "@tanstack/react-router";
 import { api } from "convex/_generated/api";
 import type { Id } from "convex/_generated/dataModel";
 import { useMutation, useQuery } from "convex/react";
 import { useEffect, useMemo, useRef, useState } from "react";
+import { ThemePicker } from "@/components/theme/ThemePicker";
 import { ProgressBar } from "@/components/ui/Primitives";
 import { TextArea } from "@/components/ui/TextArea";
 import { TextField } from "@/components/ui/TextField";
 import { useToast } from "@/components/ui/Toast";
 import { useFileUpload } from "@/hooks/useFileUpload";
-import { useTheme } from "@/hooks/useTheme";
-import { APP_TITLE_SUFFIX } from "@/lib/constants";
+import { useSignOut } from "@/hooks/useSignOut";
+import { useBookmarks } from "@/lib/bookmarks";
+import { APP_TITLE_SUFFIX, MAX_IMAGE_BYTES } from "@/lib/constants";
 
 export const Route = createFileRoute("/_authed/settings")({
   head: () => ({
@@ -36,19 +34,17 @@ function Settings() {
   const user = useQuery(api.users.currentUser);
   const updateProfile = useMutation(api.users.updateProfile);
   const generateUploadUrl = useMutation(api.users.generateUploadUrl);
-  const { signOut } = useAuthActions();
-  const navigate = useNavigate();
-  const { preference, setTheme } = useTheme();
+  const signOut = useSignOut();
   const {
     upload,
     uploading,
     progress: uploadProgress,
-  } = useFileUpload(() => generateUploadUrl(), {
-    onSuccess: (storageId, preview) => {
-      setNewProfileImage(storageId as Id<"_storage">);
+  } = useFileUpload<Id<"_storage">>(() => generateUploadUrl(), {
+    onSuccess: (storageId, previewUrl) => {
+      setNewProfileImage(storageId);
       if (previewUrlRef.current) URL.revokeObjectURL(previewUrlRef.current);
-      previewUrlRef.current = preview;
-      setPreviewUrl(preview);
+      previewUrlRef.current = previewUrl;
+      setPreviewUrl(previewUrl);
       toast("Photo uploaded!", "success");
     },
     onError: () => toast("Could not upload image", "error"),
@@ -129,16 +125,11 @@ function Settings() {
       toast("Please select an image file", "error");
       return;
     }
-    if (file.size > 5 * 1024 * 1024) {
+    if (file.size > MAX_IMAGE_BYTES) {
       toast("Image must be under 5MB", "error");
       return;
     }
     await upload(file);
-  };
-
-  const handleSignOut = async () => {
-    await signOut();
-    void navigate({ to: "/", replace: true });
   };
 
   const avatar = previewUrl ?? user.profileImageUrl ?? user.image;
@@ -224,26 +215,7 @@ function Settings() {
               <section className="space-y-4">
                 <h2 className="font-serif text-xl font-medium">Appearance</h2>
                 <p className="text-sm text-stone">Choose how Mise looks to you.</p>
-                <div className="grid grid-cols-3 gap-3">
-                  <ThemeOption
-                    icon={SunIcon}
-                    label="Light"
-                    active={preference === "light"}
-                    onClick={() => setTheme("light")}
-                  />
-                  <ThemeOption
-                    icon={MoonIcon}
-                    label="Dark"
-                    active={preference === "dark"}
-                    onClick={() => setTheme("dark")}
-                  />
-                  <ThemeOption
-                    icon={ComputerDesktopIcon}
-                    label="System"
-                    active={preference === "system"}
-                    onClick={() => setTheme("system")}
-                  />
-                </div>
+                <ThemePicker />
               </section>
 
               <section className="space-y-4 pt-6 border-t border-subtle">
@@ -251,7 +223,7 @@ function Settings() {
                 <div className="flex flex-col sm:flex-row gap-3">
                   <button
                     type="button"
-                    onClick={handleSignOut}
+                    onClick={() => signOut()}
                     className="flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg border border-field text-sm text-secondary hover:bg-cream-dark transition-colors"
                   >
                     <ArrowRightOnRectangleIcon className="w-4 h-4" />
@@ -321,36 +293,9 @@ function Settings() {
   );
 }
 
-function ThemeOption({
-  icon: Icon,
-  label,
-  active,
-  onClick,
-}: {
-  icon: React.ComponentType<{ className?: string }>;
-  label: string;
-  active: boolean;
-  onClick: () => void;
-}) {
-  return (
-    <button
-      type="button"
-      onClick={onClick}
-      className={`flex flex-col items-center gap-2 p-4 rounded-xl border-2 transition-all ${
-        active
-          ? "border-sage bg-sage/5 dark:bg-sage/10"
-          : "border-stone-light/40 hover:border-stone-light dark:border-d-border-strong dark:hover:border-d-border-hover"
-      }`}
-    >
-      <Icon className={`w-5 h-5 ${active ? "text-sage" : "text-stone"}`} />
-      <span className={`text-xs font-medium ${active ? "text-sage" : "text-stone"}`}>{label}</span>
-    </button>
-  );
-}
-
 function QuickStats() {
   const recipes = useQuery(api.recipes.myRecipes);
-  const bookmarks = useQuery(api.recipes.myBookmarks);
+  const { bookmarks } = useBookmarks();
 
   const published = recipes?.filter((r) => r.status === "published").length ?? 0;
   const drafts = recipes?.filter((r) => r.status === "draft").length ?? 0;

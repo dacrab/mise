@@ -1,4 +1,5 @@
 import { useMemo, useState } from "react";
+import { MAX_SERVINGS, MIN_SERVINGS } from "@/lib/constants";
 import { scaleIngredient } from "@/lib/utils";
 
 export function IngredientScaler({
@@ -20,7 +21,7 @@ export function IngredientScaler({
         </label>
         <button
           type="button"
-          onClick={() => setServings(Math.max(1, servings - 1))}
+          onClick={() => setServings(Math.max(MIN_SERVINGS, servings - 1))}
           className="w-8 h-8 rounded-lg surface-raised hover:bg-stone-light/50 dark:hover:bg-d-border flex items-center justify-center text-primary transition-colors"
           aria-label="Decrease servings"
         >
@@ -29,12 +30,12 @@ export function IngredientScaler({
         <input
           id="servings-input"
           type="number"
-          min={1}
-          max={100}
+          min={MIN_SERVINGS}
+          max={MAX_SERVINGS}
           value={servings}
           onChange={(e) => {
             const v = parseInt(e.target.value, 10);
-            if (!Number.isNaN(v) && v >= 1 && v <= 100) setServings(v);
+            if (!Number.isNaN(v) && v >= MIN_SERVINGS && v <= MAX_SERVINGS) setServings(v);
           }}
           className="w-12 text-center font-medium text-primary bg-transparent border-b border-stone-light dark:border-d-border-strong focus:outline-none focus:border-sage"
           aria-label="Number of servings"

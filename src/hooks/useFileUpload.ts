@@ -1,9 +1,10 @@
+import type { Id } from "convex/_generated/dataModel";
 import { useEffect, useRef, useState } from "react";
 
-export function useFileUpload(
+export function useFileUpload<TStorageId extends string = Id<"_storage">>(
   getUploadUrl: () => Promise<string>,
   options: {
-    onSuccess?: (storageId: string, previewUrl: string) => void;
+    onSuccess?: (storageId: TStorageId, previewUrl: string) => void;
     onError?: (err: Error) => void;
   } = {},
 ) {
@@ -18,21 +19,38 @@ export function useFileUpload(
     [],
   );
 
-  const upload = async (file: File): Promise<{ storageId: string; previewUrl: string } | null> => {
+  const upload = async (file: File): Promise<{ storageId: TStorageId; previewUrl: string } | null> => {
     abortRef.current = new AbortController();
     setUploading(true);
     setProgress(0);
 
     try {
       const url = await getUploadUrl();
-      const res = await fetch(url, {
-        method: "POST",
-        headers: { "Content-Type": file.type },
-        body: file,
-        signal: abortRef.current.signal,
+      const storageId = await new Promise<TStorageId>((resolve, reject) => {
+        const xhr = new XMLHttpRequest();
+        xhr.open("POST", url);
+        xhr.setRequestHeader("Content-Type", file.type);
+        xhr.upload.onprogress = (e) => {
+          if (e.lengthComputable) setProgress(Math.round((e.loaded / e.total) * 100));
+        };
+        xhr.onload = () => {
+          if (xhr.status >= 200 && xhr.status < 300) {
+            try {
+              const { storageId } = JSON.parse(xhr.responseText) as { storageId: string };
+              resolve(storageId as TStorageId);
+            } catch {
+              reject(new Error("Invalid upload response"));
+            }
+          } else {
+            reject(new Error(`Upload failed: ${xhr.status}`));
+          }
+        };
+        xhr.onerror = () => reject(new Error("Upload failed"));
+        xhr.onabort = () => reject(new DOMException("Upload aborted", "AbortError"));
+        abortRef.current?.signal.addEventListener("abort", () => xhr.abort());
+        xhr.send(file);
       });
-      if (!res.ok) throw new Error(`Upload failed: ${res.status}`);
-      const { storageId } = (await res.json()) as { storageId: string };
+
       setProgress(100);
       const previewUrl = URL.createObjectURL(file);
       options.onSuccess?.(storageId, previewUrl);
