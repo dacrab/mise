@@ -1,36 +1,28 @@
 import { paginationOptsValidator } from "convex/server";
 import { v } from "convex/values";
 import type { Doc } from "./_generated/dataModel";
+import type { QueryCtx } from "./_generated/server";
 import { mutation, query } from "./_generated/server";
 import { getAuthUserId, requireAuth } from "./lib/auth";
+import { generateSlug } from "./lib/slug";
 import { generateAuthenticatedUploadUrl, withCoverUrl, withCoverUrls } from "./lib/storage";
 import { checkRateLimit } from "./rateLimit";
 
-function generateSlug(title: string): string {
-  const base = title
-    .toLowerCase()
-    .replace(/[^a-z0-9]+/g, "-")
-    .replace(/(^-|-$)+/g, "")
-    .slice(0, 80);
-  const suffix = Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
-  return `${base}-${suffix}`;
+function publishedRecipes(ctx: QueryCtx, { category, order = "desc" }: { category?: string; order?: "asc" | "desc" }) {
+  const base = ctx.db.query("recipes");
+  if (category) {
+    return base
+      .withIndex("by_category", (q) => q.eq("category", category))
+      .filter((q) => q.eq(q.field("status"), "published"))
+      .order(order);
+  }
+  return base.withIndex("by_status", (q) => q.eq("status", "published")).order(order);
 }
 
 export const listPaginated = query({
   args: { paginationOpts: paginationOptsValidator, category: v.optional(v.string()) },
   handler: async (ctx, { paginationOpts, category }) => {
-    const results = category
-      ? await ctx.db
-          .query("recipes")
-          .withIndex("by_category", (q) => q.eq("category", category))
-          .filter((q) => q.eq(q.field("status"), "published"))
-          .order("desc")
-          .paginate(paginationOpts)
-      : await ctx.db
-          .query("recipes")
-          .withIndex("by_status", (q) => q.eq("status", "published"))
-          .order("desc")
-          .paginate(paginationOpts);
+    const results = await publishedRecipes(ctx, { category }).paginate(paginationOpts);
     return { ...results, page: await withCoverUrls(ctx, results.page) };
   },
 });
@@ -50,19 +42,8 @@ export const list = query({
           return query.eq("status", "published");
         })
         .take(safeLimit);
-    } else if (category) {
-      recipes = await ctx.db
-        .query("recipes")
-        .withIndex("by_category", (q) => q.eq("category", category))
-        .filter((q) => q.eq(q.field("status"), "published"))
-        .order("desc")
-        .take(safeLimit);
     } else {
-      recipes = await ctx.db
-        .query("recipes")
-        .withIndex("by_status", (q) => q.eq("status", "published"))
-        .order("desc")
-        .take(safeLimit);
+      recipes = await publishedRecipes(ctx, { category }).take(safeLimit);
     }
     return withCoverUrls(ctx, recipes);
   },

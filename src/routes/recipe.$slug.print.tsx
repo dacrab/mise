@@ -3,21 +3,26 @@ import { ClockIcon, FireIcon, PrinterIcon, UserGroupIcon } from "@heroicons/reac
 import { useSuspenseQuery } from "@tanstack/react-query";
 import { createFileRoute, notFound } from "@tanstack/react-router";
 import { api } from "convex/_generated/api";
+import { MetaStat } from "@/components/ui/MetaStat";
 
 export const Route = createFileRoute("/recipe/$slug/print")({
   loader: ({ params, context: { queryClient } }) =>
     queryClient.ensureQueryData(convexQuery(api.recipes.getBySlug, { slug: params.slug })),
   component: PrintRecipe,
   pendingComponent: () => <div className="center min-h-screen text-stone animate-pulse">Loading…</div>,
-  errorComponent: ({ error, reset }) => (
-    <div className="max-w-2xl mx-auto p-8 text-center">
-      <h1 className="text-xl font-bold mb-4">Could not load recipe</h1>
-      <p className="text-stone mb-4">{error.message}</p>
-      <button type="button" onClick={() => reset()} className="btn-primary">
-        Try again
-      </button>
-    </div>
-  ),
+  errorComponent: ({ error, reset }) => {
+    // biome-ignore lint/suspicious/noConsole: log the real error for diagnostics
+    console.error(error);
+    return (
+      <div className="max-w-2xl mx-auto p-8 text-center">
+        <h1 className="text-xl font-bold mb-4">Could not load recipe</h1>
+        <p className="text-stone mb-4">Something went wrong while loading this recipe. Please try again.</p>
+        <button type="button" onClick={() => reset()} className="btn-primary">
+          Try again
+        </button>
+      </div>
+    );
+  },
 });
 
 function PrintRecipe() {
@@ -25,6 +30,8 @@ function PrintRecipe() {
   const { data: recipe } = useSuspenseQuery(convexQuery(api.recipes.getBySlug, { slug }));
 
   if (!recipe) throw notFound();
+
+  const totalTime = (recipe.prepTime ?? 0) + (recipe.cookTime ?? 0);
 
   return (
     <div className="max-w-2xl mx-auto p-8 print:p-0 bg-white min-h-screen">
@@ -35,49 +42,59 @@ function PrintRecipe() {
         {recipe.description && <p className="text-stone">{recipe.description}</p>}
         <div className="flex flex-wrap gap-3 mt-4">
           {recipe.prepTime && (
-            <div className="stat-box">
-              <div className="text-stone">
-                <ClockIcon className="w-4 h-4" />
-              </div>
-              <span className="text-xs text-stone uppercase tracking-wide">Prep</span>
-              <span className="text-sm font-medium text-charcoal">{recipe.prepTime} min</span>
-            </div>
+            <MetaStat
+              icon={ClockIcon}
+              label="Prep"
+              value={`${recipe.prepTime} min`}
+              className="stat-box"
+              iconClassName="w-4 h-4 text-stone"
+              labelClassName="text-xs text-stone uppercase tracking-wide"
+              valueClassName="text-sm font-medium text-charcoal"
+            />
           )}
           {recipe.cookTime && (
-            <div className="stat-box">
-              <div className="text-stone">
-                <FireIcon className="w-4 h-4" />
-              </div>
-              <span className="text-xs text-stone uppercase tracking-wide">Cook</span>
-              <span className="text-sm font-medium text-charcoal">{recipe.cookTime} min</span>
-            </div>
+            <MetaStat
+              icon={FireIcon}
+              label="Cook"
+              value={`${recipe.cookTime} min`}
+              className="stat-box"
+              iconClassName="w-4 h-4 text-stone"
+              labelClassName="text-xs text-stone uppercase tracking-wide"
+              valueClassName="text-sm font-medium text-charcoal"
+            />
           )}
-          {recipe.prepTime && recipe.cookTime && (
-            <div className="stat-box">
-              <div className="text-stone">
-                <ClockIcon className="w-4 h-4" />
-              </div>
-              <span className="text-xs text-stone uppercase tracking-wide">Total</span>
-              <span className="text-sm font-medium text-charcoal">{recipe.prepTime + recipe.cookTime} min</span>
-            </div>
+          {totalTime > 0 && (
+            <MetaStat
+              icon={ClockIcon}
+              label="Total"
+              value={`${totalTime} min`}
+              className="stat-box"
+              iconClassName="w-4 h-4 text-stone"
+              labelClassName="text-xs text-stone uppercase tracking-wide"
+              valueClassName="text-sm font-medium text-charcoal"
+            />
           )}
           {recipe.servings && (
-            <div className="stat-box">
-              <div className="text-stone">
-                <UserGroupIcon className="w-4 h-4" />
-              </div>
-              <span className="text-xs text-stone uppercase tracking-wide">Serves</span>
-              <span className="text-sm font-medium text-charcoal">{recipe.servings}</span>
-            </div>
+            <MetaStat
+              icon={UserGroupIcon}
+              label="Serves"
+              value={`${recipe.servings}`}
+              className="stat-box"
+              iconClassName="w-4 h-4 text-stone"
+              labelClassName="text-xs text-stone uppercase tracking-wide"
+              valueClassName="text-sm font-medium text-charcoal"
+            />
           )}
           {recipe.difficulty && (
-            <div className="stat-box">
-              <div className="text-stone">
-                <FireIcon className="w-4 h-4" />
-              </div>
-              <span className="text-xs text-stone uppercase tracking-wide">Difficulty</span>
-              <span className="text-sm font-medium text-charcoal">{recipe.difficulty}</span>
-            </div>
+            <MetaStat
+              icon={FireIcon}
+              label="Difficulty"
+              value={recipe.difficulty}
+              className="stat-box"
+              iconClassName="w-4 h-4 text-stone"
+              labelClassName="text-xs text-stone uppercase tracking-wide"
+              valueClassName="text-sm font-medium text-charcoal"
+            />
           )}
         </div>
       </header>

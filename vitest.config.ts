@@ -1,15 +1,27 @@
 import { defineConfig } from "vitest/config";
 import react from "@vitejs/plugin-react";
+import { createRequire } from "module";
 import { resolve } from "path";
+
+const require = createRequire(import.meta.url);
+
+// Framework subpaths must resolve to the `convex` package, not the local
+// `./convex` dir (which only holds our functions). List them before the
+// broad `convex` alias so vite doesn't shadow them.
+const convexFrameworkAliases = ["values", "server"].map((sub) => ({
+  find: new RegExp(`^convex/${sub}$`),
+  replacement: require.resolve(`convex/${sub}`),
+}));
 
 export default defineConfig({
   plugins: [react()],
   // Aliases must be defined here since vitest runs outside of vite's build pipeline
   resolve: {
-    alias: {
-      "@": resolve(__dirname, "./src"),
-      convex: resolve(__dirname, "./convex"),
-    },
+    alias: [
+      { find: "@", replacement: resolve(__dirname, "./src") },
+      ...convexFrameworkAliases,
+      { find: "convex", replacement: resolve(__dirname, "./convex") },
+    ],
   },
   test: {
     environment: "jsdom",

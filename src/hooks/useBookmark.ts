@@ -1,27 +1,25 @@
-import { api } from "convex/_generated/api";
 import type { Id } from "convex/_generated/dataModel";
-import { useMutation, useQuery } from "convex/react";
 import { useCallback, useState } from "react";
 import { useToast } from "@/components/ui/Toast";
+import { useBookmarks } from "@/lib/bookmarks";
 
 export function useBookmark(recipeId: Id<"recipes">) {
-  const bookmarks = useQuery(api.recipes.myBookmarks);
-  const toggleBookmarkMutation = useMutation(api.social.toggleBookmark);
+  const { bookmarkedIds, toggle } = useBookmarks();
   const { toast } = useToast();
   const [isPending, setIsPending] = useState(false);
 
-  const isBookmarked = bookmarks?.some((b) => b._id === recipeId) ?? false;
+  const isBookmarked = bookmarkedIds.has(recipeId);
 
   const handleToggle = useCallback(async () => {
     setIsPending(true);
     try {
-      await toggleBookmarkMutation({ recipeId });
+      await toggle(recipeId);
     } catch {
       toast("Sign in to save recipes", "error");
     } finally {
       setIsPending(false);
     }
-  }, [recipeId, toggleBookmarkMutation, toast]);
+  }, [recipeId, toggle, toast]);
 
   return { isBookmarked, isPending, handleToggle };
 }
