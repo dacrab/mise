@@ -20,8 +20,10 @@ import { Route as AuthedSettingsRouteImport } from './routes/_authed/settings'
 import { Route as authSignupRouteImport } from './routes/(auth)/signup'
 import { Route as authLoginRouteImport } from './routes/(auth)/login'
 import { Route as authForgotPasswordRouteImport } from './routes/(auth)/forgot-password'
+import { Route as AuthedRecipesIndexRouteImport } from './routes/_authed/recipes/index'
 import { Route as AuthedDashboardIndexRouteImport } from './routes/_authed/dashboard/index'
 import { Route as RecipeSlugPrintRouteImport } from './routes/recipe.$slug.print'
+import { Route as AuthedRecipesIdRouteImport } from './routes/_authed/recipes/$id'
 import { Route as AuthedDashboardCreateRouteImport } from './routes/_authed/dashboard/create'
 import { Route as AuthedDashboardEditIdRouteImport } from './routes/_authed/dashboard/edit.$id'
 
@@ -79,6 +81,11 @@ const authForgotPasswordRoute = authForgotPasswordRouteImport.update({
   path: '/forgot-password',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AuthedRecipesIndexRoute = AuthedRecipesIndexRouteImport.update({
+  id: '/recipes/',
+  path: '/recipes/',
+  getParentRoute: () => AuthedRoute,
+} as any)
 const AuthedDashboardIndexRoute = AuthedDashboardIndexRouteImport.update({
   id: '/dashboard/',
   path: '/dashboard/',
@@ -88,6 +95,11 @@ const RecipeSlugPrintRoute = RecipeSlugPrintRouteImport.update({
   id: '/print',
   path: '/print',
   getParentRoute: () => RecipeSlugRoute,
+} as any)
+const AuthedRecipesIdRoute = AuthedRecipesIdRouteImport.update({
+  id: '/recipes/$id',
+  path: '/recipes/$id',
+  getParentRoute: () => AuthedRoute,
 } as any)
 const AuthedDashboardCreateRoute = AuthedDashboardCreateRouteImport.update({
   id: '/dashboard/create',
@@ -112,8 +124,10 @@ export interface FileRoutesByFullPath {
   '/chef/$username': typeof ChefUsernameRoute
   '/recipe/$slug': typeof RecipeSlugRouteWithChildren
   '/dashboard/create': typeof AuthedDashboardCreateRoute
+  '/recipes/$id': typeof AuthedRecipesIdRoute
   '/recipe/$slug/print': typeof RecipeSlugPrintRoute
   '/dashboard/': typeof AuthedDashboardIndexRoute
+  '/recipes/': typeof AuthedRecipesIndexRoute
   '/dashboard/edit/$id': typeof AuthedDashboardEditIdRoute
 }
 export interface FileRoutesByTo {
@@ -128,8 +142,10 @@ export interface FileRoutesByTo {
   '/chef/$username': typeof ChefUsernameRoute
   '/recipe/$slug': typeof RecipeSlugRouteWithChildren
   '/dashboard/create': typeof AuthedDashboardCreateRoute
+  '/recipes/$id': typeof AuthedRecipesIdRoute
   '/recipe/$slug/print': typeof RecipeSlugPrintRoute
   '/dashboard': typeof AuthedDashboardIndexRoute
+  '/recipes': typeof AuthedRecipesIndexRoute
   '/dashboard/edit/$id': typeof AuthedDashboardEditIdRoute
 }
 export interface FileRoutesById {
@@ -146,8 +162,10 @@ export interface FileRoutesById {
   '/chef/$username': typeof ChefUsernameRoute
   '/recipe/$slug': typeof RecipeSlugRouteWithChildren
   '/_authed/dashboard/create': typeof AuthedDashboardCreateRoute
+  '/_authed/recipes/$id': typeof AuthedRecipesIdRoute
   '/recipe/$slug/print': typeof RecipeSlugPrintRoute
   '/_authed/dashboard/': typeof AuthedDashboardIndexRoute
+  '/_authed/recipes/': typeof AuthedRecipesIndexRoute
   '/_authed/dashboard/edit/$id': typeof AuthedDashboardEditIdRoute
 }
 export interface FileRouteTypes {
@@ -164,8 +182,10 @@ export interface FileRouteTypes {
     | '/chef/$username'
     | '/recipe/$slug'
     | '/dashboard/create'
+    | '/recipes/$id'
     | '/recipe/$slug/print'
     | '/dashboard/'
+    | '/recipes/'
     | '/dashboard/edit/$id'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -180,8 +200,10 @@ export interface FileRouteTypes {
     | '/chef/$username'
     | '/recipe/$slug'
     | '/dashboard/create'
+    | '/recipes/$id'
     | '/recipe/$slug/print'
     | '/dashboard'
+    | '/recipes'
     | '/dashboard/edit/$id'
   id:
     | '__root__'
@@ -197,8 +219,10 @@ export interface FileRouteTypes {
     | '/chef/$username'
     | '/recipe/$slug'
     | '/_authed/dashboard/create'
+    | '/_authed/recipes/$id'
     | '/recipe/$slug/print'
     | '/_authed/dashboard/'
+    | '/_authed/recipes/'
     | '/_authed/dashboard/edit/$id'
   fileRoutesById: FileRoutesById
 }
@@ -294,6 +318,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof authForgotPasswordRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/_authed/recipes/': {
+      id: '/_authed/recipes/'
+      path: '/recipes'
+      fullPath: '/recipes/'
+      preLoaderRoute: typeof AuthedRecipesIndexRouteImport
+      parentRoute: typeof AuthedRoute
+    }
     '/_authed/dashboard/': {
       id: '/_authed/dashboard/'
       path: '/dashboard'
@@ -307,6 +338,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/recipe/$slug/print'
       preLoaderRoute: typeof RecipeSlugPrintRouteImport
       parentRoute: typeof RecipeSlugRoute
+    }
+    '/_authed/recipes/$id': {
+      id: '/_authed/recipes/$id'
+      path: '/recipes/$id'
+      fullPath: '/recipes/$id'
+      preLoaderRoute: typeof AuthedRecipesIdRouteImport
+      parentRoute: typeof AuthedRoute
     }
     '/_authed/dashboard/create': {
       id: '/_authed/dashboard/create'
@@ -328,14 +366,18 @@ declare module '@tanstack/react-router' {
 interface AuthedRouteChildren {
   AuthedSettingsRoute: typeof AuthedSettingsRoute
   AuthedDashboardCreateRoute: typeof AuthedDashboardCreateRoute
+  AuthedRecipesIdRoute: typeof AuthedRecipesIdRoute
   AuthedDashboardIndexRoute: typeof AuthedDashboardIndexRoute
+  AuthedRecipesIndexRoute: typeof AuthedRecipesIndexRoute
   AuthedDashboardEditIdRoute: typeof AuthedDashboardEditIdRoute
 }
 
 const AuthedRouteChildren: AuthedRouteChildren = {
   AuthedSettingsRoute: AuthedSettingsRoute,
   AuthedDashboardCreateRoute: AuthedDashboardCreateRoute,
+  AuthedRecipesIdRoute: AuthedRecipesIdRoute,
   AuthedDashboardIndexRoute: AuthedDashboardIndexRoute,
+  AuthedRecipesIndexRoute: AuthedRecipesIndexRoute,
   AuthedDashboardEditIdRoute: AuthedDashboardEditIdRoute,
 }
 
