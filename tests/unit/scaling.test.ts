@@ -3,32 +3,36 @@ import { formatNumber, scaleIngredient } from "@/lib/utils";
 
 describe("formatNumber", () => {
   it.each([
+    [0, "0"],
     [2, "2"],
-    [0.5, "½"],
-    [1.5, "1½"],
+    [100, "100"],
+    [0.125, "⅛"],
     [0.25, "¼"],
-    [0.75, "¾"],
     [0.35, "⅓"],
+    [0.5, "½"],
     [0.6, "0.6"],
+    [0.667, "⅔"],
+    [0.75, "¾"],
+    [0.42, "0.4"],
+    [1.5, "1½"],
+    [2.5, "2½"],
   ])("formatNumber(%f) → %s", (input, expected) => {
     expect(formatNumber(input)).toBe(expected);
   });
 });
 
 describe("scaleIngredient", () => {
-  it("scales whole numbers", () => {
-    expect(scaleIngredient("2 cups flour", 2)).toBe("4 cups flour");
-  });
-  it("scales fractions", () => {
-    expect(scaleIngredient("1/2 cup sugar", 2)).toBe("1 cup sugar");
-  });
-  it("scales decimals", () => {
-    expect(scaleIngredient("1.5 tsp salt", 2)).toBe("3 tsp salt");
-  });
-  it("leaves non-numeric text unchanged", () => {
-    expect(scaleIngredient("a pinch of salt", 3)).toBe("a pinch of salt");
-  });
-  it("uses vulgar fractions for results", () => {
-    expect(scaleIngredient("1 cup", 0.5)).toBe("½ cup");
+  it.each([
+    ["2 cups flour", 2, "4 cups flour"],
+    ["1/2 cup sugar", 2, "1 cup sugar"],
+    ["1.5 tsp salt", 2, "3 tsp salt"],
+    ["2-3 cups flour", 2, "4-6 cups flour"],
+    ["1 cup milk", 1, "1 cup milk"],
+    ["4 cups water", 0.25, "1 cups water"],
+    ["1/4 tsp vanilla", 4, "1 tsp vanilla"],
+    ["1 cup", 0.5, "½ cup"],
+    ["a pinch of salt", 3, "a pinch of salt"],
+  ])("scaleIngredient(%s, %f) → %s", (ingredient, scale, expected) => {
+    expect(scaleIngredient(ingredient, scale)).toBe(expected);
   });
 });
