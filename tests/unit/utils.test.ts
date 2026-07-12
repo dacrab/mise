@@ -10,5 +10,7 @@ describe("getErrorMessage", () => {
   });
   it("returns fallback for unknown types", () => {
     expect(getErrorMessage(null)).toBe("Something went wrong");
+    expect(getErrorMessage(42)).toBe("Something went wrong");
+    expect(getErrorMessage({ foo: "bar" })).toBe("Something went wrong");
   });
 });
