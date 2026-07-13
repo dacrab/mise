@@ -208,8 +208,7 @@ export function RecipeEditor({
         });
         setLastSaved(new Date());
       } catch {
-        // biome-ignore lint/suspicious/noConsole: required error logging
-        console.error("Auto-save failed");
+        // Auto-save errors are non-critical — the user can manually save
       }
     }, 30_000);
     return () => clearInterval(interval);

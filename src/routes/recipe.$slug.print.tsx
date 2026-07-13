@@ -10,19 +10,15 @@ export const Route = createFileRoute("/recipe/$slug/print")({
     queryClient.ensureQueryData(convexQuery(api.recipes.getBySlug, { slug: params.slug })),
   component: PrintRecipe,
   pendingComponent: () => <div className="center min-h-screen text-stone animate-pulse">Loading…</div>,
-  errorComponent: ({ error, reset }) => {
-    // biome-ignore lint/suspicious/noConsole: log the real error for diagnostics
-    console.error(error);
-    return (
-      <div className="max-w-2xl mx-auto p-8 text-center">
-        <h1 className="text-xl font-bold mb-4">Could not load recipe</h1>
-        <p className="text-stone mb-4">Something went wrong while loading this recipe. Please try again.</p>
-        <button type="button" onClick={() => reset()} className="btn-primary">
-          Try again
-        </button>
-      </div>
-    );
-  },
+  errorComponent: ({ reset }) => (
+    <div className="max-w-2xl mx-auto p-8 text-center">
+      <h1 className="text-xl font-bold mb-4">Could not load recipe</h1>
+      <p className="text-stone mb-4">Something went wrong while loading this recipe. Please try again.</p>
+      <button type="button" onClick={() => reset()} className="btn-primary">
+        Try again
+      </button>
+    </div>
+  ),
 });
 
 function PrintRecipe() {

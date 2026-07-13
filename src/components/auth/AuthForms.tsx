@@ -168,7 +168,7 @@ export function LoginForm() {
     try {
       const result = await signIn.create({ identifier: email, password });
       if (result?.error) throw result.error;
-      toast("Welcome back! 👨‍🍳", "success");
+      toast("Welcome back!", "success");
     } catch (err) {
       toast(mapAuthError(LOGIN_ERRORS, err), "error");
       setIsPending(false);
@@ -240,7 +240,7 @@ export function SignupForm() {
     try {
       const result = await signUp.create({ emailAddress: email, password, firstName: name });
       if (result?.error) throw result.error;
-      toast("Account created! Welcome to Mise 🎉", "success");
+      toast("Account created! Welcome to Mise", "success");
     } catch (err) {
       toast(mapAuthError(SIGNUP_ERRORS_MAP, err), "error");
       setIsPending(false);
@@ -333,7 +333,7 @@ export function ForgotPasswordForm() {
       const sendResult = await signIn.resetPasswordEmailCode.sendCode();
       if (sendResult?.error) throw sendResult.error;
       setStep("code");
-      toast("Reset code sent to your email 📬", "success");
+      toast("Reset code sent to your email", "success");
     } catch (err) {
       const message = err instanceof Error ? err.message : "Could not send reset code. Please try again.";
       toast(message, "error");
