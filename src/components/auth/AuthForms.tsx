@@ -379,7 +379,7 @@ export function ForgotPasswordForm() {
   if (step === "code") {
     return (
       <div>
-        <button onClick={() => setStep("email")} className="link-muted flex items-center gap-1 mb-6">
+        <button type="button" onClick={() => setStep("email")} className="link-muted flex items-center gap-1 mb-6">
           <ArrowLeftIcon className="w-4 h-4" /> Back
         </button>
         <h1 className="font-serif text-2xl font-medium mb-2">Enter reset code</h1>
@@ -415,7 +415,7 @@ export function ForgotPasswordForm() {
   if (step === "password") {
     return (
       <div>
-        <button onClick={() => setStep("code")} className="link-muted flex items-center gap-1 mb-6">
+        <button type="button" onClick={() => setStep("code")} className="link-muted flex items-center gap-1 mb-6">
           <ArrowLeftIcon className="w-4 h-4" /> Back
         </button>
         <h1 className="font-serif text-2xl font-medium mb-2">Set new password</h1>

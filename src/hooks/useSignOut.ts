@@ -1,11 +1,8 @@
-import { useAuthActions } from "@convex-dev/auth/react";
-import { useNavigate } from "@tanstack/react-router";
+import { useClerk } from "@clerk/tanstack-react-start";
 
 export function useSignOut() {
-  const { signOut } = useAuthActions();
-  const navigate = useNavigate();
+  const { signOut } = useClerk();
   return async () => {
-    await signOut();
-    void navigate({ to: "/", replace: true });
+    await signOut({ redirectUrl: "/" });
   };
 }
