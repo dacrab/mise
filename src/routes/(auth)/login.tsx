@@ -1,5 +1,5 @@
+import { useUser } from "@clerk/tanstack-react-start";
 import { createFileRoute, Link, Navigate } from "@tanstack/react-router";
-import { useConvexAuth } from "convex/react";
 import { z } from "zod";
 import { LoginForm } from "@/components/auth/AuthForms";
 import { AuthLayout } from "@/components/layout/AuthLayout";
@@ -21,10 +21,10 @@ export const Route = createFileRoute("/(auth)/login")({
 });
 
 function LoginPage() {
-  const { isAuthenticated, isLoading } = useConvexAuth();
+  const { isSignedIn, isLoaded } = useUser();
   const { redirect } = Route.useSearch();
 
-  if (!isLoading && isAuthenticated) {
+  if (isLoaded && isSignedIn) {
     return <Navigate to={redirect ?? "/dashboard"} replace />;
   }
 

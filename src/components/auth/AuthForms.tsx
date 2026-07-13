@@ -1,10 +1,9 @@
-import { useAuthActions } from "@convex-dev/auth/react";
+import { useSignIn, useSignUp } from "@clerk/tanstack-react-start";
 import { ArrowLeftIcon, EyeIcon, EyeSlashIcon } from "@heroicons/react/24/outline";
 import { Link, useRouter } from "@tanstack/react-router";
 import { useState } from "react";
 import { Spinner } from "@/components/ui/Primitives";
 import { useToast } from "@/components/ui/Toast";
-import { getErrorMessage } from "@/lib/utils";
 
 const MIN_PASSWORD_LENGTH = 8;
 
@@ -155,7 +154,7 @@ function mapAuthError(errors: Record<string, string>, error: unknown): string {
 }
 
 export function LoginForm() {
-  const { signIn } = useAuthActions();
+  const { signIn, fetchStatus } = useSignIn();
   const { toast } = useToast();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -164,18 +163,19 @@ export function LoginForm() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!email || !password || isPending) return;
+    if (!signIn || !email || !password || isPending) return;
     setIsPending(true);
     try {
-      await signIn("password", { email, password, flow: "signIn" });
+      const result = await signIn.create({ identifier: email, password });
+      if (result?.error) throw result.error;
       toast("Welcome back! 👨‍🍳", "success");
-      // Navigation is handled by the page-level redirect once isAuthenticated flips
     } catch (err) {
       toast(mapAuthError(LOGIN_ERRORS, err), "error");
-    } finally {
       setIsPending(false);
     }
   };
+
+  const isLoaded = fetchStatus === "idle";
 
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
@@ -203,7 +203,7 @@ export function LoginForm() {
       </div>
       <button
         type="submit"
-        disabled={isPending || !email || !password}
+        disabled={isPending || !email || !password || !isLoaded}
         className="btn-primary w-full disabled:opacity-50"
       >
         {isPending ? (
@@ -219,7 +219,7 @@ export function LoginForm() {
 }
 
 export function SignupForm() {
-  const { signIn } = useAuthActions();
+  const { signUp, fetchStatus } = useSignUp();
   const { toast } = useToast();
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
@@ -235,18 +235,19 @@ export function SignupForm() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!canSubmit) return;
+    if (!signUp || !canSubmit) return;
     setIsPending(true);
     try {
-      await signIn("password", { email, password, name, flow: "signUp" });
+      const result = await signUp.create({ emailAddress: email, password, firstName: name });
+      if (result?.error) throw result.error;
       toast("Account created! Welcome to Mise 🎉", "success");
-      // Navigation is handled by the page-level redirect once isAuthenticated flips
     } catch (err) {
       toast(mapAuthError(SIGNUP_ERRORS_MAP, err), "error");
-    } finally {
       setIsPending(false);
     }
   };
+
+  const isLoaded = fetchStatus === "idle";
 
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
@@ -298,7 +299,7 @@ export function SignupForm() {
           </p>
         )}
       </div>
-      <button type="submit" disabled={!canSubmit} className="btn-primary w-full disabled:opacity-50">
+      <button type="submit" disabled={!canSubmit || !isLoaded} className="btn-primary w-full disabled:opacity-50">
         {isPending ? (
           <span className="flex items-center justify-center gap-2">
             <Spinner /> Creating…
@@ -312,10 +313,10 @@ export function SignupForm() {
 }
 
 export function ForgotPasswordForm() {
-  const { signIn } = useAuthActions();
+  const { signIn, fetchStatus } = useSignIn();
   const { toast } = useToast();
   const router = useRouter();
-  const [step, setStep] = useState<"email" | "code">("email");
+  const [step, setStep] = useState<"email" | "code" | "password">("email");
   const [email, setEmail] = useState("");
   const [code, setCode] = useState("");
   const [newPassword, setNewPassword] = useState("");
@@ -324,51 +325,66 @@ export function ForgotPasswordForm() {
 
   const handleRequestReset = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!email.trim() || sendingCode) return;
+    if (!signIn || !email.trim() || sendingCode) return;
     setSendingCode(true);
     try {
-      const fd = new FormData();
-      fd.set("email", email);
-      fd.set("flow", "reset");
-      await signIn("password", fd);
+      const result = await signIn.create({ identifier: email });
+      if (result?.error) throw result.error;
+      const sendResult = await signIn.resetPasswordEmailCode.sendCode();
+      if (sendResult?.error) throw sendResult.error;
       setStep("code");
       toast("Reset code sent to your email 📬", "success");
     } catch (err) {
-      toast(getErrorMessage(err), "error");
+      const message = err instanceof Error ? err.message : "Could not send reset code. Please try again.";
+      toast(message, "error");
     } finally {
       setSendingCode(false);
     }
   };
 
-  const handleResetPassword = async (e: React.FormEvent) => {
+  const handleVerifyCode = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!code.trim() || newPassword.length < MIN_PASSWORD_LENGTH || resetting) return;
+    if (!signIn || !code.trim() || resetting) return;
     setResetting(true);
     try {
-      const fd = new FormData();
-      fd.set("email", email);
-      fd.set("code", code);
-      fd.set("newPassword", newPassword);
-      fd.set("flow", "reset-verification");
-      await signIn("password", fd);
-      toast("Password reset successfully! Please sign in.", "success");
-      await router.navigate({ to: "/login", replace: true });
+      const result = await signIn.resetPasswordEmailCode.verifyCode({ code });
+      if (result?.error) throw result.error;
+      setStep("password");
     } catch (err) {
-      toast(getErrorMessage(err), "error");
-    } finally {
+      const message = err instanceof Error ? err.message : "Invalid or expired code. Please try again.";
+      toast(message, "error");
       setResetting(false);
     }
   };
 
+  const handleSetNewPassword = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!signIn || newPassword.length < MIN_PASSWORD_LENGTH || resetting) return;
+    setResetting(true);
+    try {
+      const result = await signIn.resetPasswordEmailCode.submitPassword({ password: newPassword });
+      if (result?.error) throw result.error;
+      await signIn.finalize();
+      toast("Password reset successfully! Please sign in.", "success");
+      await router.navigate({ to: "/login", replace: true });
+    } catch (err) {
+      const message = err instanceof Error ? err.message : "Failed to reset password. Please try again.";
+      toast(message, "error");
+      setResetting(false);
+    }
+  };
+
+  const isLoaded = fetchStatus === "idle";
+
   if (step === "code") {
     return (
       <div>
-        <button type="button" onClick={() => setStep("email")} className="link-muted flex items-center gap-1 mb-6">
+        <button onClick={() => setStep("email")} className="link-muted flex items-center gap-1 mb-6">
           <ArrowLeftIcon className="w-4 h-4" /> Back
         </button>
         <h1 className="font-serif text-2xl font-medium mb-2">Enter reset code</h1>
         <p className="text-stone mb-6">We sent a code to {email}</p>
-        <form onSubmit={handleResetPassword} className="space-y-4">
+        <form onSubmit={handleVerifyCode} className="space-y-4">
           <FormField
             id="reset-code"
             label="Reset code"
@@ -378,6 +394,33 @@ export function ForgotPasswordForm() {
             placeholder="Enter code"
             autoComplete="one-time-code"
           />
+          <button
+            type="submit"
+            disabled={resetting || !code.trim() || !isLoaded}
+            className="btn-primary w-full disabled:opacity-50"
+          >
+            {resetting ? (
+              <span className="flex items-center justify-center gap-2">
+                <Spinner /> Verifying…
+              </span>
+            ) : (
+              "Verify code"
+            )}
+          </button>
+        </form>
+      </div>
+    );
+  }
+
+  if (step === "password") {
+    return (
+      <div>
+        <button onClick={() => setStep("code")} className="link-muted flex items-center gap-1 mb-6">
+          <ArrowLeftIcon className="w-4 h-4" /> Back
+        </button>
+        <h1 className="font-serif text-2xl font-medium mb-2">Set new password</h1>
+        <p className="text-stone mb-6">Choose a new password for your account.</p>
+        <form onSubmit={handleSetNewPassword} className="space-y-4">
           <FormField
             id="reset-password"
             label="New password"
@@ -389,7 +432,7 @@ export function ForgotPasswordForm() {
           />
           <button
             type="submit"
-            disabled={resetting || !code.trim() || newPassword.length < MIN_PASSWORD_LENGTH}
+            disabled={resetting || newPassword.length < MIN_PASSWORD_LENGTH || !isLoaded}
             className="btn-primary w-full disabled:opacity-50"
           >
             {resetting ? (
@@ -423,7 +466,7 @@ export function ForgotPasswordForm() {
         />
         <button
           type="submit"
-          disabled={sendingCode || !email.trim()}
+          disabled={sendingCode || !email.trim() || !isLoaded}
           className="btn-primary w-full disabled:opacity-50"
         >
           {sendingCode ? (

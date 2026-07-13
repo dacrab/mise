@@ -1,14 +1,12 @@
-import { v } from "convex/values";
-import { mutation, query } from "./_generated/server";
-import { getAuthUserId, requireAuth } from "./lib/auth";
+import { ConvexError, v } from "convex/values";
+import { internalMutation, mutation, query } from "./_generated/server";
+import { getCurrentUser, requireUser } from "./lib/auth";
 import { generateAuthenticatedUploadUrl, withProfileImageUrl } from "./lib/storage";
 
 export const currentUser = query({
   args: {},
   handler: async (ctx) => {
-    const userId = await getAuthUserId(ctx);
-    if (!userId) return null;
-    const user = await ctx.db.get(userId);
+    const user = await getCurrentUser(ctx);
     if (!user) return null;
     return withProfileImageUrl(ctx, user);
   },
@@ -34,23 +32,43 @@ export const updateProfile = mutation({
     profileImage: v.optional(v.id("_storage")),
   },
   handler: async (ctx, args) => {
-    const userId = await requireAuth(ctx);
+    const user = await requireUser(ctx);
 
     if (args.username) {
       const existing = await ctx.db
         .query("users")
         .withIndex("by_username", (q) => q.eq("username", args.username))
         .first();
-      if (existing && existing._id !== userId) {
+      if (existing && existing._id !== user._id) {
         throw new Error("Username already taken");
       }
     }
 
-    await ctx.db.patch(userId, args);
+    await ctx.db.patch(user._id, args);
   },
 });
 
 export const generateUploadUrl = mutation({
   args: {},
   handler: generateAuthenticatedUploadUrl,
+});
+
+export const ensureCurrentUser = internalMutation({
+  args: {},
+  handler: async (ctx) => {
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) throw new ConvexError("Not authenticated");
+    const clerkId = identity.subject;
+    const existing = await ctx.db
+      .query("users")
+      .withIndex("by_clerkId", (q) => q.eq("clerkId", clerkId))
+      .first();
+    if (existing) return existing;
+    const newId = await ctx.db.insert("users", {
+      clerkId,
+      email: identity.email ?? "",
+      name: identity.name ?? identity.email ?? "",
+    });
+    return ctx.db.get(newId);
+  },
 });
