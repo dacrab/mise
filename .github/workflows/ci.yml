@@ -33,9 +33,3 @@ jobs:
         run: doppler run -- bun run build
         env:
           DOPPLER_TOKEN: ${{ secrets.DOPPLER_TOKEN }}
-
-      - name: Deploy Convex
-        if: github.ref == 'refs/heads/main'
-        run: doppler run -- npx convex deploy --cmd 'bun run typecheck'
-        env:
-          DOPPLER_TOKEN: ${{ secrets.DOPPLER_TOKEN }}
