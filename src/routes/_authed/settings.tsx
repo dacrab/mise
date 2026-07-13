@@ -1,24 +1,26 @@
+import { useClerk } from "@clerk/tanstack-react-start";
 import {
   ArrowRightOnRectangleIcon,
   CalendarIcon,
   CameraIcon,
+  ComputerDesktopIcon,
   EnvelopeIcon,
+  MoonIcon,
+  SunIcon,
   TrashIcon,
 } from "@heroicons/react/24/outline";
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { api } from "convex/_generated/api";
 import type { Id } from "convex/_generated/dataModel";
 import { useMutation, useQuery } from "convex/react";
-import { useEffect, useMemo, useRef, useState } from "react";
-import { ThemePicker } from "@/components/theme/ThemePicker";
+import { useEffect, useRef, useState } from "react";
 import { ProgressBar } from "@/components/ui/Primitives";
 import { TextArea } from "@/components/ui/TextArea";
 import { TextField } from "@/components/ui/TextField";
 import { useToast } from "@/components/ui/Toast";
 import { useFileUpload } from "@/hooks/useFileUpload";
-import { useSignOut } from "@/hooks/useSignOut";
-import { useBookmarks } from "@/lib/bookmarks";
-import { APP_TITLE_SUFFIX, MAX_IMAGE_BYTES } from "@/lib/constants";
+import { useTheme } from "@/hooks/useTheme";
+import { APP_TITLE_SUFFIX } from "@/lib/constants";
 
 export const Route = createFileRoute("/_authed/settings")({
   head: () => ({
@@ -34,17 +36,19 @@ function Settings() {
   const user = useQuery(api.users.currentUser);
   const updateProfile = useMutation(api.users.updateProfile);
   const generateUploadUrl = useMutation(api.users.generateUploadUrl);
-  const signOut = useSignOut();
+  const { signOut } = useClerk();
+  const navigate = useNavigate();
+  const { preference, setTheme } = useTheme();
   const {
     upload,
     uploading,
     progress: uploadProgress,
-  } = useFileUpload<Id<"_storage">>(() => generateUploadUrl(), {
-    onSuccess: (storageId, previewUrl) => {
-      setNewProfileImage(storageId);
+  } = useFileUpload(() => generateUploadUrl(), {
+    onSuccess: (storageId, preview) => {
+      setNewProfileImage(storageId as Id<"_storage">);
       if (previewUrlRef.current) URL.revokeObjectURL(previewUrlRef.current);
-      previewUrlRef.current = previewUrl;
-      setPreviewUrl(previewUrl);
+      previewUrlRef.current = preview;
+      setPreviewUrl(preview);
       toast("Photo uploaded!", "success");
     },
     onError: () => toast("Could not upload image", "error"),
@@ -76,15 +80,12 @@ function Settings() {
     };
   }, []);
 
-  const hasChanges = useMemo(
-    () =>
-      !!user &&
-      (name !== (user.name ?? "") ||
-        username !== (user.username ?? "") ||
-        bio !== (user.bio ?? "") ||
-        newProfileImage !== null),
-    [user, name, username, bio, newProfileImage],
-  );
+  const hasChanges =
+    !!user &&
+    (name !== (user.name ?? "") ||
+      username !== (user.username ?? "") ||
+      bio !== (user.bio ?? "") ||
+      newProfileImage !== null);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -125,17 +126,23 @@ function Settings() {
       toast("Please select an image file", "error");
       return;
     }
-    if (file.size > MAX_IMAGE_BYTES) {
+    if (file.size > 5 * 1024 * 1024) {
       toast("Image must be under 5MB", "error");
       return;
     }
     await upload(file);
   };
 
+  const handleSignOut = async () => {
+    await signOut();
+    void navigate({ to: "/", replace: true });
+  };
+
   const avatar = previewUrl ?? user.profileImageUrl ?? user.image;
 
   return (
     <div className="min-h-[calc(100vh-4rem)]">
+      {/* Header banner */}
       <div className="hero-banner py-12 px-5 sm:px-8">
         <div className="max-w-5xl mx-auto flex items-center gap-6">
           <div className="relative w-24 h-24 sm:w-28 sm:h-28 rounded-full overflow-hidden surface-raised shrink-0 ring-4 ring-cream/20">
@@ -179,10 +186,13 @@ function Settings() {
         </div>
       </div>
 
+      {/* Content */}
       <div className="max-w-5xl mx-auto px-5 sm:px-8 py-8">
         <form onSubmit={handleSubmit}>
           <div className="grid lg:grid-cols-[1fr_320px] gap-8">
+            {/* Left column */}
             <div className="space-y-10">
+              {/* Profile section */}
               <section className="space-y-6">
                 <h2 className="font-serif text-xl font-medium">Profile</h2>
                 <TextField
@@ -212,18 +222,39 @@ function Settings() {
                 />
               </section>
 
+              {/* Appearance section */}
               <section className="space-y-4">
                 <h2 className="font-serif text-xl font-medium">Appearance</h2>
                 <p className="text-sm text-stone">Choose how Mise looks to you.</p>
-                <ThemePicker />
+                <div className="grid grid-cols-3 gap-3">
+                  <ThemeOption
+                    icon={SunIcon}
+                    label="Light"
+                    active={preference === "light"}
+                    onClick={() => setTheme("light")}
+                  />
+                  <ThemeOption
+                    icon={MoonIcon}
+                    label="Dark"
+                    active={preference === "dark"}
+                    onClick={() => setTheme("dark")}
+                  />
+                  <ThemeOption
+                    icon={ComputerDesktopIcon}
+                    label="System"
+                    active={preference === "system"}
+                    onClick={() => setTheme("system")}
+                  />
+                </div>
               </section>
 
+              {/* Danger zone */}
               <section className="space-y-4 pt-6 border-t border-subtle">
                 <h2 className="font-serif text-xl font-medium text-terracotta">Danger zone</h2>
                 <div className="flex flex-col sm:flex-row gap-3">
                   <button
                     type="button"
-                    onClick={() => signOut()}
+                    onClick={handleSignOut}
                     className="flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg border border-field text-sm text-secondary hover:bg-cream-dark transition-colors"
                   >
                     <ArrowRightOnRectangleIcon className="w-4 h-4" />
@@ -240,6 +271,7 @@ function Settings() {
                 </div>
               </section>
 
+              {/* Save — mobile */}
               <div className="lg:hidden flex justify-end pt-4">
                 <button type="submit" disabled={saving || !hasChanges} className="btn-primary disabled:opacity-50">
                   {saving ? "Saving…" : "Save changes"}
@@ -247,8 +279,10 @@ function Settings() {
               </div>
             </div>
 
+            {/* Right column — sidebar */}
             <aside className="lg:self-start">
               <div className="sticky top-24 space-y-6">
+                {/* Account info */}
                 <section className="rounded-xl surface-muted p-6 space-y-4">
                   <h3 className="text-xs font-semibold uppercase tracking-wider text-stone">Account</h3>
                   <dl className="space-y-4 text-sm">
@@ -269,11 +303,13 @@ function Settings() {
                   </dl>
                 </section>
 
+                {/* Quick stats */}
                 <section className="rounded-xl surface-muted p-6 space-y-4">
                   <h3 className="text-xs font-semibold uppercase tracking-wider text-stone">Your kitchen</h3>
                   <QuickStats />
                 </section>
 
+                {/* Save — desktop */}
                 <div className="hidden lg:block">
                   <button
                     type="submit"
@@ -293,9 +329,36 @@ function Settings() {
   );
 }
 
+function ThemeOption({
+  icon: Icon,
+  label,
+  active,
+  onClick,
+}: {
+  icon: React.ComponentType<{ className?: string }>;
+  label: string;
+  active: boolean;
+  onClick: () => void;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className={`flex flex-col items-center gap-2 p-4 rounded-xl border-2 transition-all ${
+        active
+          ? "border-sage bg-sage/5 dark:bg-sage/10"
+          : "border-stone-light/40 hover:border-stone-light dark:border-d-border-strong dark:hover:border-d-border-hover"
+      }`}
+    >
+      <Icon className={`w-5 h-5 ${active ? "text-sage" : "text-stone"}`} />
+      <span className={`text-xs font-medium ${active ? "text-sage" : "text-stone"}`}>{label}</span>
+    </button>
+  );
+}
+
 function QuickStats() {
   const recipes = useQuery(api.recipes.myRecipes);
-  const { bookmarks } = useBookmarks();
+  const bookmarks = useQuery(api.recipes.myBookmarks);
 
   const published = recipes?.filter((r) => r.status === "published").length ?? 0;
   const drafts = recipes?.filter((r) => r.status === "draft").length ?? 0;

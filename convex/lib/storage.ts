@@ -1,6 +1,6 @@
 import type { Id } from "../_generated/dataModel";
 import type { MutationCtx, QueryCtx } from "../_generated/server";
-import { requireAuth } from "./auth";
+import { requireUser } from "./auth";
 
 export async function withCoverUrl<T extends { coverImage?: Id<"_storage"> | null }>(
   ctx: QueryCtx,
@@ -30,6 +30,6 @@ export async function withProfileImageUrl<T extends { profileImage?: Id<"_storag
 }
 
 export async function generateAuthenticatedUploadUrl(ctx: MutationCtx) {
-  await requireAuth(ctx);
+  await requireUser(ctx);
   return ctx.storage.generateUploadUrl();
 }

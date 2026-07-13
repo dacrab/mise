@@ -1,28 +1,35 @@
 import { paginationOptsValidator } from "convex/server";
 import { v } from "convex/values";
-import type { Doc } from "./_generated/dataModel";
-import type { QueryCtx } from "./_generated/server";
 import { mutation, query } from "./_generated/server";
-import { getAuthUserId, requireAuth } from "./lib/auth";
-import { generateSlug } from "./lib/slug";
+import { getCurrentUser, requireUser } from "./lib/auth";
 import { generateAuthenticatedUploadUrl, withCoverUrl, withCoverUrls } from "./lib/storage";
 import { checkRateLimit } from "./rateLimit";
 
-function publishedRecipes(ctx: QueryCtx, { category, order = "desc" }: { category?: string; order?: "asc" | "desc" }) {
-  const base = ctx.db.query("recipes");
-  if (category) {
-    return base
-      .withIndex("by_category", (q) => q.eq("category", category))
-      .filter((q) => q.eq(q.field("status"), "published"))
-      .order(order);
-  }
-  return base.withIndex("by_status", (q) => q.eq("status", "published")).order(order);
+function generateSlug(title: string): string {
+  const base = title
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/(^-|-$)+/g, "")
+    .slice(0, 80);
+  const suffix = Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
+  return `${base}-${suffix}`;
 }
 
 export const listPaginated = query({
   args: { paginationOpts: paginationOptsValidator, category: v.optional(v.string()) },
   handler: async (ctx, { paginationOpts, category }) => {
-    const results = await publishedRecipes(ctx, { category }).paginate(paginationOpts);
+    const results = category
+      ? await ctx.db
+          .query("recipes")
+          .withIndex("by_category", (q) => q.eq("category", category))
+          .filter((q) => q.eq(q.field("status"), "published"))
+          .order("desc")
+          .paginate(paginationOpts)
+      : await ctx.db
+          .query("recipes")
+          .withIndex("by_status", (q) => q.eq("status", "published"))
+          .order("desc")
+          .paginate(paginationOpts);
     return { ...results, page: await withCoverUrls(ctx, results.page) };
   },
 });
@@ -31,7 +38,7 @@ export const list = query({
   args: { search: v.optional(v.string()), category: v.optional(v.string()), limit: v.optional(v.number()) },
   handler: async (ctx, { search, category, limit = 50 }) => {
     const safeLimit = Math.min(limit, 100);
-    let recipes: Doc<"recipes">[];
+    let recipes;
 
     if (search) {
       recipes = await ctx.db
@@ -42,8 +49,19 @@ export const list = query({
           return query.eq("status", "published");
         })
         .take(safeLimit);
+    } else if (category) {
+      recipes = await ctx.db
+        .query("recipes")
+        .withIndex("by_category", (q) => q.eq("category", category))
+        .filter((q) => q.eq(q.field("status"), "published"))
+        .order("desc")
+        .take(safeLimit);
     } else {
-      recipes = await publishedRecipes(ctx, { category }).take(safeLimit);
+      recipes = await ctx.db
+        .query("recipes")
+        .withIndex("by_status", (q) => q.eq("status", "published"))
+        .order("desc")
+        .take(safeLimit);
     }
     return withCoverUrls(ctx, recipes);
   },
@@ -57,17 +75,13 @@ export const getBySlug = query({
       .withIndex("by_slug", (q) => q.eq("slug", slug))
       .first();
     if (!recipe) return null;
-    if (recipe.status !== "published") {
-      const userId = await getAuthUserId(ctx);
-      if (recipe.userId !== userId) return null;
-    }
 
-    const [author, userId] = await Promise.all([ctx.db.get(recipe.userId), getAuthUserId(ctx)]);
+    const [author, currentUser] = await Promise.all([ctx.db.get(recipe.userId), getCurrentUser(ctx)]);
 
-    const isBookmarked = userId
+    const isBookmarked = currentUser
       ? !!(await ctx.db
           .query("bookmarks")
-          .withIndex("by_user_recipe", (q) => q.eq("userId", userId).eq("recipeId", recipe._id))
+          .withIndex("by_user_recipe", (q) => q.eq("userId", currentUser._id).eq("recipeId", recipe._id))
           .first())
       : false;
 
@@ -82,8 +96,8 @@ export const getBySlug = query({
 export const getByUser = query({
   args: { userId: v.id("users") },
   handler: async (ctx, { userId }) => {
-    const currentUserId = await getAuthUserId(ctx);
-    const isOwner = currentUserId === userId;
+    const currentUser = await getCurrentUser(ctx);
+    const isOwner = currentUser?._id === userId;
     const base = ctx.db.query("recipes").withIndex("by_user", (q) => q.eq("userId", userId));
     const recipes = await (isOwner ? base : base.filter((q) => q.eq(q.field("status"), "published")))
       .order("desc")
@@ -92,14 +106,27 @@ export const getByUser = query({
   },
 });
 
+export const getByUserPaginated = query({
+  args: { userId: v.id("users"), paginationOpts: paginationOptsValidator },
+  handler: async (ctx, { userId, paginationOpts }) => {
+    const currentUser = await getCurrentUser(ctx);
+    const isOwner = currentUser?._id === userId;
+    const base = ctx.db.query("recipes").withIndex("by_user", (q) => q.eq("userId", userId));
+    const results = await (isOwner ? base : base.filter((q) => q.eq(q.field("status"), "published")))
+      .order("desc")
+      .paginate(paginationOpts);
+    return { ...results, page: await withCoverUrls(ctx, results.page) };
+  },
+});
+
 export const myRecipes = query({
   args: {},
   handler: async (ctx) => {
-    const userId = await getAuthUserId(ctx);
-    if (!userId) return [];
+    const user = await getCurrentUser(ctx);
+    if (!user) return [];
     const recipes = await ctx.db
       .query("recipes")
-      .withIndex("by_user", (q) => q.eq("userId", userId))
+      .withIndex("by_user", (q) => q.eq("userId", user._id))
       .order("desc")
       .take(100);
     return withCoverUrls(ctx, recipes);
@@ -109,11 +136,11 @@ export const myRecipes = query({
 export const myBookmarks = query({
   args: {},
   handler: async (ctx) => {
-    const userId = await getAuthUserId(ctx);
-    if (!userId) return [];
+    const user = await getCurrentUser(ctx);
+    if (!user) return [];
     const bookmarks = await ctx.db
       .query("bookmarks")
-      .withIndex("by_user", (q) => q.eq("userId", userId))
+      .withIndex("by_user", (q) => q.eq("userId", user._id))
       .order("desc")
       .take(100);
     const recipes = (await Promise.all(bookmarks.map((b) => ctx.db.get(b.recipeId)))).filter(
@@ -123,14 +150,31 @@ export const myBookmarks = query({
   },
 });
 
+export const myBookmarksPaginated = query({
+  args: { paginationOpts: paginationOptsValidator },
+  handler: async (ctx, { paginationOpts }) => {
+    const user = await getCurrentUser(ctx);
+    if (!user) return { page: [], isDone: true, continueCursor: "" };
+    const results = await ctx.db
+      .query("bookmarks")
+      .withIndex("by_user", (q) => q.eq("userId", user._id))
+      .order("desc")
+      .paginate(paginationOpts);
+    const recipes = (await Promise.all(results.page.map((b) => ctx.db.get(b.recipeId)))).filter(
+      (r): r is NonNullable<typeof r> => r !== null,
+    );
+    return { ...results, page: await withCoverUrls(ctx, recipes) };
+  },
+});
+
 export const getById = query({
   args: { id: v.id("recipes") },
   handler: async (ctx, { id }) => {
     const recipe = await ctx.db.get(id);
     if (!recipe) return null;
     if (recipe.status === "draft") {
-      const userId = await getAuthUserId(ctx);
-      if (recipe.userId !== userId) return null;
+      const user = await getCurrentUser(ctx);
+      if (recipe.userId !== user?._id) return null;
     }
     return withCoverUrl(ctx, recipe);
   },
@@ -154,10 +198,10 @@ const recipeArgs = {
 export const create = mutation({
   args: recipeArgs,
   handler: async (ctx, args) => {
-    const userId = await requireAuth(ctx);
-    await checkRateLimit(ctx, userId, "recipe:create");
+    const user = await requireUser(ctx);
+    await checkRateLimit(ctx, user._id, "recipe:create");
     const slug = generateSlug(args.title);
-    const id = await ctx.db.insert("recipes", { ...args, slug, userId });
+    const id = await ctx.db.insert("recipes", { ...args, slug, userId: user._id });
     return { id, slug };
   },
 });
@@ -165,10 +209,10 @@ export const create = mutation({
 export const update = mutation({
   args: { id: v.id("recipes"), ...recipeArgs },
   handler: async (ctx, { id, ...args }) => {
-    const userId = await requireAuth(ctx);
-    await checkRateLimit(ctx, userId, "recipe:update");
+    const user = await requireUser(ctx);
+    await checkRateLimit(ctx, user._id, "recipe:update");
     const recipe = await ctx.db.get(id);
-    if (!recipe || recipe.userId !== userId) throw new Error("Not found");
+    if (!recipe || recipe.userId !== user._id) throw new Error("Not found");
     await ctx.db.patch(id, args);
     return { slug: recipe.slug };
   },
@@ -177,9 +221,9 @@ export const update = mutation({
 export const remove = mutation({
   args: { id: v.id("recipes") },
   handler: async (ctx, { id }) => {
-    const userId = await requireAuth(ctx);
+    const user = await requireUser(ctx);
     const recipe = await ctx.db.get(id);
-    if (!recipe || recipe.userId !== userId) throw new Error("Not found");
+    if (!recipe || recipe.userId !== user._id) throw new Error("Not found");
 
     const bookmarks = await ctx.db
       .query("bookmarks")

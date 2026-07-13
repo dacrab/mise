@@ -1,5 +1,5 @@
+import { useUser } from "@clerk/tanstack-react-start";
 import { createFileRoute, Navigate, Outlet, useRouterState } from "@tanstack/react-router";
-import { useConvexAuth } from "convex/react";
 import { Header } from "@/components/layout/Header";
 import { Spinner } from "@/components/ui/Primitives";
 
@@ -8,10 +8,10 @@ export const Route = createFileRoute("/_authed")({
 });
 
 function AuthedLayout() {
-  const { isLoading, isAuthenticated } = useConvexAuth();
+  const { isLoaded, isSignedIn } = useUser();
   const location = useRouterState({ select: (s) => s.location });
 
-  if (isLoading) {
+  if (!isLoaded) {
     return (
       <div className="center min-h-screen">
         <Spinner className="w-8 h-8 text-sage" />
@@ -19,7 +19,7 @@ function AuthedLayout() {
     );
   }
 
-  if (!isAuthenticated) {
+  if (!isSignedIn) {
     return <Navigate to="/login" search={{ redirect: location.href }} replace />;
   }
 
