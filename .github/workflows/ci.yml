@@ -36,10 +36,6 @@ jobs:
 
       - name: Deploy Convex
         if: github.ref == 'refs/heads/main'
-        run: |
-          doppler run --config prd_app -- \
-            npx convex env set CLERK_JWT_ISSUER_DOMAIN "${CLERK_JWT_ISSUER_DOMAIN:-https://clerk.example.com}"
-          doppler run --config prd_app -- \
-            npx convex deploy
+        run: npx convex deploy
         env:
-          DOPPLER_TOKEN: ${{ secrets.DOPPLER_TOKEN }}
+          CONVEX_DEPLOY_KEY: ${{ secrets.CONVEX_DEPLOY_KEY }}
