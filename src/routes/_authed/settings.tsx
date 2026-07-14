@@ -45,7 +45,7 @@ function Settings() {
     progress: uploadProgress,
   } = useFileUpload(() => generateUploadUrl(), {
     onSuccess: (storageId, preview) => {
-      setNewProfileImage(storageId as Id<"_storage">);
+      setNewProfileImage(storageId);
       if (previewUrlRef.current) URL.revokeObjectURL(previewUrlRef.current);
       previewUrlRef.current = preview;
       setPreviewUrl(preview);

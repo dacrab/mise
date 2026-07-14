@@ -3,18 +3,9 @@ import { v } from "convex/values";
 import type { Doc } from "./_generated/dataModel";
 import { mutation, query } from "./_generated/server";
 import { getCurrentUser, requireUser } from "./lib/auth";
+import { generateSlug } from "./lib/slug";
 import { generateAuthenticatedUploadUrl, withCoverUrl, withCoverUrls } from "./lib/storage";
 import { checkRateLimit } from "./rateLimit";
-
-function generateSlug(title: string): string {
-  const base = title
-    .toLowerCase()
-    .replace(/[^a-z0-9]+/g, "-")
-    .replace(/(^-|-$)+/g, "")
-    .slice(0, 80);
-  const suffix = Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
-  return `${base}-${suffix}`;
-}
 
 export const listPaginated = query({
   args: { paginationOpts: paginationOptsValidator, category: v.optional(v.string()) },
