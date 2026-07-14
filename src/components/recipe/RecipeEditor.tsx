@@ -85,7 +85,7 @@ function buildPayload(
 ) {
   return {
     title: data.title.trim() || "Untitled",
-    description: data.description?.trim() || undefined,
+    description: data.description.trim() || undefined,
     category: data.category || "General",
     prepTime: data.prepTime ? Number(data.prepTime) : undefined,
     cookTime: data.cookTime ? Number(data.cookTime) : undefined,
@@ -94,7 +94,7 @@ function buildPayload(
     ingredients: validIngredients,
     steps: validSteps,
     coverImage: coverImage ?? undefined,
-    videoUrl: data.videoUrl?.trim() || undefined,
+    videoUrl: data.videoUrl.trim() || undefined,
   };
 }
 
@@ -221,14 +221,9 @@ export function RecipeEditor({
     [coverImageUrl],
   );
 
-  useEffect(() => {
-    if (user === null) void navigate({ to: "/login", replace: true });
-  }, [user, navigate]);
-
   if (user === undefined) {
     return <div className="center min-h-[60vh] text-stone animate-pulse">Loading…</div>;
   }
-  if (user === null) return null;
 
   const handleUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];

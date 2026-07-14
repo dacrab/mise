@@ -37,3 +37,16 @@ export function getErrorMessage(err: unknown): string {
   if (typeof err === "string") return err;
   return "Something went wrong";
 }
+
+function isConvexId(id: string): boolean {
+  return /^[a-z][a-z0-9]*\|[a-z0-9]{20,}$/.test(id);
+}
+
+export function convexId<T extends import("convex/_generated/dataModel").TableNames>(
+  id: string,
+): import("convex/_generated/dataModel").Id<T> {
+  if (!isConvexId(id)) {
+    throw new Error(`Invalid Convex ID format: ${id}`);
+  }
+  return id as import("convex/_generated/dataModel").Id<T>;
+}

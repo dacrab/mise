@@ -14,7 +14,7 @@ import {
 import { Link, useRouter } from "@tanstack/react-router";
 import { api } from "convex/_generated/api";
 import { Authenticated, Unauthenticated, useQuery } from "convex/react";
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Avatar } from "@/components/ui/Primitives";
 import { useTheme } from "@/hooks/useTheme";
 
@@ -161,20 +161,21 @@ function ThemeToggle() {
 
 export function Header() {
   const [mobileOpen, setMobileOpen] = useState(false);
-  const closeMobile = useCallback(() => setMobileOpen(false), []);
   const menuRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     if (!mobileOpen) return;
 
+    const close = () => setMobileOpen(false);
+
     const handleClick = (e: MouseEvent) => {
       if (menuRef.current && !menuRef.current.contains(e.target as Node)) {
-        closeMobile();
+        close();
       }
     };
 
     const handleEscape = (e: KeyboardEvent) => {
-      if (e.key === "Escape") closeMobile();
+      if (e.key === "Escape") close();
     };
 
     document.addEventListener("mousedown", handleClick);
@@ -184,7 +185,7 @@ export function Header() {
       document.removeEventListener("mousedown", handleClick);
       document.removeEventListener("keydown", handleEscape);
     };
-  }, [mobileOpen, closeMobile]);
+  }, [mobileOpen]);
 
   return (
     <>
@@ -250,10 +251,10 @@ export function Header() {
         </div>
         <nav className="flex-1 overflow-y-auto p-5 space-y-1">
           <Authenticated>
-            <UserMenu onClose={closeMobile} />
+            <UserMenu onClose={() => setMobileOpen(false)} />
           </Authenticated>
           <Unauthenticated>
-            <GuestNav onClose={closeMobile} />
+            <GuestNav onClose={() => setMobileOpen(false)} />
           </Unauthenticated>
         </nav>
         <div className="p-5 border-t border-cream-dark">

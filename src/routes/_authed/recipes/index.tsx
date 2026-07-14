@@ -13,7 +13,7 @@ const searchSchema = z.object({
 });
 
 export const Route = createFileRoute("/_authed/recipes/")({
-  validateSearch: searchSchema,
+  validateSearch: searchSchema.parse,
   component: RecipesPage,
 });
 

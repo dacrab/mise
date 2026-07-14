@@ -3,15 +3,15 @@ import { PencilSquareIcon, PhotoIcon } from "@heroicons/react/24/outline";
 import { useSuspenseQuery } from "@tanstack/react-query";
 import { createFileRoute, Link, notFound } from "@tanstack/react-router";
 import { api } from "convex/_generated/api";
-import type { Id } from "convex/_generated/dataModel";
 import { useQuery } from "convex/react";
 import { BookmarkButton } from "@/components/recipe/BookmarkButton";
 import { Spinner } from "@/components/ui/Primitives";
 import { RouteError } from "@/components/ui/RouteError";
+import { convexId } from "@/lib/utils";
 
 export const Route = createFileRoute("/_authed/recipes/$id")({
   loader: ({ params, context: { queryClient } }) =>
-    queryClient.ensureQueryData(convexQuery(api.recipes.getById, { id: params.id as Id<"recipes"> })),
+    queryClient.ensureQueryData(convexQuery(api.recipes.getById, { id: convexId<"recipes">(params.id) })),
   component: RecipeDetailPage,
   pendingComponent: () => (
     <div className="center min-h-[60vh]">
@@ -23,7 +23,7 @@ export const Route = createFileRoute("/_authed/recipes/$id")({
 
 function RecipeDetailPage() {
   const { id } = Route.useParams();
-  const { data: recipe } = useSuspenseQuery(convexQuery(api.recipes.getById, { id: id as Id<"recipes"> }));
+  const { data: recipe } = useSuspenseQuery(convexQuery(api.recipes.getById, { id: convexId<"recipes">(id) }));
   const currentUser = useQuery(api.users.currentUser);
 
   if (!recipe) throw notFound();
