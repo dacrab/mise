@@ -33,3 +33,13 @@ jobs:
         run: doppler run -- bun run build
         env:
           DOPPLER_TOKEN: ${{ secrets.DOPPLER_TOKEN }}
+
+      - name: Deploy Convex
+        if: github.ref == 'refs/heads/main'
+        run: |
+          doppler run --config prd_app -- \
+            npx convex env set CLERK_JWT_ISSUER_DOMAIN "${CLERK_JWT_ISSUER_DOMAIN:-https://clerk.example.com}"
+          doppler run --config prd_app -- \
+            npx convex deploy
+        env:
+          DOPPLER_TOKEN: ${{ secrets.DOPPLER_TOKEN }}
