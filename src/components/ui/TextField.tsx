@@ -5,9 +5,7 @@ interface TextFieldProps extends Omit<React.InputHTMLAttributes<HTMLInputElement
   label?: string;
   prefix?: string;
   hint?: string;
-  /** Convenience handler that receives the string value directly */
   onValueChange?: (value: string) => void;
-  /** Native onChange handler (for react-hook-form register()) */
   onChange?: React.ChangeEventHandler<HTMLInputElement>;
 }
 
