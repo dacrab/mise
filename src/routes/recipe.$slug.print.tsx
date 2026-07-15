@@ -3,7 +3,30 @@ import { ClockIcon, FireIcon, PrinterIcon, UserGroupIcon } from "@heroicons/reac
 import { useSuspenseQuery } from "@tanstack/react-query";
 import { createFileRoute, notFound } from "@tanstack/react-router";
 import { api } from "convex/_generated/api";
-import { MetaStat } from "@/components/ui/MetaStat";
+import type { ComponentType } from "react";
+
+const statBox = "stat-box";
+const statIcon = "w-4 h-4 text-stone";
+const statLabel = "text-xs text-stone uppercase tracking-wide";
+const statValue = "text-sm font-medium text-charcoal";
+
+function Stat({
+  icon: Icon,
+  label,
+  value,
+}: {
+  icon: ComponentType<{ className?: string }>;
+  label: string;
+  value: string;
+}) {
+  return (
+    <div className={statBox}>
+      <Icon className={statIcon} />
+      <span className={statLabel}>{label}</span>
+      <span className={statValue}>{value}</span>
+    </div>
+  );
+}
 
 export const Route = createFileRoute("/recipe/$slug/print")({
   loader: ({ params, context: { queryClient } }) =>
@@ -29,6 +52,14 @@ function PrintRecipe() {
 
   const totalTime = (recipe.prepTime ?? 0) + (recipe.cookTime ?? 0);
 
+  const stats = [
+    recipe.prepTime && { icon: ClockIcon, label: "Prep", value: `${recipe.prepTime} min` },
+    recipe.cookTime && { icon: FireIcon, label: "Cook", value: `${recipe.cookTime} min` },
+    totalTime > 0 && { icon: ClockIcon, label: "Total", value: `${totalTime} min` },
+    recipe.servings && { icon: UserGroupIcon, label: "Serves", value: `${recipe.servings}` },
+    recipe.difficulty && { icon: FireIcon, label: "Difficulty", value: recipe.difficulty },
+  ].filter(Boolean) as Array<{ icon: ComponentType<{ className?: string }>; label: string; value: string }>;
+
   return (
     <div className="max-w-2xl mx-auto p-8 print:p-0 bg-white min-h-screen">
       <style>{"@media print { body { -webkit-print-color-adjust: exact; } }"}</style>
@@ -37,61 +68,9 @@ function PrintRecipe() {
         <h1 className="text-3xl font-bold mb-2">{recipe.title}</h1>
         {recipe.description && <p className="text-stone">{recipe.description}</p>}
         <div className="flex flex-wrap gap-3 mt-4">
-          {recipe.prepTime && (
-            <MetaStat
-              icon={ClockIcon}
-              label="Prep"
-              value={`${recipe.prepTime} min`}
-              className="stat-box"
-              iconClassName="w-4 h-4 text-stone"
-              labelClassName="text-xs text-stone uppercase tracking-wide"
-              valueClassName="text-sm font-medium text-charcoal"
-            />
-          )}
-          {recipe.cookTime && (
-            <MetaStat
-              icon={FireIcon}
-              label="Cook"
-              value={`${recipe.cookTime} min`}
-              className="stat-box"
-              iconClassName="w-4 h-4 text-stone"
-              labelClassName="text-xs text-stone uppercase tracking-wide"
-              valueClassName="text-sm font-medium text-charcoal"
-            />
-          )}
-          {totalTime > 0 && (
-            <MetaStat
-              icon={ClockIcon}
-              label="Total"
-              value={`${totalTime} min`}
-              className="stat-box"
-              iconClassName="w-4 h-4 text-stone"
-              labelClassName="text-xs text-stone uppercase tracking-wide"
-              valueClassName="text-sm font-medium text-charcoal"
-            />
-          )}
-          {recipe.servings && (
-            <MetaStat
-              icon={UserGroupIcon}
-              label="Serves"
-              value={`${recipe.servings}`}
-              className="stat-box"
-              iconClassName="w-4 h-4 text-stone"
-              labelClassName="text-xs text-stone uppercase tracking-wide"
-              valueClassName="text-sm font-medium text-charcoal"
-            />
-          )}
-          {recipe.difficulty && (
-            <MetaStat
-              icon={FireIcon}
-              label="Difficulty"
-              value={recipe.difficulty}
-              className="stat-box"
-              iconClassName="w-4 h-4 text-stone"
-              labelClassName="text-xs text-stone uppercase tracking-wide"
-              valueClassName="text-sm font-medium text-charcoal"
-            />
-          )}
+          {stats.map((s) => (
+            <Stat key={s.label} {...s} />
+          ))}
         </div>
       </header>
 

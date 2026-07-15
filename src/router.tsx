@@ -13,6 +13,7 @@ import { createRouter } from "@tanstack/react-router";
 import { setupRouterSsrQueryIntegration } from "@tanstack/react-router-ssr-query";
 import { ConvexProviderWithClerk } from "convex/react-clerk";
 import { ToastProvider } from "@/components/ui/Toast";
+import { BookmarksProvider } from "@/lib/bookmarks";
 import { routeTree } from "./routeTree.gen";
 
 const CONVEX_URL = import.meta.env["VITE_CONVEX_URL"] as string;
@@ -40,7 +41,9 @@ function createAppRouter() {
     Wrap: ({ children }) => (
       <ClerkProvider publishableKey={import.meta.env["VITE_CLERK_PUBLISHABLE_KEY"] as string}>
         <ConvexProviderWithClerk client={convexQueryClient.convexClient} useAuth={useAuth}>
-          <ToastProvider>{children}</ToastProvider>
+          <BookmarksProvider>
+            <ToastProvider>{children}</ToastProvider>
+          </BookmarksProvider>
         </ConvexProviderWithClerk>
       </ClerkProvider>
     ),
