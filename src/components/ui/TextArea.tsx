@@ -65,11 +65,11 @@ export function TextArea({
         }}
         onFocus={(e) => {
           setFocused(true);
-          (onFocus as React.FocusEventHandler<HTMLTextAreaElement>)?.(e);
+          onFocus?.(e);
         }}
         onBlur={(e) => {
           setFocused(false);
-          (onBlur as React.FocusEventHandler<HTMLTextAreaElement>)?.(e);
+          onBlur?.(e);
         }}
         placeholder={label ? (focused ? placeholder : undefined) : placeholder}
         rows={rows}

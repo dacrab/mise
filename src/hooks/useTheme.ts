@@ -15,8 +15,8 @@ export function useTheme() {
   const [preference, setPreferenceState] = useState<ThemePreference>("system");
 
   useEffect(() => {
-    const stored = localStorage.getItem("theme") as ThemePreference | null;
-    const pref = stored ?? "system";
+    const stored = localStorage.getItem("theme");
+    const pref: ThemePreference = stored === "light" || stored === "dark" || stored === "system" ? stored : "system";
     const res = pref === "system" ? getSystemTheme() : pref;
     setPreferenceState(pref);
     applyTheme(res);

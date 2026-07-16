@@ -47,11 +47,11 @@ export const TextField = forwardRef<HTMLInputElement, TextFieldProps>(
             }}
             onFocus={(e) => {
               setFocused(true);
-              (onFocus as React.FocusEventHandler<HTMLInputElement>)?.(e);
+              onFocus?.(e);
             }}
             onBlur={(e) => {
               setFocused(false);
-              (onBlur as React.FocusEventHandler<HTMLInputElement>)?.(e);
+              onBlur?.(e);
             }}
             placeholder={focused ? placeholder : undefined}
             className={`field-base ${prefix ? "pl-8" : ""} ${focused ? "field-focus" : ""}`}
