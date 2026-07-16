@@ -20,7 +20,7 @@ export async function checkRateLimit(ctx: MutationCtx, userId: Id<"users">, acti
     .collect();
 
   if (recent.length >= limit.max) {
-    throw new ConvexError(`Rate limit exceeded for ${action}. Try again later.`);
+    throw new ConvexError("Too many requests. Please try again later.");
   }
 
   await ctx.db.insert("rateLimits", { userId, action });

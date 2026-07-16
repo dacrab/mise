@@ -16,8 +16,13 @@ import { ToastProvider } from "@/components/ui/Toast";
 import { BookmarksProvider } from "@/lib/bookmarks";
 import { routeTree } from "./routeTree.gen";
 
-const CONVEX_URL = import.meta.env["VITE_CONVEX_URL"] as string;
-if (!CONVEX_URL) throw new Error("Missing VITE_CONVEX_URL");
+function env(key: string): string {
+  const val = import.meta.env[key];
+  if (typeof val !== "string" || !val) throw new Error(`Missing ${key}`);
+  return val;
+}
+
+const CONVEX_URL = env("VITE_CONVEX_URL");
 
 function createAppRouter() {
   const convexQueryClient = new ConvexQueryClient(CONVEX_URL);
@@ -39,7 +44,7 @@ function createAppRouter() {
     context: { queryClient },
     scrollRestoration: true,
     Wrap: ({ children }) => (
-      <ClerkProvider publishableKey={import.meta.env["VITE_CLERK_PUBLISHABLE_KEY"] as string}>
+      <ClerkProvider publishableKey={env("VITE_CLERK_PUBLISHABLE_KEY")}>
         <ConvexProviderWithClerk client={convexQueryClient.convexClient} useAuth={useAuth}>
           <BookmarksProvider>
             <ToastProvider>{children}</ToastProvider>

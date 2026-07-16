@@ -69,6 +69,8 @@ export const ensureCurrentUser = internalMutation({
       email: identity.email ?? "",
       name: identity.name ?? identity.email ?? "",
     });
-    return ctx.db.get(newId);
+    const created = await ctx.db.get(newId);
+    if (!created) throw new ConvexError("Failed to create user");
+    return created;
   },
 });

@@ -14,7 +14,7 @@ export async function getCurrentUser(ctx: QueryCtx | MutationCtx | ActionCtx): P
 
   // Actions don't have direct DB access; delegate to an internal mutation.
   if (!("db" in ctx)) {
-    return ctx.runMutation(internal.users.ensureCurrentUser, {}) as Promise<Doc<"users">>;
+    return ctx.runMutation(internal.users.ensureCurrentUser, {});
   }
 
   const existing = await ctx.db
