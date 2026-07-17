@@ -207,9 +207,7 @@ export function RecipeEditor({
           status: "draft",
         });
         setLastSaved(new Date());
-      } catch {
-        // Auto-save errors are non-critical — the user can manually save
-      }
+      } catch {}
     }, 30_000);
     return () => clearInterval(interval);
   }, [isEditing, initialData?.id, isDirty, updateRecipe]);

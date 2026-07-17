@@ -1,6 +1,5 @@
 import { paginationOptsValidator } from "convex/server";
 import { v } from "convex/values";
-import type { Doc } from "./_generated/dataModel";
 import { mutation, query } from "./_generated/server";
 import { getCurrentUser, requireUser } from "./lib/auth";
 import { generateSlug } from "./lib/slug";
@@ -30,7 +29,7 @@ export const list = query({
   args: { search: v.optional(v.string()), category: v.optional(v.string()), limit: v.optional(v.number()) },
   handler: async (ctx, { search, category, limit = 50 }) => {
     const safeLimit = Math.min(limit, 100);
-    let recipes: Doc<"recipes">[];
+    let recipes;
 
     if (search) {
       recipes = await ctx.db
