@@ -2,10 +2,6 @@ import { internal } from "../_generated/api";
 import type { Doc } from "../_generated/dataModel";
 import type { ActionCtx, MutationCtx, QueryCtx } from "../_generated/server";
 
-export async function getCurrentUser(ctx: QueryCtx): Promise<Doc<"users"> | null>;
-export async function getCurrentUser(ctx: MutationCtx): Promise<Doc<"users"> | null>;
-export async function getCurrentUser(ctx: ActionCtx): Promise<Doc<"users"> | null>;
-export async function getCurrentUser(ctx: QueryCtx | MutationCtx | ActionCtx): Promise<Doc<"users"> | null>;
 export async function getCurrentUser(ctx: QueryCtx | MutationCtx | ActionCtx): Promise<Doc<"users"> | null> {
   const identity = await ctx.auth.getUserIdentity();
   if (!identity) return null;

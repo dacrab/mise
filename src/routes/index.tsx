@@ -41,19 +41,15 @@ function HomePage() {
   const isSearching = !!q;
   const isFiltered = !!q || !!category;
 
-  // Search query — only active when q is set
   const searchResults = useQuery(api.recipes.list, isSearching ? { search: q, category: category, limit: 50 } : "skip");
 
-  // Paginated browse — always active, respects category filter
   const paginated = usePaginatedQuery(api.recipes.listPaginated, { category: category }, { initialNumItems: 20 });
 
   const isLoading = isSearching ? searchResults === undefined : paginated.status === "LoadingFirstPage";
 
   const recipes = isSearching ? (searchResults ?? []) : paginated.results;
 
-  // Featured hero — always the first recipe from the full list, independent of filters
   const featured = paginated.results.length > 0 ? paginated.results[0] : undefined;
-  // Grid shows filtered results (search or category), excluding featured when unfiltered
   const grid = isFiltered ? recipes : recipes.slice(1);
 
   const handleSearch = (e: React.FormEvent) => {

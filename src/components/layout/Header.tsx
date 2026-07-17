@@ -42,7 +42,6 @@ function UserMenu({ onClose }: { onClose?: () => void }) {
 
   return (
     <>
-      {/* Desktop */}
       <div className="hidden sm:flex items-center gap-2">
         <Menu.Root>
           <Menu.Trigger className="btn-ghost text-sm flex items-center gap-2">
@@ -80,7 +79,6 @@ function UserMenu({ onClose }: { onClose?: () => void }) {
         </Menu.Root>
       </div>
 
-      {/* Mobile */}
       <div className="sm:hidden">
         <div className="flex items-center gap-3 p-3 mb-4 surface-raised rounded-xl">
           <Avatar src={user?.profileImageUrl ?? user?.image} name={user?.name} size="md" />

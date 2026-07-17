@@ -21,7 +21,6 @@ export function Select({
   const displayValue = value ? options.find((o) => o.value === value)?.label : placeholder;
 
   return (
-    // value="" is a valid reset — don't coerce to undefined or the placeholder won't show
     <BaseSelect.Root value={value} onValueChange={(v) => onChange(v ?? "")} name={name}>
       <BaseSelect.Trigger
         id={id}

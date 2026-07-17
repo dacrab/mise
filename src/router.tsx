@@ -1,11 +1,3 @@
-/**
- * Application Router Configuration
- *
- * - Client: singleton router preserves Convex WebSocket across navigations
- * - Server: fresh instance per request to avoid serialization issues
- * - SSR loaders use ensureQueryData() for prefetching; components use useSuspenseQuery()
- */
-
 import { ClerkProvider, useAuth } from "@clerk/tanstack-react-start";
 import { ConvexQueryClient } from "@convex-dev/react-query";
 import { QueryClient } from "@tanstack/react-query";
@@ -16,7 +8,7 @@ import { ToastProvider } from "@/components/ui/Toast";
 import { BookmarksProvider } from "@/lib/bookmarks";
 import { routeTree } from "./routeTree.gen";
 
-function env(key: string): string {
+function env(key: string) {
   const val = import.meta.env[key];
   if (typeof val !== "string" || !val) throw new Error(`Missing ${key}`);
   return val;
@@ -59,8 +51,6 @@ function createAppRouter() {
   return router;
 }
 
-// Singleton on client — preserves WS connection and auth state across navigations.
-// On the server, always create fresh to avoid locked ReadableStream serialization.
 let clientRouter: ReturnType<typeof createAppRouter> | undefined;
 
 export function getRouter() {

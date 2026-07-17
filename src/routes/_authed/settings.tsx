@@ -142,7 +142,6 @@ function Settings() {
 
   return (
     <div className="min-h-[calc(100vh-4rem)]">
-      {/* Header banner */}
       <div className="hero-banner py-12 px-5 sm:px-8">
         <div className="max-w-5xl mx-auto flex items-center gap-6">
           <div className="relative w-24 h-24 sm:w-28 sm:h-28 rounded-full overflow-hidden surface-raised shrink-0 ring-4 ring-cream/20">
@@ -186,7 +185,6 @@ function Settings() {
         </div>
       </div>
 
-      {/* Content */}
       <div className="max-w-5xl mx-auto px-5 sm:px-8 py-8">
         <form onSubmit={handleSubmit}>
           <div className="grid lg:grid-cols-[1fr_320px] gap-8">
