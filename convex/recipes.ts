@@ -29,32 +29,30 @@ export const list = query({
   args: { search: v.optional(v.string()), category: v.optional(v.string()), limit: v.optional(v.number()) },
   handler: async (ctx, { search, category, limit = 50 }) => {
     const safeLimit = Math.min(limit, 100);
-    let recipes;
 
-    if (search) {
-      recipes = await ctx.db
-        .query("recipes")
-        .withSearchIndex("search_title", (q) => {
-          let query = q.search("title", search);
-          if (category) query = query.eq("category", category);
-          return query.eq("status", "published");
-        })
-        .take(safeLimit);
-    } else if (category) {
-      recipes = await ctx.db
-        .query("recipes")
-        .withIndex("by_category", (q) => q.eq("category", category))
-        .filter((q) => q.eq(q.field("status"), "published"))
-        .order("desc")
-        .take(safeLimit);
-    } else {
-      recipes = await ctx.db
-        .query("recipes")
-        .withIndex("by_status", (q) => q.eq("status", "published"))
-        .order("desc")
-        .take(safeLimit);
-    }
-    return withCoverUrls(ctx, recipes);
+    const rows = search
+      ? await ctx.db
+          .query("recipes")
+          .withSearchIndex("search_title", (q) => {
+            let query = q.search("title", search);
+            if (category) query = query.eq("category", category);
+            return query.eq("status", "published");
+          })
+          .take(safeLimit)
+      : category
+        ? await ctx.db
+            .query("recipes")
+            .withIndex("by_category", (q) => q.eq("category", category))
+            .filter((q) => q.eq(q.field("status"), "published"))
+            .order("desc")
+            .take(safeLimit)
+        : await ctx.db
+            .query("recipes")
+            .withIndex("by_status", (q) => q.eq("status", "published"))
+            .order("desc")
+            .take(safeLimit);
+
+    return withCoverUrls(ctx, rows);
   },
 });
 

@@ -1,5 +1,6 @@
 {
   "$schema": "https://unpkg.com/knip@5/schema.json",
   "entry": ["src/**/*.tsx", "src/server.ts", "src/client.tsx", "convex/**/*.ts"],
-  "project": ["src/**/*.{ts,tsx}", "convex/**/*.ts"]
+  "project": ["src/**/*.{ts,tsx}", "convex/**/*.ts"],
+  "ignoreBinaries": ["doppler"]
 }
