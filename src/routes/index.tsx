@@ -49,13 +49,13 @@ function HomePage() {
 
   const recipes = isSearching ? (searchResults ?? []) : paginated.results;
 
-  const featured = paginated.results.length > 0 ? paginated.results[0] : undefined;
-  const grid = isFiltered ? recipes : recipes.slice(1);
+  const featured = !isFiltered && paginated.results.length > 0 ? paginated.results[0] : undefined;
+  const grid = featured ? recipes.slice(1) : recipes;
+  const showEmpty = grid.length === 0 && !featured;
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
-    const form = e.currentTarget as HTMLFormElement;
-    const q = (form.elements.namedItem("q") as HTMLInputElement).value.trim();
+    const q = searchInputRef.current?.value.trim() ?? "";
     navigate({ to: "/", search: { q: q || undefined, category: category } });
   };
 
@@ -191,10 +191,10 @@ function HomePage() {
 
         {isLoading ? (
           <RecipeGridSkeleton />
-        ) : grid.length > 0 ? (
+        ) : !showEmpty ? (
           <>
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
-              {grid.map((r) => (
+              {(grid.length > 0 ? grid : featured ? [featured] : []).map((r) => (
                 <RecipeCard
                   key={r._id}
                   recipeId={r._id}

@@ -1,5 +1,5 @@
 import { ConvexError, v } from "convex/values";
-import { internalMutation, mutation, query } from "./_generated/server";
+import { mutation, query } from "./_generated/server";
 import { getCurrentUser, requireUser } from "./lib/auth";
 import { generateAuthenticatedUploadUrl, withProfileImageUrl } from "./lib/storage";
 
@@ -40,7 +40,7 @@ export const updateProfile = mutation({
         .withIndex("by_username", (q) => q.eq("username", args.username))
         .first();
       if (existing && existing._id !== user._id) {
-        throw new Error("Username already taken");
+        throw new ConvexError("Username already taken");
       }
     }
 
@@ -51,26 +51,4 @@ export const updateProfile = mutation({
 export const generateUploadUrl = mutation({
   args: {},
   handler: generateAuthenticatedUploadUrl,
-});
-
-export const ensureCurrentUser = internalMutation({
-  args: {},
-  handler: async (ctx) => {
-    const identity = await ctx.auth.getUserIdentity();
-    if (!identity) throw new ConvexError("Not authenticated");
-    const clerkId = identity.subject;
-    const existing = await ctx.db
-      .query("users")
-      .withIndex("by_clerkId", (q) => q.eq("clerkId", clerkId))
-      .first();
-    if (existing) return existing;
-    const newId = await ctx.db.insert("users", {
-      clerkId,
-      email: identity.email ?? "",
-      name: identity.name ?? identity.email ?? "",
-    });
-    const created = await ctx.db.get(newId);
-    if (!created) throw new ConvexError("Failed to create user");
-    return created;
-  },
 });

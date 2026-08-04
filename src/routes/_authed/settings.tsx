@@ -20,7 +20,7 @@ import { TextField } from "@/components/ui/TextField";
 import { useToast } from "@/components/ui/Toast";
 import { useFileUpload } from "@/hooks/useFileUpload";
 import { useTheme } from "@/hooks/useTheme";
-import { APP_TITLE_SUFFIX } from "@/lib/constants";
+import { APP_TITLE_SUFFIX, MAX_IMAGE_BYTES } from "@/lib/constants";
 
 export const Route = createFileRoute("/_authed/settings")({
   head: () => ({
@@ -56,9 +56,9 @@ function Settings() {
   const { toast } = useToast();
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  const [name, setName] = useState(() => user?.name ?? "");
-  const [username, setUsername] = useState(() => user?.username ?? "");
-  const [bio, setBio] = useState(() => user?.bio ?? "");
+  const [name, setName] = useState("");
+  const [username, setUsername] = useState("");
+  const [bio, setBio] = useState("");
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [newProfileImage, setNewProfileImage] = useState<Id<"_storage"> | null>(null);
   const [saving, setSaving] = useState(false);
@@ -126,7 +126,7 @@ function Settings() {
       toast("Please select an image file", "error");
       return;
     }
-    if (file.size > 5 * 1024 * 1024) {
+    if (file.size > MAX_IMAGE_BYTES) {
       toast("Image must be under 5MB", "error");
       return;
     }
@@ -134,8 +134,12 @@ function Settings() {
   };
 
   const handleSignOut = async () => {
-    await signOut();
-    void navigate({ to: "/", replace: true });
+    try {
+      await signOut();
+      void navigate({ to: "/", replace: true });
+    } catch {
+      toast("Could not sign out", "error");
+    }
   };
 
   const avatar = previewUrl ?? user.profileImageUrl ?? user.image;
@@ -197,7 +201,7 @@ function Settings() {
                   id="name"
                   label="Display name"
                   value={name}
-                  onValueChange={setName}
+                  onChange={(e) => setName(e.target.value)}
                   placeholder="Your name"
                 />
                 <TextField
@@ -205,7 +209,7 @@ function Settings() {
                   label="Username"
                   prefix="@"
                   value={username}
-                  onValueChange={(v) => setUsername(v.toLowerCase().replace(/[^a-z0-9_]/g, ""))}
+                  onChange={(e) => setUsername(e.target.value.toLowerCase().replace(/[^a-z0-9_]/g, ""))}
                   placeholder="username"
                   hint="Letters, numbers, and underscores only. This is your public profile URL."
                 />
@@ -213,7 +217,7 @@ function Settings() {
                   id="bio"
                   label="Bio"
                   value={bio}
-                  onValueChange={setBio}
+                  onChange={(e) => setBio(e.target.value)}
                   placeholder="A few words about yourself…"
                   maxLength={160}
                   rows={4}

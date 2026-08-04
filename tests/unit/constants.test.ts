@@ -13,8 +13,19 @@ import {
 } from "@/lib/constants";
 
 describe("constants", () => {
-  it("has 10 categories", () => {
-    expect(CATEGORIES).toHaveLength(10);
+  it("has exactly the known category set", () => {
+    expect(CATEGORIES).toEqual([
+      "Salads",
+      "Pasta",
+      "Chicken",
+      "Beef & Lamb",
+      "Seafood",
+      "Vegetarian",
+      "Soups",
+      "Desserts",
+      "Baking",
+      "Quick & Easy",
+    ]);
   });
 
   it("every category maps to a non-empty icon string", () => {

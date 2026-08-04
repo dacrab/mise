@@ -20,7 +20,7 @@ export async function withCoverUrls<T extends { coverImage?: Id<"_storage"> | nu
 }
 
 export async function withProfileImageUrl<T extends { profileImage?: Id<"_storage"> | null }>(
-  ctx: { storage: { getUrl: (id: Id<"_storage">) => Promise<string | null> } },
+  ctx: QueryCtx,
   user: T,
 ): Promise<T & { profileImageUrl: string | null }> {
   return {
