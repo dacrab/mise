@@ -3,30 +3,12 @@ import { ClockIcon, FireIcon, PrinterIcon, UserGroupIcon } from "@heroicons/reac
 import { useSuspenseQuery } from "@tanstack/react-query";
 import { createFileRoute, notFound } from "@tanstack/react-router";
 import { api } from "convex/_generated/api";
-import type { ComponentType } from "react";
+import { MetaStat } from "@/components/ui/MetaStat";
 
 const statBox = "stat-box";
 const statIcon = "w-4 h-4 text-stone";
 const statLabel = "text-xs text-stone uppercase tracking-wide";
 const statValue = "text-sm font-medium text-charcoal";
-
-function Stat({
-  icon: Icon,
-  label,
-  value,
-}: {
-  icon: ComponentType<{ className?: string }>;
-  label: string;
-  value: string;
-}) {
-  return (
-    <div className={statBox}>
-      <Icon className={statIcon} />
-      <span className={statLabel}>{label}</span>
-      <span className={statValue}>{value}</span>
-    </div>
-  );
-}
 
 export const Route = createFileRoute("/recipe/$slug/print")({
   loader: ({ params, context: { queryClient } }) =>
@@ -53,12 +35,12 @@ function PrintRecipe() {
   const totalTime = (recipe.prepTime ?? 0) + (recipe.cookTime ?? 0);
 
   const stats = [
-    recipe.prepTime && { icon: ClockIcon, label: "Prep", value: `${recipe.prepTime} min` },
-    recipe.cookTime && { icon: FireIcon, label: "Cook", value: `${recipe.cookTime} min` },
+    recipe.prepTime != null && { icon: ClockIcon, label: "Prep", value: `${recipe.prepTime} min` },
+    recipe.cookTime != null && { icon: FireIcon, label: "Cook", value: `${recipe.cookTime} min` },
     totalTime > 0 && { icon: ClockIcon, label: "Total", value: `${totalTime} min` },
-    recipe.servings && { icon: UserGroupIcon, label: "Serves", value: `${recipe.servings}` },
+    recipe.servings != null && { icon: UserGroupIcon, label: "Serves", value: `${recipe.servings}` },
     recipe.difficulty && { icon: FireIcon, label: "Difficulty", value: recipe.difficulty },
-  ].filter(Boolean) as Array<{ icon: ComponentType<{ className?: string }>; label: string; value: string }>;
+  ].flatMap((s) => (s ? [s] : []));
 
   return (
     <div className="max-w-2xl mx-auto p-8 print:p-0 bg-white min-h-screen">
@@ -69,7 +51,16 @@ function PrintRecipe() {
         {recipe.description && <p className="text-stone">{recipe.description}</p>}
         <div className="flex flex-wrap gap-3 mt-4">
           {stats.map((s) => (
-            <Stat key={s.label} {...s} />
+            <MetaStat
+              key={s.label}
+              icon={s.icon}
+              label={s.label}
+              value={s.value}
+              className={statBox}
+              iconClassName={statIcon}
+              labelClassName={statLabel}
+              valueClassName={statValue}
+            />
           ))}
         </div>
       </header>

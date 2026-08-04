@@ -17,7 +17,7 @@ function AboutPage() {
     <StaticPageLayout>
       <h1 className="font-serif text-4xl font-medium mb-4">A place for home cooks</h1>
       <p className="font-hand text-xl text-sage mb-3">our story</p>
-      <p className="body-large mb-12">
+      <p className="text-lg text-secondary leading-relaxed mb-12">
         Mise is a platform born from the love of home cooking and the desire to share culinary secrets with a global
         community.
       </p>

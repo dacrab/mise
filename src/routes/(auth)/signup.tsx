@@ -4,6 +4,7 @@ import { z } from "zod";
 import { SignupForm } from "@/components/auth/AuthForms";
 import { AuthLayout } from "@/components/layout/AuthLayout";
 import { APP_TITLE_SUFFIX } from "@/lib/constants";
+import { safeRedirect } from "@/lib/utils";
 
 const searchSchema = z.object({
   redirect: z.string().optional(),
@@ -23,9 +24,10 @@ export const Route = createFileRoute("/(auth)/signup")({
 function SignupPage() {
   const { isSignedIn, isLoaded } = useUser();
   const { redirect } = Route.useSearch();
+  const safeTarget = safeRedirect(redirect);
 
   if (isLoaded && isSignedIn) {
-    return <Navigate to={redirect ?? "/dashboard"} replace />;
+    return <Navigate to={safeTarget ?? "/dashboard"} replace />;
   }
 
   return (

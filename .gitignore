@@ -15,6 +15,9 @@ test-results/
 # Convex
 .convex-tmp/
 
+# Local tools
+.opencode/
+
 # Env
 .env
 .env.*
@@ -33,4 +36,3 @@ Thumbs.db
 .wrangler/
 .dev.vars
 .vercel
-.env*.local

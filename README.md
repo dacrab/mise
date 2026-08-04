@@ -66,7 +66,6 @@ bun lint:fix         # fix lint issues
 bun test             # run tests (watch mode)
 bun test:run         # run tests (CI)
 bun test:coverage    # test coverage
-bun test:e2e         # E2E tests
 ```
 
 ## License

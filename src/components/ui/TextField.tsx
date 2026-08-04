@@ -1,19 +1,14 @@
 import { forwardRef, useState } from "react";
 
-interface TextFieldProps extends Omit<React.InputHTMLAttributes<HTMLInputElement>, "onChange"> {
+interface TextFieldProps extends React.InputHTMLAttributes<HTMLInputElement> {
   id: string;
   label?: string;
   prefix?: string;
   hint?: string;
-  onValueChange?: (value: string) => void;
-  onChange?: React.ChangeEventHandler<HTMLInputElement>;
 }
 
 export const TextField = forwardRef<HTMLInputElement, TextFieldProps>(
-  (
-    { id, label, prefix, hint, onValueChange, onChange, className = "", onFocus, onBlur, value, placeholder, ...rest },
-    ref,
-  ) => {
+  ({ id, label, prefix, hint, className = "", onFocus, onBlur, value, placeholder, ...rest }, ref) => {
     const [focused, setFocused] = useState(false);
     const hasValue = typeof value === "string" ? value.length > 0 : false;
 
@@ -41,10 +36,6 @@ export const TextField = forwardRef<HTMLInputElement, TextFieldProps>(
             ref={ref}
             id={id}
             value={value}
-            onChange={(e) => {
-              onChange?.(e);
-              onValueChange?.(e.target.value);
-            }}
             onFocus={(e) => {
               setFocused(true);
               onFocus?.(e);

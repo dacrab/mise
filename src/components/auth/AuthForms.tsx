@@ -7,8 +7,13 @@ import { useToast } from "@/components/ui/Toast";
 
 const MIN_PASSWORD_LENGTH = 8;
 
-const STRENGTH_COLORS = ["bg-stone-light", "bg-terracotta", "bg-honey", "bg-sage", "bg-sage"];
-const STRENGTH_LABELS = ["Too short", "Weak", "Good", "Strong", "Strong"];
+const STRENGTH = [
+  { color: "bg-stone-light", label: "Too short" },
+  { color: "bg-terracotta", label: "Weak" },
+  { color: "bg-honey", label: "Good" },
+  { color: "bg-sage", label: "Strong" },
+  { color: "bg-sage", label: "Strong" },
+] as const;
 
 function calculatePasswordStrength(password: string): number {
   let score = 0;
@@ -18,6 +23,30 @@ function calculatePasswordStrength(password: string): number {
   if (/[0-9]/.test(password)) score++;
   if (/[^A-Za-z0-9]/.test(password)) score++;
   return Math.min(score, 4);
+}
+
+function SubmitButton({
+  pending,
+  pendingLabel,
+  label,
+  disabled,
+}: {
+  pending: boolean;
+  pendingLabel: string;
+  label: string;
+  disabled?: boolean;
+}) {
+  return (
+    <button type="submit" disabled={disabled || pending} className="btn-primary w-full disabled:opacity-50">
+      {pending ? (
+        <span className="flex items-center justify-center gap-2">
+          <Spinner /> {pendingLabel}
+        </span>
+      ) : (
+        label
+      )}
+    </button>
+  );
 }
 
 function FormField({
@@ -73,7 +102,7 @@ function PasswordField({
   show,
   onToggleShow,
   autoComplete,
-  strengthMeter,
+  strength,
 }: {
   label: string;
   id?: string;
@@ -82,8 +111,9 @@ function PasswordField({
   show: boolean;
   onToggleShow: () => void;
   autoComplete?: string;
-  strengthMeter?: { strength: number; colors: string[]; labels: string[] };
+  strength?: number;
 }) {
+  const strengthEntry = strength != null ? STRENGTH[Math.min(strength, STRENGTH.length - 1)] : undefined;
   return (
     <div>
       <label htmlFor={id} className="label">
@@ -98,7 +128,7 @@ function PasswordField({
           className="input-field w-full pr-10"
           placeholder="••••••••"
           autoComplete={autoComplete ?? "current-password"}
-          aria-describedby={strengthMeter ? `${id}-strength` : undefined}
+          aria-describedby={strength ? `${id}-strength` : undefined}
         />
         <button
           type="button"
@@ -109,23 +139,23 @@ function PasswordField({
           {show ? <EyeSlashIcon className="w-5 h-5" /> : <EyeIcon className="w-5 h-5" />}
         </button>
       </div>
-      {strengthMeter && value && (
+      {strength != null && value && (
         <div id={`${id}-strength`} className="mt-3 space-y-1" aria-live="polite">
           <div
             className="flex gap-1 h-1"
             role="progressbar"
-            aria-valuenow={strengthMeter.strength}
+            aria-valuenow={strength}
             aria-valuemin={0}
             aria-valuemax={4}
           >
             {[1, 2, 3, 4].map((i) => (
               <div
                 key={i}
-                className={`flex-1 rounded-full ${i <= strengthMeter.strength ? (strengthMeter.colors[strengthMeter.strength] ?? "bg-sage") : "surface-raised"}`}
+                className={`flex-1 rounded-full ${i <= strength ? (strengthEntry?.color ?? "bg-sage") : "surface-raised"}`}
               />
             ))}
           </div>
-          <p className="text-xs text-stone">{strengthMeter.labels[strengthMeter.strength]}</p>
+          <p className="text-xs text-stone">{strengthEntry?.label}</p>
         </div>
       )}
     </div>
@@ -171,6 +201,7 @@ export function LoginForm() {
       toast("Welcome back!", "success");
     } catch (err) {
       toast(mapAuthError(LOGIN_ERRORS, err), "error");
+    } finally {
       setIsPending(false);
     }
   };
@@ -201,19 +232,12 @@ export function LoginForm() {
           Forgot password?
         </Link>
       </div>
-      <button
-        type="submit"
-        disabled={isPending || !email || !password || !isLoaded}
-        className="btn-primary w-full disabled:opacity-50"
-      >
-        {isPending ? (
-          <span className="flex items-center justify-center gap-2">
-            <Spinner /> Signing in…
-          </span>
-        ) : (
-          "Sign in"
-        )}
-      </button>
+      <SubmitButton
+        pending={isPending}
+        pendingLabel="Signing in…"
+        label="Sign in"
+        disabled={!email || !password || !isLoaded}
+      />
     </form>
   );
 }
@@ -243,6 +267,7 @@ export function SignupForm() {
       toast("Account created! Welcome to Mise", "success");
     } catch (err) {
       toast(mapAuthError(SIGNUP_ERRORS_MAP, err), "error");
+    } finally {
       setIsPending(false);
     }
   };
@@ -276,7 +301,7 @@ export function SignupForm() {
         show={showPassword}
         onToggleShow={() => setShowPassword((s) => !s)}
         autoComplete="new-password"
-        strengthMeter={{ strength, colors: STRENGTH_COLORS, labels: STRENGTH_LABELS }}
+        strength={strength}
       />
       <div>
         <label htmlFor="signup-confirm" className="label">
@@ -299,15 +324,7 @@ export function SignupForm() {
           </p>
         )}
       </div>
-      <button type="submit" disabled={!canSubmit || !isLoaded} className="btn-primary w-full disabled:opacity-50">
-        {isPending ? (
-          <span className="flex items-center justify-center gap-2">
-            <Spinner /> Creating…
-          </span>
-        ) : (
-          "Sign up"
-        )}
-      </button>
+      <SubmitButton pending={isPending} pendingLabel="Creating…" label="Sign up" disabled={!canSubmit || !isLoaded} />
     </form>
   );
 }
@@ -394,19 +411,12 @@ export function ForgotPasswordForm() {
             placeholder="Enter code"
             autoComplete="one-time-code"
           />
-          <button
-            type="submit"
-            disabled={resetting || !code.trim() || !isLoaded}
-            className="btn-primary w-full disabled:opacity-50"
-          >
-            {resetting ? (
-              <span className="flex items-center justify-center gap-2">
-                <Spinner /> Verifying…
-              </span>
-            ) : (
-              "Verify code"
-            )}
-          </button>
+          <SubmitButton
+            pending={resetting}
+            pendingLabel="Verifying…"
+            label="Verify code"
+            disabled={!code.trim() || !isLoaded}
+          />
         </form>
       </div>
     );
@@ -430,19 +440,12 @@ export function ForgotPasswordForm() {
             placeholder="At least 8 characters"
             autoComplete="new-password"
           />
-          <button
-            type="submit"
-            disabled={resetting || newPassword.length < MIN_PASSWORD_LENGTH || !isLoaded}
-            className="btn-primary w-full disabled:opacity-50"
-          >
-            {resetting ? (
-              <span className="flex items-center justify-center gap-2">
-                <Spinner /> Resetting…
-              </span>
-            ) : (
-              "Reset password"
-            )}
-          </button>
+          <SubmitButton
+            pending={resetting}
+            pendingLabel="Resetting…"
+            label="Reset password"
+            disabled={newPassword.length < MIN_PASSWORD_LENGTH || !isLoaded}
+          />
         </form>
       </div>
     );
@@ -464,19 +467,12 @@ export function ForgotPasswordForm() {
           onChange={setEmail}
           placeholder="you@example.com"
         />
-        <button
-          type="submit"
-          disabled={sendingCode || !email.trim() || !isLoaded}
-          className="btn-primary w-full disabled:opacity-50"
-        >
-          {sendingCode ? (
-            <span className="flex items-center justify-center gap-2">
-              <Spinner /> Sending…
-            </span>
-          ) : (
-            "Send reset code"
-          )}
-        </button>
+        <SubmitButton
+          pending={sendingCode}
+          pendingLabel="Sending…"
+          label="Send reset code"
+          disabled={!email.trim() || !isLoaded}
+        />
       </form>
     </div>
   );

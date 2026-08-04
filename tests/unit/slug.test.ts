@@ -1,4 +1,4 @@
-import { generateSlug } from "convex/lib/slug";
+import { generateSlug } from "convex/recipes";
 import { describe, expect, it } from "vitest";
 
 function splitSlug(slug: string): { base: string; suffix: string } {
@@ -31,6 +31,13 @@ describe("generateSlug", () => {
   it("truncates base to 80 chars", () => {
     const { base } = splitSlug(generateSlug("a".repeat(100)));
     expect(base.length).toBeLessThanOrEqual(80);
+  });
+
+  it("falls back to 'recipe' base when title yields no characters", () => {
+    for (const title of ["", "   ", "!!!", "日本語", "---"]) {
+      const { base } = splitSlug(generateSlug(title));
+      expect(base).toBe("recipe");
+    }
   });
 
   it("appends a unique, non-empty alphanumeric suffix", () => {

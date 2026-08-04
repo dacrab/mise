@@ -11,7 +11,7 @@ import {
   SunIcon,
   XMarkIcon,
 } from "@heroicons/react/24/outline";
-import { Link, useRouter } from "@tanstack/react-router";
+import { Link } from "@tanstack/react-router";
 import { api } from "convex/_generated/api";
 import { Authenticated, Unauthenticated, useQuery } from "convex/react";
 import { useEffect, useRef, useState } from "react";
@@ -32,12 +32,12 @@ const USER_MENU_LINKS = [
 function UserMenu({ onClose }: { onClose?: () => void }) {
   const user = useQuery(api.users.currentUser);
   const { signOut } = useClerk();
-  const router = useRouter();
 
   const handleSignOut = async () => {
     onClose?.();
-    await signOut({ redirectUrl: "/" });
-    await router.navigate({ to: "/", replace: true });
+    try {
+      await signOut({ redirectUrl: "/" });
+    } catch {}
   };
 
   return (
@@ -178,10 +178,13 @@ export function Header() {
 
     document.addEventListener("mousedown", handleClick);
     document.addEventListener("keydown", handleEscape);
+    const prevOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
 
     return () => {
       document.removeEventListener("mousedown", handleClick);
       document.removeEventListener("keydown", handleEscape);
+      document.body.style.overflow = prevOverflow;
     };
   }, [mobileOpen]);
 
@@ -234,6 +237,7 @@ export function Header() {
         role="dialog"
         aria-modal="true"
         aria-label="Navigation menu"
+        inert={!mobileOpen}
         className={`fixed top-0 right-0 bottom-0 z-50 w-72 bg-warm-white shadow-hover flex flex-col sm:hidden transition-transform duration-300 ${mobileOpen ? "translate-x-0" : "translate-x-full"}`}
       >
         <div className="flex items-center justify-between px-5 h-16 border-b border-cream-dark">

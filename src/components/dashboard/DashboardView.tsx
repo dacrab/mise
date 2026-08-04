@@ -1,13 +1,66 @@
-import { BookmarkIcon, BookOpenIcon, PlusIcon } from "@heroicons/react/24/outline";
-import { Link } from "@tanstack/react-router";
+import { BookmarkIcon, BookOpenIcon, PhotoIcon, PlusIcon } from "@heroicons/react/24/outline";
+import { Link, useSearch } from "@tanstack/react-router";
 import { api } from "convex/_generated/api";
 import type { Id } from "convex/_generated/dataModel";
 import { useMutation, useQuery } from "convex/react";
 import { useEffect, useRef, useState } from "react";
-import { RecipeListRow } from "@/components/dashboard/RecipeListRow";
 import { useToast } from "@/components/ui/Toast";
 import { useBookmarks } from "@/lib/bookmarks";
-import { Route } from "@/routes/_authed/dashboard/index";
+
+function RecipeListRow({
+  recipe,
+  showActions = false,
+  pendingDeleteId,
+  onDelete,
+}: {
+  recipe: {
+    _id: Id<"recipes">;
+    slug: string;
+    title: string;
+    coverImageUrl?: string | null;
+    status?: "draft" | "published";
+  };
+  showActions?: boolean;
+  pendingDeleteId?: Id<"recipes"> | null;
+  onDelete?: (id: Id<"recipes">) => void;
+}) {
+  return (
+    <div className="card-hover flex items-center gap-4 p-4 group">
+      <div className="w-16 h-16 md:w-20 md:h-20 rounded-lg overflow-hidden surface-raised shrink-0">
+        {recipe.coverImageUrl ? (
+          <img src={recipe.coverImageUrl} className="w-full h-full object-cover" alt="" />
+        ) : (
+          <div className="w-full h-full flex items-center justify-center">
+            <PhotoIcon className="w-6 h-6 text-stone-light" />
+          </div>
+        )}
+      </div>
+      <div className="flex-1 min-w-0">
+        <div className="flex items-center gap-2 mb-1">
+          <h3 className="font-serif text-lg font-medium truncate group-hover:text-sage">{recipe.title}</h3>
+          {recipe.status === "draft" && <span className="tag text-[10px] bg-honey/20 text-honey">Draft</span>}
+        </div>
+        <Link to="/recipe/$slug" params={{ slug: recipe.slug }} className="text-xs text-stone hover:text-sage">
+          View →
+        </Link>
+      </div>
+      {showActions && onDelete && (
+        <div className="flex gap-2">
+          <Link to="/dashboard/edit/$id" params={{ id: recipe._id }} className="btn-ghost text-xs py-1.5 px-3">
+            Edit
+          </Link>
+          <button
+            type="button"
+            onClick={() => onDelete(recipe._id)}
+            className={`btn-ghost text-xs py-1.5 px-3 text-terracotta ${pendingDeleteId === recipe._id ? "font-semibold" : ""}`}
+          >
+            {pendingDeleteId === recipe._id ? "Confirm?" : "Delete"}
+          </button>
+        </div>
+      )}
+    </div>
+  );
+}
 
 const TABS = [
   { id: "my-recipes", label: "My Recipes", icon: BookOpenIcon },
@@ -18,13 +71,13 @@ function DashboardSkeleton() {
   return (
     <div className="max-w-6xl mx-auto px-5 py-8 animate-pulse">
       <div className="py-8 md:py-12 mb-8">
-        <div className="h-5 w-24 surface-dark rounded mb-3" />
-        <div className="h-9 w-64 surface-dark rounded mb-8" />
+        <div className="h-5 w-24 surface-muted rounded mb-3" />
+        <div className="h-9 w-64 surface-muted rounded mb-8" />
         <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
           {[1, 2, 3].map((i) => (
             <div key={i} className="card p-5 space-y-2">
-              <div className="h-8 w-12 surface-dark rounded" />
-              <div className="h-3 w-16 surface-dark rounded" />
+              <div className="h-8 w-12 surface-muted rounded" />
+              <div className="h-3 w-16 surface-muted rounded" />
             </div>
           ))}
         </div>
@@ -32,10 +85,10 @@ function DashboardSkeleton() {
       <div className="space-y-3">
         {[1, 2, 3, 4].map((i) => (
           <div key={i} className="card flex items-center gap-4 p-4">
-            <div className="w-16 h-16 rounded-lg surface-dark shrink-0" />
+            <div className="w-16 h-16 rounded-lg surface-muted shrink-0" />
             <div className="flex-1 space-y-2">
-              <div className="h-4 w-2/3 surface-dark rounded" />
-              <div className="h-3 w-1/4 surface-dark rounded" />
+              <div className="h-4 w-2/3 surface-muted rounded" />
+              <div className="h-3 w-1/4 surface-muted rounded" />
             </div>
           </div>
         ))}
@@ -52,11 +105,9 @@ export function DashboardView() {
   const { toast } = useToast();
   const [pendingDelete, setPendingDelete] = useState<Id<"recipes"> | null>(null);
   const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const mounted = useRef(true);
 
   useEffect(() => {
     return () => {
-      mounted.current = false;
       if (timer.current) clearTimeout(timer.current);
     };
   }, []);
@@ -66,9 +117,7 @@ export function DashboardView() {
       setPendingDelete(id);
       toast("Tap delete again to confirm", "info");
       if (timer.current) clearTimeout(timer.current);
-      timer.current = setTimeout(() => {
-        if (mounted.current) setPendingDelete(null);
-      }, 3000);
+      timer.current = setTimeout(() => setPendingDelete(null), 3000);
       return;
     }
     if (timer.current) clearTimeout(timer.current);
@@ -81,7 +130,7 @@ export function DashboardView() {
     }
   };
 
-  const { tab = "my-recipes" } = Route.useSearch();
+  const { tab = "my-recipes" } = useSearch({ from: "/_authed/dashboard/" });
   const isSavedTab = tab === "saved";
   const recipes = isSavedTab ? myBookmarks : myRecipes;
 
@@ -141,7 +190,7 @@ export function DashboardView() {
             >
               <Icon className="w-4 h-4" />
               {tabItem.label}
-              <span className="text-xs surface-dark px-2 py-0.5 rounded-full">
+              <span className="text-xs surface-muted px-2 py-0.5 rounded-full">
                 {(tabItem.id === "saved" ? myBookmarks : myRecipes).length}
               </span>
             </Link>

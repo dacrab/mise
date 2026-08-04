@@ -10,8 +10,6 @@ export function RecipeCard({
   description,
   category,
   coverImageUrl,
-  badge,
-  meta,
 }: {
   slug: string;
   recipeId?: Id<"recipes">;
@@ -19,8 +17,6 @@ export function RecipeCard({
   description?: string | null;
   category: string;
   coverImageUrl?: string | null;
-  badge?: string;
-  meta?: React.ReactNode;
 }) {
   return (
     <Link to="/recipe/$slug" params={{ slug }} className="recipe-card group">
@@ -36,9 +32,6 @@ export function RecipeCard({
           {category}
         </span>
         <div className="absolute top-3 right-3 flex items-center gap-1.5">
-          {badge && (
-            <div className="center w-7 h-7 rounded-full bg-charcoal text-cream text-sm font-medium">{badge}</div>
-          )}
           {recipeId && (
             <div className="opacity-0 group-hover:opacity-100 focus-within:opacity-100 transition-opacity duration-200">
               <BookmarkButton recipeId={recipeId} variant="card" />
@@ -49,7 +42,6 @@ export function RecipeCard({
       <div className="p-5">
         <h3 className="font-serif text-lg font-medium group-hover:text-sage transition-colors line-clamp-1">{title}</h3>
         {description && <p className="text-sm text-stone line-clamp-2 mt-1">{description}</p>}
-        {meta}
       </div>
     </Link>
   );

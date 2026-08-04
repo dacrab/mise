@@ -1,35 +1,28 @@
 import { useEffect, useRef, useState } from "react";
 
-interface TextAreaProps extends Omit<React.TextareaHTMLAttributes<HTMLTextAreaElement>, "onChange"> {
+interface TextAreaProps extends React.TextareaHTMLAttributes<HTMLTextAreaElement> {
   id: string;
   label?: string;
   maxLength?: number;
-  onValueChange?: (value: string) => void;
-  onChange?: React.ChangeEventHandler<HTMLTextAreaElement>;
-  textareaRef?: React.RefObject<HTMLTextAreaElement | null>;
 }
 
 export function TextArea({
   id,
   label,
   maxLength,
-  onValueChange,
-  onChange,
   className = "",
   onFocus,
   onBlur,
   value = "",
   rows = 3,
   placeholder,
-  textareaRef,
   ...rest
 }: TextAreaProps) {
   const internalRef = useRef<HTMLTextAreaElement>(null);
   const [focused, setFocused] = useState(false);
-  const resolverRef = textareaRef ?? internalRef;
 
   useEffect(() => {
-    const el = resolverRef.current;
+    const el = internalRef.current;
     if (!el) return;
     el.style.height = "auto";
     el.style.height = `${el.scrollHeight}px`;
@@ -55,14 +48,9 @@ export function TextArea({
         </label>
       )}
       <textarea
-        ref={resolverRef}
+        ref={internalRef}
         id={id}
         value={value}
-        onChange={(e) => {
-          const v = e.target.value;
-          onChange?.(e);
-          onValueChange?.(v);
-        }}
         onFocus={(e) => {
           setFocused(true);
           onFocus?.(e);

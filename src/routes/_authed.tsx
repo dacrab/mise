@@ -20,7 +20,7 @@ function AuthedLayout() {
   }
 
   if (!isSignedIn) {
-    return <Navigate to="/login" search={{ redirect: location.href }} replace />;
+    return <Navigate to="/login" search={{ redirect: location.pathname + location.search }} replace />;
   }
 
   return (

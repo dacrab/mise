@@ -1,12 +1,13 @@
+import { ArrowLeftIcon, PhotoIcon, PlusIcon, XMarkIcon } from "@heroicons/react/24/outline";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Link, useNavigate } from "@tanstack/react-router";
 import { api } from "convex/_generated/api";
 import type { Id } from "convex/_generated/dataModel";
 import { useMutation, useQuery } from "convex/react";
 import { useEffect, useRef, useState } from "react";
+import type { FieldError as RHFFieldError } from "react-hook-form";
 import { Controller, useFieldArray, useForm, useWatch } from "react-hook-form";
 import { z } from "zod";
-import { FieldError } from "@/components/ui/FieldError";
 import { ProgressBar } from "@/components/ui/Primitives";
 import { Select } from "@/components/ui/Select";
 import { TextField } from "@/components/ui/TextField";
@@ -16,6 +17,7 @@ import {
   CATEGORIES as BASE_CATEGORIES,
   DIFFICULTIES,
   MAX_COOK_MINUTES,
+  MAX_IMAGE_BYTES,
   MAX_PREP_MINUTES,
   MAX_SERVINGS,
   MIN_COOK_MINUTES,
@@ -77,6 +79,11 @@ const recipeSchema = z.object({
 
 const unwrap = (arr?: Array<{ value?: string }>) => (arr ?? []).map((x) => x.value ?? "");
 
+function FieldError({ error }: { error?: RHFFieldError | { message?: string } }) {
+  if (!error?.message) return null;
+  return <p className="text-xs text-terracotta mt-1">{error.message}</p>;
+}
+
 function buildPayload(
   data: RecipeFormData,
   coverImage: Id<"_storage"> | null,
@@ -127,8 +134,6 @@ export function RecipeEditor({
   const [loading, setLoading] = useState(false);
   const [lastSaved, setLastSaved] = useState<Date | null>(null);
   const [coverImage, setCoverImage] = useState<Id<"_storage"> | null>(initialData?.coverImage ?? null);
-  const coverImageRef = useRef(coverImage);
-  coverImageRef.current = coverImage;
   const [coverImageUrl, setCoverImageUrl] = useState(initialData?.coverImageUrl ?? "");
 
   const pendingStatusRef = useRef<"draft" | "published" | null>(null);
@@ -137,6 +142,7 @@ export function RecipeEditor({
     register,
     control,
     handleSubmit: rhfHandleSubmit,
+    reset,
     formState: { errors, isDirty },
   } = useForm<RecipeFormData>({
     resolver: zodResolver(recipeSchema),
@@ -163,8 +169,6 @@ export function RecipeEditor({
   const { fields: stepFields, append: appendStep, remove: removeStep } = useFieldArray({ control, name: "steps" });
 
   const watchedValues = useWatch<RecipeFormData>({ control });
-  const watchedValuesRef = useRef(watchedValues);
-  watchedValuesRef.current = watchedValues;
 
   useEffect(() => {
     const handler = (e: BeforeUnloadEvent) => {
@@ -193,24 +197,25 @@ export function RecipeEditor({
   });
 
   useEffect(() => {
-    if (!isEditing || !initialData?.id) return;
+    if (!isEditing || !initialData?.id || !isDirty) return;
     const recipeId = initialData.id;
-    const interval = setInterval(async () => {
-      if (!isDirty) return;
-      const vals = watchedValuesRef.current;
-      const validIngredients = unwrap(vals.ingredients);
-      const validSteps = unwrap(vals.steps);
+    const recipeStatus = initialData.status ?? "draft";
+    const timer = setTimeout(async () => {
+      const vals = watchedValues as RecipeFormData;
       try {
         await updateRecipe({
           id: recipeId,
-          ...buildPayload(vals as RecipeFormData, coverImageRef.current, validIngredients, validSteps),
-          status: "draft",
+          ...buildPayload(vals, coverImage, unwrap(vals.ingredients), unwrap(vals.steps)),
+          status: recipeStatus,
         });
         setLastSaved(new Date());
-      } catch {}
+        reset({ ...vals });
+      } catch {
+        toast("Autosave failed", "error");
+      }
     }, 30_000);
-    return () => clearInterval(interval);
-  }, [isEditing, initialData?.id, isDirty, updateRecipe]);
+    return () => clearTimeout(timer);
+  }, [isEditing, initialData?.id, initialData?.status, isDirty, watchedValues, coverImage, updateRecipe, reset, toast]);
 
   useEffect(
     () => () => {
@@ -225,7 +230,16 @@ export function RecipeEditor({
 
   const handleUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
+    e.target.value = "";
     if (!file) return;
+    if (!file.type.startsWith("image/")) {
+      toast("Please select an image file", "error");
+      return;
+    }
+    if (file.size > MAX_IMAGE_BYTES) {
+      toast("Image must be under 5MB", "error");
+      return;
+    }
     await upload(file);
   };
 
@@ -277,14 +291,9 @@ export function RecipeEditor({
             <Link
               to="/dashboard"
               className="cursor-pointer text-stone hover:text-charcoal dark:hover:text-d-text transition-colors"
+              aria-label="Back to dashboard"
             >
-              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="w-5 h-5">
-                <path
-                  fillRule="evenodd"
-                  d="M17 10a.75.75 0 01-.75.75H5.612l4.158 3.96a.75.75 0 11-1.04 1.08l-5.5-5.25a.75.75 0 010-1.08l5.5-5.25a.75.75 0 111.04 1.08L5.612 9.25H16.25A.75.75 0 0117 10z"
-                  clipRule="evenodd"
-                />
-              </svg>
+              <ArrowLeftIcon className="w-5 h-5" />
             </Link>
             <h1 className="font-serif text-lg font-medium">{isEditing ? "Edit recipe" : "New recipe"}</h1>
             {lastSaved && (
@@ -341,20 +350,7 @@ export function RecipeEditor({
                 </>
               ) : (
                 <label className="absolute inset-0 flex flex-col items-center justify-center cursor-pointer text-stone hover:text-sage transition-colors gap-2">
-                  <svg
-                    xmlns="http://www.w3.org/2000/svg"
-                    fill="none"
-                    viewBox="0 0 24 24"
-                    strokeWidth={1.5}
-                    stroke="currentColor"
-                    className="w-10 h-10"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      d="m2.25 15.75 5.159-5.159a2.25 2.25 0 0 1 3.182 0l5.159 5.159m-1.5-1.5 1.409-1.409a2.25 2.25 0 0 1 3.182 0l2.909 2.909M3.75 21h16.5A2.25 2.25 0 0 0 22.5 18.75V5.25A2.25 2.25 0 0 0 20.25 3H3.75A2.25 2.25 0 0 0 1.5 5.25v13.5A2.25 2.25 0 0 0 3.75 21Z"
-                    />
-                  </svg>
+                  <PhotoIcon className="w-10 h-10" />
                   <span className="text-sm font-medium">Add a cover photo</span>
                   <span className="text-xs text-stone">Recommended: 1200×600px or wider</span>
                   <input
@@ -416,14 +412,7 @@ export function RecipeEditor({
                       aria-label={`Remove ingredient ${i + 1}`}
                       type="button"
                     >
-                      <svg
-                        xmlns="http://www.w3.org/2000/svg"
-                        viewBox="0 0 20 20"
-                        fill="currentColor"
-                        className="w-4 h-4"
-                      >
-                        <path d="M6.28 5.22a.75.75 0 00-1.06 1.06L8.94 10l-3.72 3.72a.75.75 0 101.06 1.06L10 11.06l3.72 3.72a.75.75 0 101.06-1.06L11.06 10l3.72-3.72a.75.75 0 00-1.06-1.06L10 8.94 6.28 5.22z" />
-                      </svg>
+                      <XMarkIcon className="w-4 h-4" />
                     </button>
                   </div>
                 ))}
@@ -433,9 +422,7 @@ export function RecipeEditor({
                 className="flex items-center gap-2 text-sm font-medium text-sage hover:text-sage-light transition-colors pt-2"
                 type="button"
               >
-                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="w-4 h-4">
-                  <path d="M10.75 4.75a.75.75 0 00-1.5 0v4.5h-4.5a.75.75 0 000 1.5h4.5v4.5a.75.75 0 001.5 0v-4.5h4.5a.75.75 0 000-1.5h-4.5v-4.5z" />
-                </svg>
+                <PlusIcon className="w-4 h-4" />
                 Add ingredient
               </button>
             </section>
@@ -478,9 +465,7 @@ export function RecipeEditor({
                 className="flex items-center gap-2 text-sm font-medium text-sage hover:text-sage-light transition-colors"
                 type="button"
               >
-                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="w-4 h-4">
-                  <path d="M10.75 4.75a.75.75 0 00-1.5 0v4.5h-4.5a.75.75 0 000 1.5h4.5v4.5a.75.75 0 001.5 0v-4.5h4.5a.75.75 0 000-1.5h-4.5v-4.5z" />
-                </svg>
+                <PlusIcon className="w-4 h-4" />
                 Add step
               </button>
             </section>

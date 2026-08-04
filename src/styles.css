@@ -3,6 +3,7 @@
 @theme {
   --font-sans: "Inter", system-ui, sans-serif;
   --font-serif: "Playfair Display", "Georgia", serif;
+  --font-hand: "Caveat", cursive;
 
   /* Light palette */
   --color-cream: #faf7f2;
@@ -12,10 +13,15 @@
   --color-charcoal-light: #4a4640;
   --color-sage: #8b9a7d;
   --color-sage-light: #a8b89a;
+  --color-sage-dark: #66745a;
   --color-terracotta: #c4846c;
   --color-honey: #d4a853;
   --color-stone: #9c9488;
   --color-stone-light: #c4beb4;
+
+  /* Shadows */
+  --shadow-card: 0 4px 16px rgba(45, 42, 38, 0.1);
+  --shadow-hover: 0 8px 30px rgba(45, 42, 38, 0.12);
 
   /* Dark palette */
   --color-d-bg: #1a1a1a;
@@ -166,6 +172,10 @@
 
 @utility tag {
   @apply inline-flex items-center px-2.5 py-1 text-xs font-medium rounded-md bg-cream-dark text-charcoal-light dark:bg-d-surface-raised dark:text-d-text-muted;
+}
+
+@utility tag-sage {
+  @apply tag bg-sage/10 text-sage;
 }
 
 @utility stat-box {

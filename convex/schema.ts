@@ -7,13 +7,11 @@ export default defineSchema({
     name: v.optional(v.string()),
     username: v.optional(v.string()),
     email: v.optional(v.string()),
-    emailVerificationTime: v.optional(v.float64()),
     image: v.optional(v.string()),
     profileImage: v.optional(v.id("_storage")),
     bio: v.optional(v.string()),
   })
     .index("by_clerkId", ["clerkId"])
-    .index("by_email", ["email"])
     .index("by_username", ["username"]),
 
   recipes: defineTable({

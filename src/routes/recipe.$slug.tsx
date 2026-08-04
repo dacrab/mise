@@ -1,17 +1,18 @@
 import { convexQuery } from "@convex-dev/react-query";
-import { ClockIcon, FireIcon, PrinterIcon, UserGroupIcon } from "@heroicons/react/24/outline";
+import { ClockIcon, FireIcon, PrinterIcon, ShareIcon, UserGroupIcon } from "@heroicons/react/24/outline";
 import { PlayIcon as PlayIconSolid } from "@heroicons/react/24/solid";
 import { useSuspenseQuery } from "@tanstack/react-query";
 import { createFileRoute, Link, notFound } from "@tanstack/react-router";
 import { api } from "convex/_generated/api";
+import { useMemo, useState } from "react";
 import { PageLayout } from "@/components/layout/PageLayout";
 import { BookmarkButton } from "@/components/recipe/BookmarkButton";
-import { ShareButton } from "@/components/recipe/RecipeActions";
-import { IngredientScaler } from "@/components/recipe/RecipeWidgets";
 import { MetaStat } from "@/components/ui/MetaStat";
 import { Avatar } from "@/components/ui/Primitives";
 import { RouteError } from "@/components/ui/RouteError";
-import { APP_TITLE_SUFFIX } from "@/lib/constants";
+import { useToast } from "@/components/ui/Toast";
+import { APP_TITLE_SUFFIX, MAX_SERVINGS, MIN_SERVINGS } from "@/lib/constants";
+import { scaleIngredient } from "@/lib/utils";
 
 export const Route = createFileRoute("/recipe/$slug")({
   loader: ({ params, context: { queryClient } }) =>
@@ -32,11 +33,106 @@ export const Route = createFileRoute("/recipe/$slug")({
   }),
 });
 
+function ShareButton({ title }: { title: string }) {
+  const { toast } = useToast();
+  const handleShare = async () => {
+    const url = window.location.href;
+    try {
+      if (navigator.share) {
+        await navigator.share({ title, url });
+      } else {
+        await navigator.clipboard.writeText(url);
+        toast("Link copied!", "success");
+      }
+    } catch (err) {
+      if (err instanceof Error && err.name !== "AbortError") toast("Could not share", "error");
+    }
+  };
+  return (
+    <button
+      type="button"
+      onClick={() => void handleShare()}
+      className="flex items-center gap-1.5 text-sm text-stone hover:text-sage transition-colors"
+      aria-label="Share"
+    >
+      <ShareIcon className="w-4 h-4" />
+      Share
+    </button>
+  );
+}
+
+function IngredientScaler({ ingredients, defaultServings = 4 }: { ingredients: string[]; defaultServings?: number }) {
+  const [servings, setServings] = useState(defaultServings);
+  const scale = servings / defaultServings;
+  const scaled = useMemo(() => ingredients.map((ing) => scaleIngredient(ing, scale)), [ingredients, scale]);
+
+  return (
+    <div>
+      <div className="flex items-center gap-3 mb-4">
+        <label htmlFor="servings-input" className="text-sm font-medium text-secondary">
+          Servings:
+        </label>
+        <button
+          type="button"
+          onClick={() => setServings(Math.max(MIN_SERVINGS, servings - 1))}
+          className="w-8 h-8 rounded-lg surface-raised hover:bg-stone-light/50 dark:hover:bg-d-border flex items-center justify-center text-primary transition-colors"
+          aria-label="Decrease servings"
+        >
+          −
+        </button>
+        <input
+          id="servings-input"
+          type="number"
+          min={MIN_SERVINGS}
+          max={MAX_SERVINGS}
+          value={servings}
+          onChange={(e) => {
+            const v = parseInt(e.target.value, 10);
+            if (!Number.isNaN(v) && v >= MIN_SERVINGS && v <= MAX_SERVINGS) setServings(v);
+          }}
+          className="w-12 text-center font-medium text-primary bg-transparent border-b border-stone-light dark:border-d-border-strong focus:outline-none focus:border-sage"
+          aria-label="Number of servings"
+        />
+        <button
+          type="button"
+          onClick={() => setServings(servings + 1)}
+          className="w-8 h-8 rounded-lg surface-raised hover:bg-stone-light/50 dark:hover:bg-d-border flex items-center justify-center text-primary transition-colors"
+          aria-label="Increase servings"
+        >
+          +
+        </button>
+        {servings !== defaultServings && (
+          <button
+            type="button"
+            onClick={() => setServings(defaultServings)}
+            className="text-xs text-sage hover:text-sage-light"
+          >
+            Reset
+          </button>
+        )}
+      </div>
+      <ul className="space-y-2">
+        {scaled.map((ing) => (
+          <li key={ing} className="text-sm text-secondary flex gap-2">
+            <span className="text-stone mt-0.5">·</span>
+            <span>{ing}</span>
+          </li>
+        ))}
+      </ul>
+    </div>
+  );
+}
+
 function RecipeAuthor({
   author,
   createdAt,
 }: {
-  author?: { name?: string | null; username?: string | null; image?: string | null } | null;
+  author?: {
+    name?: string | null;
+    username?: string | null;
+    image?: string | null;
+    profileImageUrl?: string | null;
+  } | null;
   createdAt: number;
 }) {
   const nameClass = author?.username
@@ -45,7 +141,7 @@ function RecipeAuthor({
   const content = (
     <>
       <Avatar
-        src={author?.image}
+        src={author?.profileImageUrl ?? author?.image}
         name={author?.name ?? "Chef"}
         size="md"
         className="ring-2 ring-cream-dark dark:ring-d-border"
@@ -144,8 +240,8 @@ function RecipePage() {
               <p className="text-lg text-secondary leading-relaxed max-w-2xl">{recipe.description}</p>
             )}
 
-            {(recipe.prepTime || recipe.cookTime || recipe.servings || recipe.difficulty) && (
-              <div className="flex justify-between py-5 px-8 rounded-xl surface-muted">
+            {(recipe.prepTime != null || recipe.cookTime != null || recipe.servings != null || recipe.difficulty) && (
+              <div className="flex flex-wrap justify-between gap-6 py-5 px-8 rounded-xl surface-muted">
                 {recipe.prepTime != null && <MetaStat icon={ClockIcon} label="Prep" value={`${recipe.prepTime}m`} />}
                 {recipe.cookTime != null && <MetaStat icon={FireIcon} label="Cook" value={`${recipe.cookTime}m`} />}
                 {totalTime > 0 && <MetaStat icon={ClockIcon} label="Total" value={`${totalTime}m`} />}
