@@ -28,19 +28,6 @@ import { getErrorMessage } from "@/lib/utils";
 
 const CATEGORIES = ["General", ...BASE_CATEGORIES];
 
-type RecipeFormData = {
-  title: string;
-  description: string;
-  category: string;
-  difficulty: string;
-  prepTime: string;
-  cookTime: string;
-  servings: string;
-  videoUrl: string;
-  ingredients: Array<{ value: string }>;
-  steps: Array<{ value: string }>;
-};
-
 const numericStr = (min: number, max: number, minMsg: string, maxMsg: string) =>
   z
     .string()
@@ -76,6 +63,8 @@ const recipeSchema = z.object({
   ingredients: z.array(z.object({ value: z.string() })),
   steps: z.array(z.object({ value: z.string() })),
 });
+
+type RecipeFormData = z.infer<typeof recipeSchema>;
 
 const unwrap = (arr?: Array<{ value?: string }>) => (arr ?? []).map((x) => x.value ?? "");
 

@@ -1,3 +1,5 @@
+import { Progress } from "@base-ui-components/react/progress";
+
 const sizes = { sm: "w-8 h-8 text-xs", md: "w-10 h-10 text-sm", lg: "w-14 h-14 text-base" } as const;
 
 export function Avatar({
@@ -39,17 +41,11 @@ export function Spinner({ className = "w-5 h-5 text-sage" }: { className?: strin
 export function ProgressBar({ value, label, className = "" }: { value: number; label?: string; className?: string }) {
   const pct = Math.min(100, Math.max(0, value));
   return (
-    <div className={`space-y-1 ${className}`}>
-      {label && <p className="text-xs text-stone">{label}</p>}
-      <div
-        className="h-1.5 rounded-full surface-raised overflow-hidden"
-        role="progressbar"
-        aria-valuenow={pct}
-        aria-valuemin={0}
-        aria-valuemax={100}
-      >
-        <div className="h-full bg-sage rounded-full transition-all duration-300" style={{ width: `${pct}%` }} />
-      </div>
-    </div>
+    <Progress.Root value={pct} className={`space-y-1 ${className}`}>
+      {label && <Progress.Label className="text-xs text-stone">{label}</Progress.Label>}
+      <Progress.Track className="h-1.5 rounded-full surface-raised overflow-hidden">
+        <Progress.Indicator className="h-full bg-sage rounded-full transition-all duration-300" />
+      </Progress.Track>
+    </Progress.Root>
   );
 }
