@@ -1,3 +1,4 @@
+import { Dialog } from "@base-ui-components/react/dialog";
 import { Menu } from "@base-ui-components/react/menu";
 import { useClerk } from "@clerk/tanstack-react-start";
 import {
@@ -14,7 +15,7 @@ import {
 import { Link } from "@tanstack/react-router";
 import { api } from "convex/_generated/api";
 import { Authenticated, Unauthenticated, useQuery } from "convex/react";
-import { useEffect, useRef, useState } from "react";
+import { useState } from "react";
 import { Avatar } from "@/components/ui/Primitives";
 import { useTheme } from "@/hooks/useTheme";
 
@@ -159,37 +160,10 @@ function ThemeToggle() {
 
 export function Header() {
   const [mobileOpen, setMobileOpen] = useState(false);
-  const menuRef = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    if (!mobileOpen) return;
-
-    const close = () => setMobileOpen(false);
-
-    const handleClick = (e: MouseEvent) => {
-      if (menuRef.current && !menuRef.current.contains(e.target as Node)) {
-        close();
-      }
-    };
-
-    const handleEscape = (e: KeyboardEvent) => {
-      if (e.key === "Escape") close();
-    };
-
-    document.addEventListener("mousedown", handleClick);
-    document.addEventListener("keydown", handleEscape);
-    const prevOverflow = document.body.style.overflow;
-    document.body.style.overflow = "hidden";
-
-    return () => {
-      document.removeEventListener("mousedown", handleClick);
-      document.removeEventListener("keydown", handleEscape);
-      document.body.style.overflow = prevOverflow;
-    };
-  }, [mobileOpen]);
+  const closeMenu = () => setMobileOpen(false);
 
   return (
-    <>
+    <Dialog.Root open={mobileOpen} onOpenChange={(open) => setMobileOpen(open)}>
       <header className="fixed top-0 w-full z-50 glass">
         <div className="wrapper h-16 flex items-center justify-between">
           <Link
@@ -209,71 +183,48 @@ export function Header() {
           </nav>
           <div className="flex sm:hidden items-center gap-2">
             <ThemeToggle />
-            <button
-              type="button"
-              onClick={() => setMobileOpen(true)}
-              className="p-2 hover:bg-cream-dark dark:hover:bg-d-surface-raised rounded-lg transition-colors"
+            <Dialog.Trigger
+              className="p-2 hover:bg-cream-dark dark:hover:bg-d-surface-raised rounded-lg transition-colors cursor-pointer"
               aria-label="Open menu"
-              aria-expanded={mobileOpen}
-              aria-controls="mobile-menu"
             >
               <Bars3Icon className="w-5 h-5" />
-            </button>
+            </Dialog.Trigger>
           </div>
         </div>
       </header>
 
-      {mobileOpen && (
-        <div
-          className="fixed inset-0 z-40 bg-charcoal/30 backdrop-blur-sm sm:hidden"
-          aria-hidden="true"
-          onClick={() => setMobileOpen(false)}
-        />
-      )}
-
-      <div
-        ref={menuRef}
-        id="mobile-menu"
-        role="dialog"
-        aria-modal="true"
-        aria-label="Navigation menu"
-        inert={!mobileOpen}
-        className={`fixed top-0 right-0 bottom-0 z-50 w-72 bg-warm-white shadow-hover flex flex-col sm:hidden transition-transform duration-300 ${mobileOpen ? "translate-x-0" : "translate-x-full"}`}
-      >
-        <div className="flex items-center justify-between px-5 h-16 border-b border-cream-dark">
-          <span className="font-serif text-xl font-semibold text-primary">mise</span>
-          <button
-            type="button"
-            onClick={() => setMobileOpen(false)}
-            className="p-2 hover:bg-cream-dark dark:hover:bg-d-surface-raised rounded-lg"
-            aria-label="Close menu"
-          >
-            <XMarkIcon className="w-5 h-5" />
-          </button>
-        </div>
-        <nav className="flex-1 overflow-y-auto p-5 space-y-1">
-          <Authenticated>
-            <UserMenu onClose={() => setMobileOpen(false)} />
-          </Authenticated>
-          <Unauthenticated>
-            <GuestNav onClose={() => setMobileOpen(false)} />
-          </Unauthenticated>
-        </nav>
-        <div className="p-5 border-t border-cream-dark">
-          <nav className="flex gap-4 text-sm text-stone">
-            {FOOTER_LINKS.map(({ to, label }) => (
-              <Link
-                key={to}
-                to={to}
-                onClick={() => setMobileOpen(false)}
-                className="hover:text-primary transition-colors"
-              >
-                {label}
-              </Link>
-            ))}
+      <Dialog.Portal>
+        <Dialog.Backdrop className="fixed inset-0 z-40 bg-charcoal/30 backdrop-blur-sm sm:hidden data-[starting-style]:opacity-0 data-[ending-style]:opacity-0 transition-opacity duration-300" />
+        <Dialog.Popup className="fixed top-0 right-0 bottom-0 z-50 w-72 bg-warm-white shadow-hover flex flex-col sm:hidden transition-transform duration-300 data-[starting-style]:translate-x-full data-[ending-style]:translate-x-full">
+          <Dialog.Title className="sr-only">Navigation menu</Dialog.Title>
+          <div className="flex items-center justify-between px-5 h-16 border-b border-cream-dark">
+            <span className="font-serif text-xl font-semibold text-primary">mise</span>
+            <Dialog.Close
+              className="p-2 hover:bg-cream-dark dark:hover:bg-d-surface-raised rounded-lg"
+              aria-label="Close menu"
+            >
+              <XMarkIcon className="w-5 h-5" />
+            </Dialog.Close>
+          </div>
+          <nav className="flex-1 overflow-y-auto p-5 space-y-1">
+            <Authenticated>
+              <UserMenu onClose={closeMenu} />
+            </Authenticated>
+            <Unauthenticated>
+              <GuestNav onClose={closeMenu} />
+            </Unauthenticated>
           </nav>
-        </div>
-      </div>
-    </>
+          <div className="p-5 border-t border-cream-dark">
+            <nav className="flex gap-4 text-sm text-stone">
+              {FOOTER_LINKS.map(({ to, label }) => (
+                <Link key={to} to={to} onClick={closeMenu} className="hover:text-primary transition-colors">
+                  {label}
+                </Link>
+              ))}
+            </nav>
+          </div>
+        </Dialog.Popup>
+      </Dialog.Portal>
+    </Dialog.Root>
   );
 }
