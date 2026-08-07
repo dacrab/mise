@@ -42,6 +42,7 @@ export function getErrorMessage(err: unknown): string {
 
 export function safeRedirect(value?: string): string | undefined {
   if (!value) return undefined;
+  // Reject protocol-relative URLs (//host) to prevent open redirects
   return value.startsWith("/") && !value.startsWith("//") ? value : undefined;
 }
 
