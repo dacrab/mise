@@ -125,6 +125,7 @@ export function RecipeEditor({
   const [coverImage, setCoverImage] = useState<Id<"_storage"> | null>(initialData?.coverImage ?? null);
   const [coverImageUrl, setCoverImageUrl] = useState(initialData?.coverImageUrl ?? "");
 
+  // Ref carries the clicked action into the submit, which runs asynchronously after validation
   const pendingStatusRef = useRef<"draft" | "published" | null>(null);
 
   const {

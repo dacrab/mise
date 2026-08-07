@@ -33,6 +33,9 @@ A recipe sharing platform for home cooks. No ads, no algorithms — just good fo
 ```bash
 bun install
 
+# Set up secrets (via Doppler — or copy .env.example to .env)
+doppler setup
+
 # Terminal 1 — backend
 bunx convex dev
 

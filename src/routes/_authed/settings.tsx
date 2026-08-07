@@ -65,6 +65,7 @@ function Settings() {
   const previewUrlRef = useRef<string | null>(null);
 
   const userIdRef = useRef<string | undefined>(undefined);
+  // Populate the form once per user so query refetches don't clobber in-progress edits
   useEffect(() => {
     if (user && user._id !== userIdRef.current) {
       userIdRef.current = user._id;
@@ -194,7 +195,6 @@ function Settings() {
           <div className="grid lg:grid-cols-[1fr_320px] gap-8">
             {/* Left column */}
             <div className="space-y-10">
-              {/* Profile section */}
               <section className="space-y-6">
                 <h2 className="font-serif text-xl font-medium">Profile</h2>
                 <TextField
@@ -224,7 +224,6 @@ function Settings() {
                 />
               </section>
 
-              {/* Appearance section */}
               <section className="space-y-4">
                 <h2 className="font-serif text-xl font-medium">Appearance</h2>
                 <p className="text-sm text-stone">Choose how Mise looks to you.</p>
@@ -250,7 +249,6 @@ function Settings() {
                 </div>
               </section>
 
-              {/* Danger zone */}
               <section className="space-y-4 pt-6 border-t border-subtle">
                 <h2 className="font-serif text-xl font-medium text-terracotta">Danger zone</h2>
                 <div className="flex flex-col sm:flex-row gap-3">
@@ -284,7 +282,6 @@ function Settings() {
             {/* Right column — sidebar */}
             <aside className="lg:self-start">
               <div className="sticky top-24 space-y-6">
-                {/* Account info */}
                 <section className="rounded-xl surface-muted p-6 space-y-4">
                   <h3 className="text-xs font-semibold uppercase tracking-wider text-stone">Account</h3>
                   <dl className="space-y-4 text-sm">
@@ -305,7 +302,6 @@ function Settings() {
                   </dl>
                 </section>
 
-                {/* Quick stats */}
                 <section className="rounded-xl surface-muted p-6 space-y-4">
                   <h3 className="text-xs font-semibold uppercase tracking-wider text-stone">Your kitchen</h3>
                   <QuickStats />
