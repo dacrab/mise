@@ -1,21 +1,43 @@
 import { paginationOptsValidator } from "convex/server";
 import { type ObjectType, v } from "convex/values";
 import type { Id } from "./_generated/dataModel";
-import type { QueryCtx } from "./_generated/server";
+import type { MutationCtx, QueryCtx } from "./_generated/server";
 import { mutation, query } from "./_generated/server";
 import { getCurrentUser, requireUser } from "./lib/auth";
 import { generateAuthenticatedUploadUrl, withCoverUrl, withCoverUrls } from "./lib/storage";
 import { checkRateLimit } from "./rateLimit";
 
-export function generateSlug(title: string): string {
+/**
+ * Builds a deterministic URL slug from a recipe title. Pass an optional
+ * suffix (e.g. a collision counter) to disambiguate duplicates.
+ */
+export function generateSlug(title: string, suffix?: string): string {
   const base =
     title
       .toLowerCase()
       .replace(/[^a-z0-9]+/g, "-")
       .replace(/(^-|-$)+/g, "")
       .slice(0, 80) || "recipe";
-  const suffix = Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
-  return `${base}-${suffix}`;
+  return suffix ? `${base}-${suffix}` : base;
+}
+
+/**
+ * Returns a slug guaranteed to be unique against existing recipes by
+ * appending a counter suffix. Runs inside the calling mutation, so the
+ * check-and-insert cannot race (Convex retries the mutation on conflicts).
+ */
+async function generateUniqueSlug(ctx: MutationCtx, title: string): Promise<string> {
+  const base = generateSlug(title);
+  let counter = 0;
+  for (;;) {
+    const candidate = counter === 0 ? base : `${base}-${counter.toString(36)}`;
+    const existing = await ctx.db
+      .query("recipes")
+      .withIndex("by_slug", (q) => q.eq("slug", candidate))
+      .first();
+    if (!existing) return candidate;
+    counter++;
+  }
 }
 
 function publishedRecipesQuery(ctx: QueryCtx, category?: string) {
@@ -185,7 +207,7 @@ export const create = mutation({
     const user = await requireUser(ctx);
     await checkRateLimit(ctx, user._id, "recipe:create");
     assertPublishable(args);
-    const slug = generateSlug(args.title);
+    const slug = await generateUniqueSlug(ctx, args.title);
     const id = await ctx.db.insert("recipes", { ...args, slug, userId: user._id });
     return { id, slug };
   },

@@ -17,6 +17,7 @@ import { api } from "convex/_generated/api";
 import { Authenticated, Unauthenticated, useQuery } from "convex/react";
 import { useState } from "react";
 import { Avatar } from "@/components/ui/Primitives";
+import { useToast } from "@/components/ui/Toast";
 import { useTheme } from "@/hooks/useTheme";
 
 const FOOTER_LINKS = [
@@ -33,12 +34,15 @@ const USER_MENU_LINKS = [
 function UserMenu({ onClose }: { onClose?: () => void }) {
   const user = useQuery(api.users.currentUser);
   const { signOut } = useClerk();
+  const { toast } = useToast();
 
   const handleSignOut = async () => {
     onClose?.();
     try {
       await signOut({ redirectUrl: "/" });
-    } catch {}
+    } catch {
+      toast("Could not sign out", "error");
+    }
   };
 
   return (

@@ -35,6 +35,9 @@ export const updateProfile = mutation({
     const user = await requireUser(ctx);
 
     if (args.username) {
+      // Convex has no unique constraints / onConflict; the check-and-patch below
+      // is safe because it runs inside one mutation, which is retried when a
+      // concurrent claim of the same username writes a conflicting index entry.
       const existing = await ctx.db
         .query("users")
         .withIndex("by_username", (q) => q.eq("username", args.username))
