@@ -112,8 +112,9 @@ function IngredientScaler({ ingredients, defaultServings = 4 }: { ingredients: s
         )}
       </div>
       <ul className="space-y-2">
-        {scaled.map((ing) => (
-          <li key={ing} className="text-sm text-secondary flex gap-2">
+        {scaled.map((ing, i) => (
+          // biome-ignore lint/suspicious/noArrayIndexKey: ingredients may repeat, so value alone is not a unique key
+          <li key={`${ing}-${i}`} className="text-sm text-secondary flex gap-2">
             <span className="text-stone mt-0.5">·</span>
             <span>{ing}</span>
           </li>
@@ -167,6 +168,24 @@ function RecipeAuthor({
     );
   }
   return <div className="flex items-center gap-3">{content}</div>;
+}
+
+function MetaStatsBar({
+  recipe,
+  totalTime,
+}: {
+  recipe: { prepTime?: number | null; cookTime?: number | null; servings?: number | null; difficulty?: string | null };
+  totalTime: number;
+}) {
+  return (
+    <div className="flex flex-wrap justify-between gap-6 py-5 px-8 rounded-xl surface-muted">
+      {recipe.prepTime != null && <MetaStat icon={ClockIcon} label="Prep" value={`${recipe.prepTime}m`} />}
+      {recipe.cookTime != null && <MetaStat icon={FireIcon} label="Cook" value={`${recipe.cookTime}m`} />}
+      {totalTime > 0 && <MetaStat icon={ClockIcon} label="Total" value={`${totalTime}m`} />}
+      {recipe.servings != null && <MetaStat icon={UserGroupIcon} label="Serves" value={`${recipe.servings}`} />}
+      {recipe.difficulty && <MetaStat icon={FireIcon} label="Level" value={recipe.difficulty} />}
+    </div>
+  );
 }
 
 function RecipePage() {
@@ -241,15 +260,7 @@ function RecipePage() {
             )}
 
             {(recipe.prepTime != null || recipe.cookTime != null || recipe.servings != null || recipe.difficulty) && (
-              <div className="flex flex-wrap justify-between gap-6 py-5 px-8 rounded-xl surface-muted">
-                {recipe.prepTime != null && <MetaStat icon={ClockIcon} label="Prep" value={`${recipe.prepTime}m`} />}
-                {recipe.cookTime != null && <MetaStat icon={FireIcon} label="Cook" value={`${recipe.cookTime}m`} />}
-                {totalTime > 0 && <MetaStat icon={ClockIcon} label="Total" value={`${totalTime}m`} />}
-                {recipe.servings != null && (
-                  <MetaStat icon={UserGroupIcon} label="Serves" value={`${recipe.servings}`} />
-                )}
-                {recipe.difficulty && <MetaStat icon={FireIcon} label="Level" value={recipe.difficulty} />}
-              </div>
+              <MetaStatsBar recipe={recipe} totalTime={totalTime} />
             )}
           </div>
 
@@ -267,7 +278,8 @@ function RecipePage() {
               <h2 className="font-serif text-xl font-medium mb-8">Instructions</h2>
               <ol className="space-y-6">
                 {recipe.steps.map((step, i) => (
-                  <li key={step} className="flex gap-4">
+                  // biome-ignore lint/suspicious/noArrayIndexKey: steps may repeat, so value alone is not a unique key
+                  <li key={`${step}-${i}`} className="flex gap-4">
                     <div className="flex flex-col items-center">
                       <span className="w-8 h-8 step-number text-sm">{i + 1}</span>
                       {i < recipe.steps.length - 1 && <div className="step-line mt-2" />}

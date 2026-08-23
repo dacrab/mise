@@ -1,4 +1,5 @@
 import { Link } from "@tanstack/react-router";
+import { FOOTER_LINKS } from "@/lib/constants";
 
 export function Footer() {
   return (
@@ -10,15 +11,15 @@ export function Footer() {
             <p className="text-sm text-stone mt-2 max-w-xs">A place for home cooks to share recipes made with love.</p>
           </div>
           <nav className="flex flex-wrap gap-x-6 gap-y-2 text-sm">
-            <Link to="/about" className="text-stone hover:text-charcoal dark:hover:text-d-text transition-colors">
-              About
-            </Link>
-            <Link to="/privacy" className="text-stone hover:text-charcoal dark:hover:text-d-text transition-colors">
-              Privacy
-            </Link>
-            <Link to="/terms" className="text-stone hover:text-charcoal dark:hover:text-d-text transition-colors">
-              Terms
-            </Link>
+            {FOOTER_LINKS.map(({ to, label }) => (
+              <Link
+                key={to}
+                to={to}
+                className="text-stone hover:text-charcoal dark:hover:text-d-text transition-colors"
+              >
+                {label}
+              </Link>
+            ))}
             <a
               href="https://github.com/dacrab/mise"
               className="text-stone hover:text-charcoal dark:hover:text-d-text transition-colors"

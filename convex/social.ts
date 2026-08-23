@@ -1,13 +1,11 @@
 import { v } from "convex/values";
-import type { Doc, Id } from "./_generated/dataModel";
+import type { Id } from "./_generated/dataModel";
+import type { MutationCtx } from "./_generated/server";
 import { mutation } from "./_generated/server";
 import { requireUser } from "./lib/auth";
 import { checkRateLimit } from "./rateLimit";
 
-async function requirePublishedRecipe(
-  ctx: { db: { get: (id: Id<"recipes">) => Promise<Doc<"recipes"> | null> } },
-  recipeId: Id<"recipes">,
-) {
+async function requirePublishedRecipe(ctx: MutationCtx, recipeId: Id<"recipes">) {
   const recipe = await ctx.db.get(recipeId);
   if (recipe?.status !== "published") throw new Error("Recipe not found");
   return recipe;

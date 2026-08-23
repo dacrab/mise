@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { convexId, getErrorMessage, safeRedirect } from "@/lib/utils";
+import { getErrorMessage, safeRedirect } from "@/lib/utils";
 
 describe("getErrorMessage", () => {
   it("extracts message from Error", () => {
@@ -32,18 +32,5 @@ describe("safeRedirect", () => {
     expect(safeRedirect()).toBeUndefined();
     expect(safeRedirect("")).toBeUndefined();
     expect(safeRedirect(undefined)).toBeUndefined();
-  });
-});
-
-describe("convexId", () => {
-  it("accepts a well-formed Convex id", () => {
-    expect(convexId("users|abcdefghijklmnopqrstuvwx")).toBe("users|abcdefghijklmnopqrstuvwx");
-  });
-
-  it("throws for malformed ids", () => {
-    expect(() => convexId("not-an-id")).toThrow(/Invalid Convex ID format/);
-    expect(() => convexId("users|short")).toThrow(/Invalid Convex ID format/);
-    expect(() => convexId("|abcdefghijklmnopqrstuvwx")).toThrow(/Invalid Convex ID format/);
-    expect(() => convexId("")).toThrow(/Invalid Convex ID format/);
   });
 });

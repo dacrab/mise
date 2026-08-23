@@ -9,6 +9,8 @@ import { useEffect, useRef } from "react";
 import { ErrorPage } from "@/components/layout/PageLayout";
 import appCss from "../styles.css?url";
 
+const PAGE_TRANSITION_MS = 400;
+
 function RootComponent() {
   const { isLoading, location } = useRouterState();
   const wrapperRef = useRef<HTMLDivElement>(null);
@@ -29,7 +31,7 @@ function RootComponent() {
 
     const timer = setTimeout(() => {
       if (!cancelled) el.classList.remove("page-enter");
-    }, 400);
+    }, PAGE_TRANSITION_MS);
     return () => {
       cancelled = true;
       clearTimeout(timer);
@@ -41,6 +43,7 @@ function RootComponent() {
       <head>
         <HeadContent />
         <script
+          // biome-ignore lint/security/noDangerouslySetInnerHtml: static pre-hydration theme script, no user input
           dangerouslySetInnerHTML={{
             // Apply theme before React hydrates to avoid a flash of the wrong theme
             __html: `(function(){try{var t=localStorage.getItem("theme");var d=t==="dark"||(t!=="light"&&matchMedia("(prefers-color-scheme:dark)").matches);if(d)document.documentElement.classList.add("dark")}catch(e){}})()`,

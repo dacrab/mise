@@ -4,8 +4,12 @@ import type { Id } from "./_generated/dataModel";
 import type { MutationCtx, QueryCtx } from "./_generated/server";
 import { mutation, query } from "./_generated/server";
 import { getCurrentUser, requireUser } from "./lib/auth";
-import { generateAuthenticatedUploadUrl, withCoverUrl, withCoverUrls } from "./lib/storage";
+import { RECIPE_CATEGORIES } from "./lib/categories";
 import { checkRateLimit } from "./rateLimit";
+
+const MAX_RECIPES_PER_QUERY = 100;
+const MAX_BOOKMARKS_PER_QUERY = 100;
+const SITEMAP_SLUG_LIMIT = 1000;
 
 /**
  * Builds a deterministic URL slug from a recipe title. Pass an optional
@@ -40,6 +44,23 @@ async function generateUniqueSlug(ctx: MutationCtx, title: string): Promise<stri
   }
 }
 
+export async function withCoverUrl<T extends { coverImage?: Id<"_storage"> | null }>(
+  ctx: QueryCtx,
+  item: T,
+): Promise<T & { coverImageUrl: string | null }> {
+  return {
+    ...item,
+    coverImageUrl: item.coverImage ? await ctx.storage.getUrl(item.coverImage) : null,
+  };
+}
+
+async function withCoverUrls<T extends { coverImage?: Id<"_storage"> | null }>(
+  ctx: QueryCtx,
+  items: T[],
+): Promise<Array<T & { coverImageUrl: string | null }>> {
+  return Promise.all(items.map((item) => withCoverUrl(ctx, item)));
+}
+
 function publishedRecipesQuery(ctx: QueryCtx, category?: string) {
   return category
     ? ctx.db
@@ -52,7 +73,7 @@ function publishedRecipesQuery(ctx: QueryCtx, category?: string) {
 async function getRecipesByUser(ctx: QueryCtx, userId: Id<"users">, includeDrafts: boolean) {
   const base = ctx.db.query("recipes").withIndex("by_user", (q) => q.eq("userId", userId));
   const query = includeDrafts ? base : base.filter((q) => q.eq(q.field("status"), "published"));
-  const recipes = await query.order("desc").take(100);
+  const recipes = await query.order("desc").take(MAX_RECIPES_PER_QUERY);
   return withCoverUrls(ctx, recipes);
 }
 
@@ -67,7 +88,7 @@ export const listPaginated = query({
 export const list = query({
   args: { search: v.optional(v.string()), category: v.optional(v.string()), limit: v.optional(v.number()) },
   handler: async (ctx, { search, category, limit = 50 }) => {
-    const safeLimit = Math.min(limit, 100);
+    const safeLimit = Math.min(limit, MAX_RECIPES_PER_QUERY);
 
     const rows = search
       ? await ctx.db
@@ -91,7 +112,7 @@ export const listSlugs = query({
       .query("recipes")
       .withIndex("by_status", (q) => q.eq("status", "published"))
       .order("desc")
-      .take(1000);
+      .take(SITEMAP_SLUG_LIMIT);
     return recipes.map((r) => ({ slug: r.slug, updatedAt: r._creationTime }));
   },
 });
@@ -157,7 +178,7 @@ export const myBookmarks = query({
       .query("bookmarks")
       .withIndex("by_user", (q) => q.eq("userId", user._id))
       .order("desc")
-      .take(100);
+      .take(MAX_BOOKMARKS_PER_QUERY);
     const recipes = (await Promise.all(bookmarks.map((b) => ctx.db.get(b.recipeId)))).filter(
       (r): r is NonNullable<typeof r> => r !== null,
     );
@@ -181,7 +202,7 @@ export const getById = query({
 const recipeArgs = {
   title: v.string(),
   description: v.optional(v.string()),
-  category: v.string(),
+  category: v.union(...RECIPE_CATEGORIES.map((c) => v.literal(c))),
   ingredients: v.array(v.string()),
   steps: v.array(v.string()),
   coverImage: v.optional(v.id("_storage")),
@@ -221,7 +242,15 @@ export const update = mutation({
     const recipe = await ctx.db.get(id);
     if (!recipe || recipe.userId !== user._id) throw new Error("Not found");
     assertPublishable(args);
-    await ctx.db.patch(id, args);
+
+    // Slugs follow the title: any title change (draft or published) regenerates
+    // the slug. Old URLs break — there is no redirect infrastructure.
+    const slug = args.title === recipe.title ? recipe.slug : await generateUniqueSlug(ctx, args.title);
+
+    await ctx.db.patch(id, { ...args, slug });
+    if (recipe.coverImage && recipe.coverImage !== args.coverImage) {
+      await ctx.storage.delete(recipe.coverImage);
+    }
   },
 });
 
@@ -246,5 +275,8 @@ export const remove = mutation({
 
 export const generateUploadUrl = mutation({
   args: {},
-  handler: generateAuthenticatedUploadUrl,
+  handler: async (ctx) => {
+    await requireUser(ctx);
+    return ctx.storage.generateUploadUrl();
+  },
 });

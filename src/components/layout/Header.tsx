@@ -1,6 +1,5 @@
 import { Dialog } from "@base-ui-components/react/dialog";
 import { Menu } from "@base-ui-components/react/menu";
-import { useClerk } from "@clerk/tanstack-react-start";
 import {
   ArrowRightOnRectangleIcon,
   Bars3Icon,
@@ -17,14 +16,9 @@ import { api } from "convex/_generated/api";
 import { Authenticated, Unauthenticated, useQuery } from "convex/react";
 import { useState } from "react";
 import { Avatar } from "@/components/ui/Primitives";
-import { useToast } from "@/components/ui/Toast";
+import { useSignOut } from "@/hooks/useSignOut";
 import { useTheme } from "@/hooks/useTheme";
-
-const FOOTER_LINKS = [
-  { to: "/about", label: "About" },
-  { to: "/privacy", label: "Privacy" },
-  { to: "/terms", label: "Terms" },
-] as const;
+import { FOOTER_LINKS } from "@/lib/constants";
 
 const USER_MENU_LINKS = [
   { to: "/dashboard", label: "Dashboard", icon: HomeIcon },
@@ -33,16 +27,11 @@ const USER_MENU_LINKS = [
 
 function UserMenu({ onClose }: { onClose?: () => void }) {
   const user = useQuery(api.users.currentUser);
-  const { signOut } = useClerk();
-  const { toast } = useToast();
+  const signOut = useSignOut();
 
   const handleSignOut = async () => {
     onClose?.();
-    try {
-      await signOut({ redirectUrl: "/" });
-    } catch {
-      toast("Could not sign out", "error");
-    }
+    await signOut();
   };
 
   return (

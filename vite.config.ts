@@ -15,6 +15,8 @@ export default defineConfig(({ command }) => {
       alias: {
         "@/": `${resolve(import.meta.dirname!, "src")}/`,
         "convex/_generated/": `${resolve(import.meta.dirname!, "convex/_generated")}/`,
+        // Shared constants under convex/ must beat the npm `convex` package
+        "convex/lib/": `${resolve(import.meta.dirname!, "convex/lib")}/`,
       },
     },
     plugins: [
@@ -39,11 +41,6 @@ export default defineConfig(({ command }) => {
     build: {
       sourcemap: true,
       chunkSizeWarningLimit: 600,
-      rolldownOptions: {
-        checks: {
-          pluginTimings: false,
-        },
-      },
       rollupOptions: {
         onwarn(warning, warn) {
           if (warning.code === "MODULE_LEVEL_DIRECTIVE") return;

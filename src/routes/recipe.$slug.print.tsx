@@ -68,8 +68,9 @@ function PrintRecipe() {
       <section className="mb-8">
         <h2 className="text-xl font-semibold mb-4">Ingredients</h2>
         <ul className="space-y-2">
-          {recipe.ingredients.map((ing) => (
-            <li key={ing} className="flex items-start gap-2">
+          {recipe.ingredients.map((ing, i) => (
+            // biome-ignore lint/suspicious/noArrayIndexKey: ingredients may repeat, so value alone is not a unique key
+            <li key={`${ing}-${i}`} className="flex items-start gap-2">
               <span className="inline-block w-4 h-4 mt-0.5 border border-charcoal rounded-sm flex-shrink-0" />
               {ing}
             </li>
@@ -81,7 +82,8 @@ function PrintRecipe() {
         <h2 className="text-xl font-semibold mb-4">Instructions</h2>
         <ol className="space-y-4">
           {recipe.steps.map((step, i) => (
-            <li key={step} className="flex gap-4">
+            // biome-ignore lint/suspicious/noArrayIndexKey: steps may repeat, so value alone is not a unique key
+            <li key={`${step}-${i}`} className="flex gap-4">
               <span className="font-bold text-sage">{i + 1}.</span>
               <span>{step}</span>
             </li>

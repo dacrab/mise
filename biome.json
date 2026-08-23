@@ -1,5 +1,10 @@
 {
-  "$schema": "https://biomejs.dev/schemas/2.5.0/schema.json",
+  "$schema": "https://biomejs.dev/schemas/2.5.10/schema.json",
+  "vcs": {
+    "enabled": true,
+    "clientKind": "git",
+    "useIgnoreFile": true
+  },
   "files": {
     "includes": [
       "src/**",
@@ -45,55 +50,75 @@
     "enabled": true,
     "rules": {
       "preset": "recommended",
-      "style": {
-        "useConst": "error",
-        "useTemplate": "error",
-        "useSelfClosingElements": "warn",
-        "noUnusedTemplateLiteral": "error",
-        "noUselessElse": "error",
-        "useDefaultParameterLast": "error",
-        "useConsistentArrayType": { "level": "error", "options": { "syntax": "shorthand" } }
-      },
-      "suspicious": {
-        "noDoubleEquals": "error",
-        "noSelfCompare": "error",
-        "noRedeclare": "error",
-        "noExplicitAny": "error",
-        "noVar": "error",
-        "noConsole": "warn",
-        "noArrayIndexKey": "warn",
-        "noImplicitAnyLet": "warn"
-      },
-      "correctness": {
-        "noUnusedVariables": "error",
-        "noUnusedImports": "error",
-        "useHookAtTopLevel": "error",
-        "noUnreachable": "error",
-        "useExhaustiveDependencies": "warn"
-      },
       "a11y": {
         "noSvgWithoutTitle": "off",
         "useButtonType": "warn"
       },
-      "security": {
-        "noDangerouslySetInnerHtml": "off"
-      },
       "complexity": {
-        "noUselessRename": "error",
-        "noUselessTernary": "error",
-        "noUselessLoneBlockStatements": "error",
-        "useLiteralKeys": "off"
+        "noExcessiveCognitiveComplexity": {
+          "level": "warn",
+          "options": { "maxAllowedComplexity": 15 }
+        },
+        "noForEach": "off",
+        "noUselessUndefined": "error",
+        "useLiteralKeys": "off",
+        "useSimplifiedLogicExpression": "warn"
+      },
+      "correctness": {
+        "noUnusedFunctionParameters": "warn",
+        "noUnusedImports": "error",
+        "noUnusedVariables": "error",
+        "useExhaustiveDependencies": "warn",
+        "useHookAtTopLevel": "error"
+      },
+      "performance": {
+        "noAccumulatingSpread": "warn",
+        "noDelete": "warn"
+      },
+      "security": {
+        "noDangerouslySetInnerHtml": "warn"
+      },
+      "suspicious": {
+        "noArrayIndexKey": "warn",
+        "noCommentText": "off",
+        "noConsole": "warn",
+        "noDebugger": "error",
+        "noConfusingVoidType": "error",
+        "noDoubleEquals": "error",
+        "noExplicitAny": "error",
+        "noImplicitAnyLet": "warn",
+        "noMisleadingInstantiator": "error",
+        "noRedeclare": "error",
+        "noSelfCompare": "error",
+        "noVar": "error"
+      },
+      "style": {
+        "noNonNullAssertion": "warn",
+        "noParameterAssign": "error",
+        "noUselessElse": "error",
+        "noUnusedTemplateLiteral": "error",
+        "useCollapsedElseIf": "warn",
+        "useConsistentArrayType": { "level": "error", "options": { "syntax": "shorthand" } },
+        "useConsistentBuiltinInstantiation": "error",
+        "useConst": "error",
+        "useDefaultParameterLast": "error",
+        "useImportType": "error",
+        "useSelfClosingElements": "warn",
+        "useShorthandAssign": "error",
+        "useSingleVarDeclarator": "error",
+        "useTemplate": "error",
+        "useThrowOnlyError": "error"
       }
     }
   },
   "overrides": [
     {
-      "includes": ["tests/**"],
+      "includes": ["**/*.{test,spec}.{ts,tsx}", "tests/**"],
       "linter": {
         "rules": {
           "suspicious": {
-            "noExplicitAny": "warn",
-            "noConsole": "off"
+            "noConsole": "off",
+            "noExplicitAny": "warn"
           }
         }
       }

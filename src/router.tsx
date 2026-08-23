@@ -3,6 +3,7 @@ import { ConvexQueryClient } from "@convex-dev/react-query";
 import { QueryClient } from "@tanstack/react-query";
 import { createRouter } from "@tanstack/react-router";
 import { setupRouterSsrQueryIntegration } from "@tanstack/react-router-ssr-query";
+import { Authenticated, Unauthenticated } from "convex/react";
 import { ConvexProviderWithClerk } from "convex/react-clerk";
 import { ToastProvider } from "@/components/ui/Toast";
 import { BookmarksProvider } from "@/lib/bookmarks";
@@ -38,9 +39,15 @@ function createAppRouter() {
     Wrap: ({ children }) => (
       <ClerkProvider publishableKey={env("VITE_CLERK_PUBLISHABLE_KEY")}>
         <ConvexProviderWithClerk client={convexQueryClient.convexClient} useAuth={useAuth}>
-          <BookmarksProvider>
+          {/* Anonymous visitors skip the myBookmarks subscription entirely */}
+          <Authenticated>
+            <BookmarksProvider>
+              <ToastProvider>{children}</ToastProvider>
+            </BookmarksProvider>
+          </Authenticated>
+          <Unauthenticated>
             <ToastProvider>{children}</ToastProvider>
-          </BookmarksProvider>
+          </Unauthenticated>
         </ConvexProviderWithClerk>
       </ClerkProvider>
     ),

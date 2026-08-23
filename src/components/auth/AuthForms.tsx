@@ -193,7 +193,7 @@ export function LoginForm() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!signIn || !email || !password || isPending) return;
+    if (!(signIn && email && password) || isPending) return;
     setIsPending(true);
     try {
       const result = await signIn.create({ identifier: email, password });
@@ -236,7 +236,7 @@ export function LoginForm() {
         pending={isPending}
         pendingLabel="Signing in…"
         label="Sign in"
-        disabled={!email || !password || !isLoaded}
+        disabled={!(email && password && isLoaded)}
       />
     </form>
   );
@@ -259,7 +259,7 @@ export function SignupForm() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!signUp || !canSubmit) return;
+    if (!(signUp && canSubmit)) return;
     setIsPending(true);
     try {
       const result = await signUp.create({ emailAddress: email, password, firstName: name });
@@ -324,7 +324,7 @@ export function SignupForm() {
           </p>
         )}
       </div>
-      <SubmitButton pending={isPending} pendingLabel="Creating…" label="Sign up" disabled={!canSubmit || !isLoaded} />
+      <SubmitButton pending={isPending} pendingLabel="Creating…" label="Sign up" disabled={!(canSubmit && isLoaded)} />
     </form>
   );
 }
@@ -342,7 +342,7 @@ export function ForgotPasswordForm() {
 
   const handleRequestReset = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!signIn || !email.trim() || sendingCode) return;
+    if (!(signIn && email.trim()) || sendingCode) return;
     setSendingCode(true);
     try {
       const result = await signIn.create({ identifier: email });
@@ -361,7 +361,7 @@ export function ForgotPasswordForm() {
 
   const handleVerifyCode = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!signIn || !code.trim() || resetting) return;
+    if (!(signIn && code.trim()) || resetting) return;
     setResetting(true);
     try {
       const result = await signIn.resetPasswordEmailCode.verifyCode({ code });
@@ -370,6 +370,7 @@ export function ForgotPasswordForm() {
     } catch (err) {
       const message = err instanceof Error ? err.message : "Invalid or expired code. Please try again.";
       toast(message, "error");
+    } finally {
       setResetting(false);
     }
   };
@@ -415,7 +416,7 @@ export function ForgotPasswordForm() {
             pending={resetting}
             pendingLabel="Verifying…"
             label="Verify code"
-            disabled={!code.trim() || !isLoaded}
+            disabled={!(code.trim() && isLoaded)}
           />
         </form>
       </div>
@@ -471,7 +472,7 @@ export function ForgotPasswordForm() {
           pending={sendingCode}
           pendingLabel="Sending…"
           label="Send reset code"
-          disabled={!email.trim() || !isLoaded}
+          disabled={!(email.trim() && isLoaded)}
         />
       </form>
     </div>
