@@ -12,6 +12,7 @@
     "typecheck:convex": "tsc --noEmit -p convex/tsconfig.json",
     "test": "vitest run",
     "test:watch": "vitest",
+    "test:run": "vitest run",
     "test:coverage": "vitest run --coverage",
     "knip": "knip",
     "validate": "bun run typecheck && bun run typecheck:convex && bun run lint && bun run knip"
