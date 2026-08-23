@@ -1,5 +1,3 @@
-import type { Id, TableNames } from "convex/_generated/dataModel";
-
 const FRACTIONS: [number, string][] = [
   [0.125, "⅛"],
   [0.25, "¼"],
@@ -44,15 +42,4 @@ export function safeRedirect(value?: string): string | undefined {
   if (!value) return undefined;
   // Reject protocol-relative URLs (//host) to prevent open redirects
   return value.startsWith("/") && !value.startsWith("//") ? value : undefined;
-}
-
-function isConvexId(id: string): boolean {
-  return /^[a-z][a-z0-9]*\|[a-z0-9]{20,}$/.test(id);
-}
-
-export function convexId<T extends TableNames>(id: string): Id<T> {
-  if (!isConvexId(id)) {
-    throw new Error(`Invalid Convex ID format: ${id}`);
-  }
-  return id as Id<T>;
 }

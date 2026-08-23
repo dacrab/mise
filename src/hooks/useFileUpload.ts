@@ -1,5 +1,10 @@
 import type { Id } from "convex/_generated/dataModel";
 import { useEffect, useRef, useState } from "react";
+import { useToast } from "@/components/ui/Toast";
+import { MAX_IMAGE_BYTES } from "@/lib/constants";
+
+const INVALID_TYPE_MESSAGE = "Please select an image file";
+const TOO_LARGE_MESSAGE = `Image must be under ${MAX_IMAGE_BYTES / (1024 * 1024)}MB`;
 
 export function useFileUpload<TStorageId extends string = Id<"_storage">>(
   getUploadUrl: () => Promise<string>,
@@ -8,6 +13,7 @@ export function useFileUpload<TStorageId extends string = Id<"_storage">>(
     onError?: (err: Error) => void;
   } = {},
 ) {
+  const { toast } = useToast();
   const [uploading, setUploading] = useState(false);
   const [progress, setProgress] = useState(0);
   const abortRef = useRef<AbortController | null>(null);
@@ -20,6 +26,15 @@ export function useFileUpload<TStorageId extends string = Id<"_storage">>(
   );
 
   const upload = async (file: File): Promise<{ storageId: TStorageId; previewUrl: string } | null> => {
+    if (!file.type.startsWith("image/")) {
+      toast(INVALID_TYPE_MESSAGE, "error");
+      return null;
+    }
+    if (file.size > MAX_IMAGE_BYTES) {
+      toast(TOO_LARGE_MESSAGE, "error");
+      return null;
+    }
+
     abortRef.current = new AbortController();
     setUploading(true);
     setProgress(0);
@@ -65,5 +80,12 @@ export function useFileUpload<TStorageId extends string = Id<"_storage">>(
     }
   };
 
-  return { upload, uploading, progress };
+  const handleInputChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    e.target.value = "";
+    if (!file) return;
+    await upload(file);
+  };
+
+  return { upload, handleInputChange, uploading, progress };
 }

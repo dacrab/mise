@@ -1,4 +1,3 @@
-import { useClerk } from "@clerk/tanstack-react-start";
 import {
   ArrowRightOnRectangleIcon,
   CalendarIcon,
@@ -9,7 +8,7 @@ import {
   SunIcon,
   TrashIcon,
 } from "@heroicons/react/24/outline";
-import { createFileRoute, useNavigate } from "@tanstack/react-router";
+import { createFileRoute } from "@tanstack/react-router";
 import { api } from "convex/_generated/api";
 import type { Id } from "convex/_generated/dataModel";
 import { useMutation, useQuery } from "convex/react";
@@ -19,8 +18,9 @@ import { TextArea } from "@/components/ui/TextArea";
 import { TextField } from "@/components/ui/TextField";
 import { useToast } from "@/components/ui/Toast";
 import { useFileUpload } from "@/hooks/useFileUpload";
-import { useTheme } from "@/hooks/useTheme";
-import { APP_TITLE_SUFFIX, MAX_IMAGE_BYTES } from "@/lib/constants";
+import { useSignOut } from "@/hooks/useSignOut";
+import { type ThemePreference, useTheme } from "@/hooks/useTheme";
+import { APP_TITLE_SUFFIX } from "@/lib/constants";
 
 export const Route = createFileRoute("/_authed/settings")({
   head: () => ({
@@ -36,11 +36,11 @@ function Settings() {
   const user = useQuery(api.users.currentUser);
   const updateProfile = useMutation(api.users.updateProfile);
   const generateUploadUrl = useMutation(api.users.generateUploadUrl);
-  const { signOut } = useClerk();
-  const navigate = useNavigate();
+  const { toast } = useToast();
+  const signOut = useSignOut();
   const { preference, setTheme } = useTheme();
   const {
-    upload,
+    handleInputChange,
     uploading,
     progress: uploadProgress,
   } = useFileUpload(() => generateUploadUrl(), {
@@ -53,7 +53,6 @@ function Settings() {
     },
     onError: () => toast("Could not upload image", "error"),
   });
-  const { toast } = useToast();
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const [name, setName] = useState("");
@@ -120,75 +119,23 @@ function Settings() {
     return <div className="center min-h-[60vh] text-stone animate-pulse">Loading…</div>;
   }
 
-  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-    if (!file.type.startsWith("image/")) {
-      toast("Please select an image file", "error");
-      return;
-    }
-    if (file.size > MAX_IMAGE_BYTES) {
-      toast("Image must be under 5MB", "error");
-      return;
-    }
-    await upload(file);
-  };
-
   const handleSignOut = async () => {
-    try {
-      await signOut();
-      void navigate({ to: "/", replace: true });
-    } catch {
-      toast("Could not sign out", "error");
-    }
+    await signOut();
   };
 
   const avatar = previewUrl ?? user.profileImageUrl ?? user.image;
 
   return (
     <div className="min-h-[calc(100vh-4rem)]">
-      <div className="hero-banner py-12 px-5 sm:px-8">
-        <div className="max-w-5xl mx-auto flex items-center gap-6">
-          <div className="relative w-24 h-24 sm:w-28 sm:h-28 rounded-full overflow-hidden surface-raised shrink-0 ring-4 ring-cream/20">
-            {avatar ? (
-              <img src={avatar} alt="Profile" className="w-full h-full object-cover" />
-            ) : (
-              <div className="center w-full h-full text-3xl font-medium text-sage surface-raised">
-                {(name || "?")[0]}
-              </div>
-            )}
-            {uploading && (
-              <div className="absolute inset-0 bg-charcoal/70 flex items-center justify-center">
-                <span className="text-white text-xs font-bold">{uploadProgress}%</span>
-              </div>
-            )}
-            <label className="absolute inset-0 bg-charcoal/50 opacity-0 hover:opacity-100 transition-opacity flex items-center justify-center">
-              <CameraIcon className="w-6 h-6 text-white" />
-              <input
-                ref={fileInputRef}
-                type="file"
-                accept="image/*"
-                onChange={handleImageUpload}
-                className="hidden"
-                aria-label="Upload profile photo"
-              />
-            </label>
-          </div>
-          <div>
-            <h1 className="font-serif text-2xl sm:text-3xl font-medium text-cream">{name || "Chef"}</h1>
-            {username && <p className="text-sage-light text-sm mt-1">@{username}</p>}
-            <button
-              type="button"
-              onClick={() => fileInputRef.current?.click()}
-              disabled={uploading}
-              className="text-sm text-cream/70 hover:text-cream transition-colors mt-2"
-            >
-              {uploading ? "Uploading…" : "Change photo"}
-            </button>
-            {uploading && <ProgressBar value={uploadProgress} className="mt-2" />}
-          </div>
-        </div>
-      </div>
+      <ProfileHero
+        avatar={avatar}
+        name={name}
+        username={username}
+        uploading={uploading}
+        uploadProgress={uploadProgress}
+        fileInputRef={fileInputRef}
+        onInputChange={handleInputChange}
+      />
 
       <div className="max-w-5xl mx-auto px-5 sm:px-8 py-8">
         <form onSubmit={handleSubmit}>
@@ -211,7 +158,12 @@ function Settings() {
                   value={username}
                   onChange={(e) => setUsername(e.target.value.toLowerCase().replace(/[^a-z0-9_]/g, ""))}
                   placeholder="username"
-                  hint="Letters, numbers, and underscores only. This is your public profile URL."
+                  disabled={!!user.username}
+                  hint={
+                    user.username
+                      ? "Usernames are permanent and cannot be changed."
+                      : "Letters, numbers, and underscores only. This is your public profile URL."
+                  }
                 />
                 <TextArea
                   id="bio"
@@ -224,52 +176,12 @@ function Settings() {
                 />
               </section>
 
-              <section className="space-y-4">
-                <h2 className="font-serif text-xl font-medium">Appearance</h2>
-                <p className="text-sm text-stone">Choose how Mise looks to you.</p>
-                <div className="grid grid-cols-3 gap-3">
-                  <ThemeOption
-                    icon={SunIcon}
-                    label="Light"
-                    active={preference === "light"}
-                    onClick={() => setTheme("light")}
-                  />
-                  <ThemeOption
-                    icon={MoonIcon}
-                    label="Dark"
-                    active={preference === "dark"}
-                    onClick={() => setTheme("dark")}
-                  />
-                  <ThemeOption
-                    icon={ComputerDesktopIcon}
-                    label="System"
-                    active={preference === "system"}
-                    onClick={() => setTheme("system")}
-                  />
-                </div>
-              </section>
+              <AppearanceSection preference={preference} setTheme={setTheme} />
 
-              <section className="space-y-4 pt-6 border-t border-subtle">
-                <h2 className="font-serif text-xl font-medium text-terracotta">Danger zone</h2>
-                <div className="flex flex-col sm:flex-row gap-3">
-                  <button
-                    type="button"
-                    onClick={handleSignOut}
-                    className="flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg border border-field text-sm text-secondary hover:bg-cream-dark transition-colors"
-                  >
-                    <ArrowRightOnRectangleIcon className="w-4 h-4" />
-                    Sign out
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => toast("Account deletion is not yet available", "error")}
-                    className="flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg border border-terracotta/30 text-sm text-terracotta hover:bg-terracotta/5 transition-colors"
-                  >
-                    <TrashIcon className="w-4 h-4" />
-                    Delete account
-                  </button>
-                </div>
-              </section>
+              <DangerZone
+                onSignOut={() => void handleSignOut()}
+                onDeleteAccount={() => toast("Account deletion is not yet available", "error")}
+              />
 
               {/* Save — mobile */}
               <div className="lg:hidden flex justify-end pt-4">
@@ -324,6 +236,118 @@ function Settings() {
         </form>
       </div>
     </div>
+  );
+}
+
+function ProfileHero({
+  avatar,
+  name,
+  username,
+  uploading,
+  uploadProgress,
+  fileInputRef,
+  onInputChange,
+}: {
+  avatar: string | null | undefined;
+  name: string;
+  username: string;
+  uploading: boolean;
+  uploadProgress: number;
+  fileInputRef: React.RefObject<HTMLInputElement | null>;
+  onInputChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
+}) {
+  return (
+    <div className="hero-banner py-12 px-5 sm:px-8">
+      <div className="max-w-5xl mx-auto flex items-center gap-6">
+        <div className="relative w-24 h-24 sm:w-28 sm:h-28 rounded-full overflow-hidden surface-raised shrink-0 ring-4 ring-cream/20">
+          {avatar ? (
+            <img src={avatar} alt="Profile" className="w-full h-full object-cover" />
+          ) : (
+            <div className="center w-full h-full text-3xl font-medium text-sage surface-raised">{(name || "?")[0]}</div>
+          )}
+          {uploading && (
+            <div className="absolute inset-0 bg-charcoal/70 flex items-center justify-center">
+              <span className="text-white text-xs font-bold">{uploadProgress}%</span>
+            </div>
+          )}
+          <label className="absolute inset-0 bg-charcoal/50 opacity-0 hover:opacity-100 transition-opacity flex items-center justify-center">
+            <CameraIcon className="w-6 h-6 text-white" />
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept="image/*"
+              onChange={onInputChange}
+              className="hidden"
+              aria-label="Upload profile photo"
+            />
+          </label>
+        </div>
+        <div>
+          <h1 className="font-serif text-2xl sm:text-3xl font-medium text-cream">{name || "Chef"}</h1>
+          {username && <p className="text-sage-light text-sm mt-1">@{username}</p>}
+          <button
+            type="button"
+            onClick={() => fileInputRef.current?.click()}
+            disabled={uploading}
+            className="text-sm text-cream/70 hover:text-cream transition-colors mt-2"
+          >
+            {uploading ? "Uploading…" : "Change photo"}
+          </button>
+          {uploading && <ProgressBar value={uploadProgress} className="mt-2" />}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function AppearanceSection({
+  preference,
+  setTheme,
+}: {
+  preference: ThemePreference;
+  setTheme: (pref: ThemePreference) => void;
+}) {
+  return (
+    <section className="space-y-4">
+      <h2 className="font-serif text-xl font-medium">Appearance</h2>
+      <p className="text-sm text-stone">Choose how Mise looks to you.</p>
+      <div className="grid grid-cols-3 gap-3">
+        <ThemeOption icon={SunIcon} label="Light" active={preference === "light"} onClick={() => setTheme("light")} />
+        <ThemeOption icon={MoonIcon} label="Dark" active={preference === "dark"} onClick={() => setTheme("dark")} />
+        <ThemeOption
+          icon={ComputerDesktopIcon}
+          label="System"
+          active={preference === "system"}
+          onClick={() => setTheme("system")}
+        />
+      </div>
+    </section>
+  );
+}
+
+function DangerZone({ onSignOut, onDeleteAccount }: { onSignOut: () => void; onDeleteAccount: () => void }) {
+  return (
+    <section className="space-y-4 pt-6 border-t border-subtle">
+      <h2 className="font-serif text-xl font-medium text-terracotta">Danger zone</h2>
+      <div className="flex flex-col sm:flex-row gap-3">
+        <button
+          type="button"
+          onClick={onSignOut}
+          className="flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg border border-field text-sm text-secondary hover:bg-cream-dark transition-colors"
+        >
+          <ArrowRightOnRectangleIcon className="w-4 h-4" />
+          Sign out
+        </button>
+        <button
+          type="button"
+          onClick={onDeleteAccount}
+          className="flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg border border-terracotta/30 text-sm text-terracotta hover:bg-terracotta/5 transition-colors"
+        >
+          <TrashIcon className="w-4 h-4" />
+          Delete account
+        </button>
+      </div>
+    </section>
   );
 }
 

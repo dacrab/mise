@@ -1,29 +1,59 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useSyncExternalStore } from "react";
 
-type ThemePreference = "light" | "dark" | "system";
+export type ThemePreference = "light" | "dark" | "system";
 type ResolvedTheme = "light" | "dark";
 
+const THEME_KEY = "theme";
+const MEDIA_QUERY = "(prefers-color-scheme: dark)";
+
+const listeners = new Set<() => void>();
+
 function getSystemTheme(): ResolvedTheme {
-  return window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
+  return window.matchMedia(MEDIA_QUERY).matches ? "dark" : "light";
+}
+
+function resolveTheme(preference: ThemePreference): ResolvedTheme {
+  return preference === "system" ? getSystemTheme() : preference;
 }
 
 function applyTheme(resolved: ResolvedTheme) {
   document.documentElement.classList.toggle("dark", resolved === "dark");
 }
 
+function parsePreference(raw: string | null): ThemePreference {
+  return raw === "light" || raw === "dark" || raw === "system" ? raw : "system";
+}
+
+// Module-level store keeps every useTheme() instance (Header toggle, Settings
+// options) in sync; the storage event covers cross-tab changes.
+function subscribe(listener: () => void) {
+  listeners.add(listener);
+  window.addEventListener("storage", listener);
+  return () => {
+    listeners.delete(listener);
+    window.removeEventListener("storage", listener);
+  };
+}
+
+function getSnapshot(): ThemePreference {
+  return parsePreference(localStorage.getItem(THEME_KEY));
+}
+
+function getServerSnapshot(): ThemePreference {
+  return "system";
+}
+
 export function useTheme() {
-  const [preference, setPreferenceState] = useState<ThemePreference>("system");
+  const preference = useSyncExternalStore(subscribe, getSnapshot, getServerSnapshot);
 
   useEffect(() => {
-    const stored = localStorage.getItem("theme");
-    const pref: ThemePreference = stored === "light" || stored === "dark" || stored === "system" ? stored : "system";
-    const res = pref === "system" ? getSystemTheme() : pref;
-    setPreferenceState(pref);
-    applyTheme(res);
+    applyTheme(resolveTheme(preference));
+  }, [preference]);
 
-    const mq = window.matchMedia("(prefers-color-scheme: dark)");
+  useEffect(() => {
+    const mq = window.matchMedia(MEDIA_QUERY);
     const handler = () => {
-      if ((localStorage.getItem("theme") ?? "system") === "system") {
+      if (parsePreference(localStorage.getItem(THEME_KEY)) === "system") {
         applyTheme(getSystemTheme());
       }
     };
@@ -32,14 +62,13 @@ export function useTheme() {
   }, []);
 
   const setTheme = useCallback((pref: ThemePreference) => {
-    setPreferenceState(pref);
     if (pref === "system") {
-      localStorage.removeItem("theme");
-      applyTheme(getSystemTheme());
+      localStorage.removeItem(THEME_KEY);
     } else {
-      localStorage.setItem("theme", pref);
-      applyTheme(pref);
+      localStorage.setItem(THEME_KEY, pref);
     }
+    applyTheme(resolveTheme(pref));
+    for (const listener of listeners) listener();
   }, []);
 
   return { preference, setTheme };

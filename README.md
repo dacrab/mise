@@ -6,17 +6,17 @@ A recipe sharing platform for home cooks. No ads, no algorithms — just good fo
 
 ## Features
 
-- **Recipes** — create, edit, publish/draft, print view, cover images
+- **Recipes** — create, edit, autosave drafts, publish/draft, print view, cover images, servings scaler
 - **Browse** — paginated listing, category filters, full-text search
 - **Social** — bookmarks, chef profiles
 - **Auth** — email/password with session management
-- **Dark mode** — system-aware with manual toggle, persisted preference
+- **Dark mode** — system-aware with manual toggle, persisted preference, synced across all toggles and tabs
 - **SEO** — server-side rendering, sitemap, Open Graph meta tags
 
 ### Planned
 
 - Fork recipes, import from URL
-- Ingredient scaling, cooking timers
+- Cooking timers
 - Comments, star ratings
 - Follow chefs, notifications
 - Collections (organize bookmarks)
@@ -24,9 +24,9 @@ A recipe sharing platform for home cooks. No ads, no algorithms — just good fo
 
 ## Tech Stack
 
-- **Frontend**: React, TanStack Start (SSR), Tailwind CSS
-- **Backend**: Convex (database, auth, file storage, real-time)
-- **Testing**: Vitest, Playwright
+- **Frontend**: React, TanStack Start (SSR), Tailwind CSS, Base UI, react-hook-form + zod
+- **Backend**: Convex (database, auth via Clerk, file storage, real-time)
+- **Testing**: Vitest (unit)
 
 ## Getting Started
 
@@ -55,6 +55,24 @@ For production, set these in the [Convex dashboard](https://dashboard.convex.dev
 SITE_URL           # production URL
 ```
 
+## Behavior Notes
+
+**Slugs.** Recipe slugs are derived from the title. Any title change (draft or published) regenerates the slug with a uniqueness suffix on collision. Old URLs break after renames — there is no redirect infrastructure.
+
+**Usernames.** `^[a-z0-9_]{3,32}$`, enforced server-side and normalized to lowercase. Usernames are permanent once set (the settings field disables after the first save).
+
+**Categories.** The canonical list lives in `convex/lib/categories.ts` and drives the editor dropdown, browse-page chips, and mutation argument validation (a `v.union` of literals). Recipes stored before validation may hold legacy categories; they remain readable but must be re-categorized to save.
+
+**Autosave & rate limits.** Editing an existing recipe autosaves every 30s of activity. Saves with an unchanged payload are skipped client-side, so idle editing consumes no quota; the `recipe:update` limit is 120/hour. Creating recipes is limited to 10/hour, bookmark toggles to 60/hour.
+
+**Images.** Cover/profile uploads go through authenticated Convex storage URLs (5 MB max, image types only). Replacing an image deletes the previous storage object, so no orphans accumulate.
+
+**Theme.** Preference (`light`/`dark`/`system`) is persisted in `localStorage` and broadcast through a shared store, so the header toggle and settings options always agree, including across tabs. An inline pre-hydration script prevents flash of the wrong theme.
+
+**Bookmarks.** The bookmarks subscription only runs for signed-in visitors; anonymous users never open that query.
+
+**Imports.** Client code can import shared constants from `convex/lib/*` thanks to a dedicated Vite alias (`convex/lib/`) that takes precedence over the npm `convex` package. Regenerate Convex files with `bunx convex dev` after changing function signatures.
+
 ## Development
 
 ```bash
@@ -62,13 +80,13 @@ bun dev              # start dev server
 bun build            # production build
 bun start            # preview build
 
-bun typecheck        # check types
-bun lint             # lint code
+bun typecheck        # check types (app + convex)
+bun lint             # lint code (biome)
 bun lint:fix         # fix lint issues
 
-bun test             # run tests (watch mode)
-bun test:run         # run tests (CI)
+bun test             # run unit tests
 bun test:coverage    # test coverage
+bun knip             # detect unused exports/files
 ```
 
 ## License

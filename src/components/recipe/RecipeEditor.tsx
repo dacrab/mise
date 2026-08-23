@@ -3,21 +3,20 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { Link, useNavigate } from "@tanstack/react-router";
 import { api } from "convex/_generated/api";
 import type { Id } from "convex/_generated/dataModel";
-import { useMutation, useQuery } from "convex/react";
+import { useConvexAuth, useMutation } from "convex/react";
 import { useEffect, useRef, useState } from "react";
-import type { FieldError as RHFFieldError } from "react-hook-form";
+import type { Control, FieldErrors, FieldError as RHFFieldError, UseFormRegister } from "react-hook-form";
 import { Controller, useFieldArray, useForm, useWatch } from "react-hook-form";
 import { z } from "zod";
 import { ProgressBar } from "@/components/ui/Primitives";
 import { Select } from "@/components/ui/Select";
-import { TextField } from "@/components/ui/TextField";
 import { useToast } from "@/components/ui/Toast";
 import { useFileUpload } from "@/hooks/useFileUpload";
+import type { Category } from "@/lib/constants";
 import {
-  CATEGORIES as BASE_CATEGORIES,
+  CATEGORIES,
   DIFFICULTIES,
   MAX_COOK_MINUTES,
-  MAX_IMAGE_BYTES,
   MAX_PREP_MINUTES,
   MAX_SERVINGS,
   MIN_COOK_MINUTES,
@@ -26,7 +25,7 @@ import {
 } from "@/lib/constants";
 import { getErrorMessage } from "@/lib/utils";
 
-const CATEGORIES = ["General", ...BASE_CATEGORIES];
+const AUTOSAVE_DELAY_MS = 30_000;
 
 const numericStr = (min: number, max: number, minMsg: string, maxMsg: string) =>
   z
@@ -82,7 +81,7 @@ function buildPayload(
   return {
     title: data.title.trim() || "Untitled",
     description: data.description.trim() || undefined,
-    category: data.category || "General",
+    category: (data.category || "General") as Category,
     prepTime: data.prepTime ? Number(data.prepTime) : undefined,
     cookTime: data.cookTime ? Number(data.cookTime) : undefined,
     servings: data.servings ? Number(data.servings) : undefined,
@@ -92,6 +91,250 @@ function buildPayload(
     coverImage: coverImage ?? undefined,
     videoUrl: data.videoUrl.trim() || undefined,
   };
+}
+
+type EditorSidebarProps = {
+  register: UseFormRegister<RecipeFormData>;
+  errors: FieldErrors<RecipeFormData>;
+  control: Control<RecipeFormData>;
+};
+
+function EditorSidebar({ register, errors, control }: EditorSidebarProps) {
+  return (
+    <aside className="lg:self-start">
+      <div className="sticky top-[7.5rem] space-y-6">
+        <div className="card p-6 space-y-5">
+          <h3 className="font-serif text-base font-medium">Details</h3>
+          <div className="space-y-4">
+            <div>
+              <label htmlFor="recipe-category" className="label">
+                Category
+              </label>
+              <Controller
+                name="category"
+                control={control}
+                render={({ field }) => (
+                  <Select
+                    id="recipe-category"
+                    value={field.value}
+                    onChange={field.onChange}
+                    options={CATEGORIES.map((c) => ({ label: c, value: c }))}
+                    className="w-full"
+                  />
+                )}
+              />
+            </div>
+            <div>
+              <label htmlFor="recipe-difficulty" className="label">
+                Difficulty
+              </label>
+              <Controller
+                name="difficulty"
+                control={control}
+                render={({ field }) => (
+                  <Select
+                    id="recipe-difficulty"
+                    value={field.value}
+                    onChange={field.onChange}
+                    options={[{ label: "Select…", value: "" }, ...DIFFICULTIES.map((d) => ({ label: d, value: d }))]}
+                    className="w-full"
+                  />
+                )}
+              />
+            </div>
+          </div>
+        </div>
+
+        <div className="card p-6 space-y-5">
+          <h3 className="font-serif text-base font-medium">Timing & Servings</h3>
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <label htmlFor="recipe-prep-time" className="label text-xs">
+                Prep (min)
+              </label>
+              <input
+                id="recipe-prep-time"
+                type="number"
+                min={MIN_PREP_MINUTES}
+                max={MAX_PREP_MINUTES}
+                className="input-field text-sm py-2.5"
+                placeholder="15"
+                {...register("prepTime")}
+              />
+              <FieldError error={errors.prepTime} />
+            </div>
+            <div>
+              <label htmlFor="recipe-cook-time" className="label text-xs">
+                Cook (min)
+              </label>
+              <input
+                id="recipe-cook-time"
+                type="number"
+                min={MIN_COOK_MINUTES}
+                max={MAX_COOK_MINUTES}
+                className="input-field text-sm py-2.5"
+                placeholder="30"
+                {...register("cookTime")}
+              />
+              <FieldError error={errors.cookTime} />
+            </div>
+          </div>
+          <div>
+            <label htmlFor="recipe-servings" className="label text-xs">
+              Servings
+            </label>
+            <input
+              id="recipe-servings"
+              type="number"
+              min={MIN_SERVINGS}
+              max={MAX_SERVINGS}
+              className="input-field text-sm py-2.5"
+              placeholder="4"
+              {...register("servings")}
+            />
+            <FieldError error={errors.servings} />
+          </div>
+        </div>
+
+        <div className="card p-6 space-y-4">
+          <h3 className="font-serif text-base font-medium">Video</h3>
+          <div>
+            <label htmlFor="recipe-video" className="label">
+              Video URL
+            </label>
+            <input
+              id="recipe-video"
+              type="url"
+              placeholder="YouTube or TikTok URL"
+              className="input-field"
+              {...register("videoUrl")}
+            />
+            <FieldError error={errors.videoUrl} />
+          </div>
+        </div>
+      </div>
+    </aside>
+  );
+}
+
+function CoverUploader({
+  coverImageUrl,
+  uploading,
+  uploadProgress,
+  onInputChange,
+}: {
+  coverImageUrl: string;
+  uploading: boolean;
+  uploadProgress: number;
+  onInputChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
+}) {
+  return (
+    <div>
+      <div
+        className={`relative w-full rounded-xl overflow-hidden border-2 border-dashed transition-colors ${
+          coverImageUrl
+            ? "border-transparent aspect-[21/9]"
+            : "border-stone-light hover:border-sage bg-cream-dark dark:bg-d-surface-muted dark:border-d-border-strong dark:hover:border-sage aspect-[21/9]"
+        }`}
+      >
+        {coverImageUrl ? (
+          <>
+            <img src={coverImageUrl} className="w-full h-full object-cover" alt="Recipe cover preview" />
+            <div className="absolute inset-0 bg-gradient-to-t from-charcoal/60 via-transparent to-transparent" />
+            <label className="absolute bottom-4 right-4 btn-secondary text-xs px-3 py-1.5 cursor-pointer bg-warm-white/90 backdrop-blur-sm">
+              Change image
+              <input
+                type="file"
+                accept="image/*"
+                onChange={onInputChange}
+                className="hidden"
+                aria-label="Change cover image"
+              />
+            </label>
+          </>
+        ) : (
+          <label className="absolute inset-0 flex flex-col items-center justify-center cursor-pointer text-stone hover:text-sage transition-colors gap-2">
+            <PhotoIcon className="w-10 h-10" />
+            <span className="text-sm font-medium">Add a cover photo</span>
+            <span className="text-xs text-stone">Recommended: 1200×600px or wider</span>
+            <input
+              type="file"
+              accept="image/*"
+              onChange={onInputChange}
+              className="hidden"
+              aria-label="Upload cover image"
+            />
+          </label>
+        )}
+      </div>
+      {uploading && <ProgressBar value={uploadProgress} label="Uploading" />}
+    </div>
+  );
+}
+
+function missingForPublish(
+  status: "draft" | "published" | null,
+  ingredients: string[],
+  steps: string[],
+): string | null {
+  if (status !== "published") return null;
+  if (ingredients.length === 0) return "Add at least one ingredient";
+  if (steps.length === 0) return "Add at least one step";
+  return null;
+}
+
+function EditorHeader({
+  isEditing,
+  loading,
+  lastSaved,
+  onSaveDraft,
+  onPublish,
+}: {
+  isEditing: boolean;
+  loading: boolean;
+  lastSaved: Date | null;
+  onSaveDraft: () => void;
+  onPublish: () => void;
+}) {
+  return (
+    <div className="sticky top-16 z-30 glass border-b border-cream-dark dark:border-d-border">
+      <div className="max-w-7xl mx-auto px-5 sm:px-8 flex items-center justify-between h-14">
+        <div className="flex items-center gap-4">
+          <Link
+            to="/dashboard"
+            className="cursor-pointer text-stone hover:text-charcoal dark:hover:text-d-text transition-colors"
+            aria-label="Back to dashboard"
+          >
+            <ArrowLeftIcon className="w-5 h-5" />
+          </Link>
+          <h1 className="font-serif text-lg font-medium">{isEditing ? "Edit recipe" : "New recipe"}</h1>
+          {lastSaved && (
+            <span className="text-xs text-stone hidden sm:inline">
+              Saved {lastSaved.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
+            </span>
+          )}
+        </div>
+        <div className="flex items-center gap-2">
+          <button
+            type="button"
+            onClick={onSaveDraft}
+            disabled={loading}
+            className="btn-secondary text-sm px-4 py-2 cursor-pointer"
+          >
+            {loading ? "Saving…" : "Save draft"}
+          </button>
+          <button
+            type="button"
+            onClick={onPublish}
+            disabled={loading}
+            className="btn-primary text-sm px-4 py-2 cursor-pointer"
+          >
+            {loading ? "Saving…" : isEditing ? "Update" : "Publish"}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
 }
 
 export function RecipeEditor({
@@ -117,7 +360,7 @@ export function RecipeEditor({
   isEditing?: boolean;
 }) {
   const { toast } = useToast();
-  const user = useQuery(api.users.currentUser);
+  const { isLoading: isAuthLoading } = useConvexAuth();
   const navigate = useNavigate();
 
   const [loading, setLoading] = useState(false);
@@ -127,6 +370,7 @@ export function RecipeEditor({
 
   // Ref carries the clicked action into the submit, which runs asynchronously after validation
   const pendingStatusRef = useRef<"draft" | "published" | null>(null);
+  const lastSavedPayloadRef = useRef<string | null>(null);
 
   const {
     register,
@@ -173,7 +417,7 @@ export function RecipeEditor({
   const updateRecipe = useMutation(api.recipes.update);
 
   const {
-    upload,
+    handleInputChange,
     uploading,
     progress: uploadProgress,
   } = useFileUpload(() => generateUploadUrl(), {
@@ -187,23 +431,26 @@ export function RecipeEditor({
   });
 
   useEffect(() => {
-    if (!isEditing || !initialData?.id || !isDirty) return;
+    if (!(isEditing && initialData?.id && isDirty)) return;
     const recipeId = initialData.id;
     const recipeStatus = initialData.status ?? "draft";
     const timer = setTimeout(async () => {
       const vals = watchedValues as RecipeFormData;
+      const payload = {
+        ...buildPayload(vals, coverImage, unwrap(vals.ingredients), unwrap(vals.steps)),
+        status: recipeStatus,
+      };
+      const fingerprint = JSON.stringify(payload);
+      if (fingerprint === lastSavedPayloadRef.current) return;
       try {
-        await updateRecipe({
-          id: recipeId,
-          ...buildPayload(vals, coverImage, unwrap(vals.ingredients), unwrap(vals.steps)),
-          status: recipeStatus,
-        });
+        await updateRecipe({ id: recipeId, ...payload });
+        lastSavedPayloadRef.current = fingerprint;
         setLastSaved(new Date());
         reset({ ...vals });
       } catch {
         toast("Autosave failed", "error");
       }
-    }, 30_000);
+    }, AUTOSAVE_DELAY_MS);
     return () => clearTimeout(timer);
   }, [isEditing, initialData?.id, initialData?.status, isDirty, watchedValues, coverImage, updateRecipe, reset, toast]);
 
@@ -214,24 +461,9 @@ export function RecipeEditor({
     [coverImageUrl],
   );
 
-  if (user === undefined) {
+  if (isAuthLoading) {
     return <div className="center min-h-[60vh] text-stone animate-pulse">Loading…</div>;
   }
-
-  const handleUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    e.target.value = "";
-    if (!file) return;
-    if (!file.type.startsWith("image/")) {
-      toast("Please select an image file", "error");
-      return;
-    }
-    if (file.size > MAX_IMAGE_BYTES) {
-      toast("Image must be under 5MB", "error");
-      return;
-    }
-    await upload(file);
-  };
 
   const handleSubmit = async (data: RecipeFormData) => {
     const status = pendingStatusRef.current;
@@ -240,12 +472,9 @@ export function RecipeEditor({
     const validIngredients = unwrap(data.ingredients).filter(Boolean);
     const validSteps = unwrap(data.steps).filter(Boolean);
 
-    if (status === "published" && validIngredients.length === 0) {
-      toast("Add at least one ingredient", "error");
-      return;
-    }
-    if (status === "published" && validSteps.length === 0) {
-      toast("Add at least one step", "error");
+    const missing = missingForPublish(status, validIngredients, validSteps);
+    if (missing) {
+      toast(missing, "error");
       return;
     }
 
@@ -257,7 +486,7 @@ export function RecipeEditor({
         toast("Recipe updated!", "success");
       } else {
         await createRecipe(payload);
-        toast(status === "published" ? "Recipe published!" : "Draft saved!", "success");
+        toast("Recipe saved!", "success");
       }
       void navigate({ to: "/dashboard" });
     } catch (err) {
@@ -275,85 +504,23 @@ export function RecipeEditor({
 
   return (
     <div className="min-h-[calc(100vh-4rem)]">
-      <div className="sticky top-16 z-30 glass border-b border-cream-dark dark:border-d-border">
-        <div className="max-w-7xl mx-auto px-5 sm:px-8 flex items-center justify-between h-14">
-          <div className="flex items-center gap-4">
-            <Link
-              to="/dashboard"
-              className="cursor-pointer text-stone hover:text-charcoal dark:hover:text-d-text transition-colors"
-              aria-label="Back to dashboard"
-            >
-              <ArrowLeftIcon className="w-5 h-5" />
-            </Link>
-            <h1 className="font-serif text-lg font-medium">{isEditing ? "Edit recipe" : "New recipe"}</h1>
-            {lastSaved && (
-              <span className="text-xs text-stone hidden sm:inline">
-                Saved {lastSaved.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
-              </span>
-            )}
-          </div>
-          <div className="flex items-center gap-2">
-            <button
-              type="button"
-              onClick={() => triggerSubmit("draft")}
-              disabled={loading}
-              className="btn-secondary text-sm px-4 py-2 cursor-pointer"
-            >
-              {loading ? "Saving…" : "Save draft"}
-            </button>
-            <button
-              type="button"
-              onClick={() => triggerSubmit("published")}
-              disabled={loading}
-              className="btn-primary text-sm px-4 py-2 cursor-pointer"
-            >
-              {loading ? "Saving…" : isEditing ? "Update" : "Publish"}
-            </button>
-          </div>
-        </div>
-      </div>
+      <EditorHeader
+        isEditing={!!isEditing}
+        loading={loading}
+        lastSaved={lastSaved}
+        onSaveDraft={() => triggerSubmit("draft")}
+        onPublish={() => triggerSubmit("published")}
+      />
 
       <div className="max-w-7xl mx-auto px-5 sm:px-8 py-8">
         <div className="grid lg:grid-cols-[1fr_380px] gap-8">
           <div className="space-y-6">
-            <div
-              className={`relative w-full rounded-xl overflow-hidden border-2 border-dashed transition-colors ${
-                coverImageUrl
-                  ? "border-transparent aspect-[21/9]"
-                  : "border-stone-light hover:border-sage bg-cream-dark dark:bg-d-surface-muted dark:border-d-border-strong dark:hover:border-sage aspect-[21/9]"
-              }`}
-            >
-              {coverImageUrl ? (
-                <>
-                  <img src={coverImageUrl} className="w-full h-full object-cover" alt="Recipe cover preview" />
-                  <div className="absolute inset-0 bg-gradient-to-t from-charcoal/60 via-transparent to-transparent" />
-                  <label className="absolute bottom-4 right-4 btn-secondary text-xs px-3 py-1.5 cursor-pointer bg-warm-white/90 backdrop-blur-sm">
-                    Change image
-                    <input
-                      type="file"
-                      accept="image/*"
-                      onChange={handleUpload}
-                      className="hidden"
-                      aria-label="Change cover image"
-                    />
-                  </label>
-                </>
-              ) : (
-                <label className="absolute inset-0 flex flex-col items-center justify-center cursor-pointer text-stone hover:text-sage transition-colors gap-2">
-                  <PhotoIcon className="w-10 h-10" />
-                  <span className="text-sm font-medium">Add a cover photo</span>
-                  <span className="text-xs text-stone">Recommended: 1200×600px or wider</span>
-                  <input
-                    type="file"
-                    accept="image/*"
-                    onChange={handleUpload}
-                    className="hidden"
-                    aria-label="Upload cover image"
-                  />
-                </label>
-              )}
-            </div>
-            {uploading && <ProgressBar value={uploadProgress} label="Uploading" />}
+            <CoverUploader
+              coverImageUrl={coverImageUrl}
+              uploading={uploading}
+              uploadProgress={uploadProgress}
+              onInputChange={handleInputChange}
+            />
 
             <div>
               <input
@@ -461,119 +628,7 @@ export function RecipeEditor({
             </section>
           </div>
 
-          <aside className="lg:self-start">
-            <div className="sticky top-[7.5rem] space-y-6">
-              <div className="card p-6 space-y-5">
-                <h3 className="font-serif text-base font-medium">Details</h3>
-                <div className="space-y-4">
-                  <div>
-                    <label htmlFor="recipe-category" className="label">
-                      Category
-                    </label>
-                    <Controller
-                      name="category"
-                      control={control}
-                      render={({ field }) => (
-                        <Select
-                          id="recipe-category"
-                          value={field.value}
-                          onChange={field.onChange}
-                          options={CATEGORIES.map((c) => ({ label: c, value: c }))}
-                          className="w-full"
-                        />
-                      )}
-                    />
-                  </div>
-                  <div>
-                    <label htmlFor="recipe-difficulty" className="label">
-                      Difficulty
-                    </label>
-                    <Controller
-                      name="difficulty"
-                      control={control}
-                      render={({ field }) => (
-                        <Select
-                          id="recipe-difficulty"
-                          value={field.value}
-                          onChange={field.onChange}
-                          options={[
-                            { label: "Select…", value: "" },
-                            ...DIFFICULTIES.map((d) => ({ label: d, value: d })),
-                          ]}
-                          className="w-full"
-                        />
-                      )}
-                    />
-                  </div>
-                </div>
-              </div>
-
-              <div className="card p-6 space-y-5">
-                <h3 className="font-serif text-base font-medium">Timing & Servings</h3>
-                <div className="grid grid-cols-2 gap-3">
-                  <div>
-                    <label htmlFor="recipe-prep-time" className="label text-xs">
-                      Prep (min)
-                    </label>
-                    <input
-                      id="recipe-prep-time"
-                      type="number"
-                      min={MIN_PREP_MINUTES}
-                      max={MAX_PREP_MINUTES}
-                      className="input-field text-sm py-2.5"
-                      placeholder="15"
-                      {...register("prepTime")}
-                    />
-                    <FieldError error={errors.prepTime} />
-                  </div>
-                  <div>
-                    <label htmlFor="recipe-cook-time" className="label text-xs">
-                      Cook (min)
-                    </label>
-                    <input
-                      id="recipe-cook-time"
-                      type="number"
-                      min={MIN_COOK_MINUTES}
-                      max={MAX_COOK_MINUTES}
-                      className="input-field text-sm py-2.5"
-                      placeholder="30"
-                      {...register("cookTime")}
-                    />
-                    <FieldError error={errors.cookTime} />
-                  </div>
-                </div>
-                <div>
-                  <label htmlFor="recipe-servings" className="label text-xs">
-                    Servings
-                  </label>
-                  <input
-                    id="recipe-servings"
-                    type="number"
-                    min={MIN_SERVINGS}
-                    max={MAX_SERVINGS}
-                    className="input-field text-sm py-2.5"
-                    placeholder="4"
-                    {...register("servings")}
-                  />
-                  <FieldError error={errors.servings} />
-                </div>
-              </div>
-
-              <div className="card p-6 space-y-4">
-                <h3 className="font-serif text-base font-medium">Video</h3>
-                <div>
-                  <TextField
-                    id="recipe-video"
-                    label="Video URL"
-                    placeholder="YouTube or TikTok URL"
-                    type="url"
-                    {...register("videoUrl")}
-                  />
-                  <FieldError error={errors.videoUrl} />
-                </div>
-              </div>
-            </div>
-          </aside>
+          <EditorSidebar register={register} errors={errors} control={control} />
         </div>
       </div>
     </div>
