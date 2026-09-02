@@ -1,4 +1,4 @@
-import { Progress } from "@base-ui-components/react/progress";
+import { Progress } from "@base-ui/react/progress";
 
 const sizes = { sm: "w-8 h-8 text-xs", md: "w-10 h-10 text-sm", lg: "w-14 h-14 text-base" } as const;
 

@@ -18,7 +18,7 @@
     "validate": "bun run typecheck && bun run typecheck:convex && bun run lint && bun run knip"
   },
   "dependencies": {
-    "@base-ui-components/react": "^1.0.0-rc.0",
+    "@base-ui/react": "^1.0.0-rc.0",
     "@clerk/tanstack-react-start": "^1.1.0",
     "@convex-dev/react-query": "^0.1.0",
     "@heroicons/react": "^2.2.0",
