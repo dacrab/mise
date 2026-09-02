@@ -1,4 +1,4 @@
-import { Toast } from "@base-ui-components/react/toast";
+import { Toast } from "@base-ui/react/toast";
 import { CheckCircleIcon, ExclamationCircleIcon, InformationCircleIcon, XMarkIcon } from "@heroicons/react/24/outline";
 import { createContext, useCallback, useContext } from "react";
 
