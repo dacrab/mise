@@ -1,4 +1,4 @@
-import { Select as BaseSelect } from "@base-ui-components/react/select";
+import { Select as BaseSelect } from "@base-ui/react/select";
 import { CheckIcon, ChevronUpDownIcon } from "@heroicons/react/24/outline";
 
 export function Select({
