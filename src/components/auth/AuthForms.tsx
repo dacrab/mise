@@ -174,7 +174,33 @@ const SIGNUP_ERRORS_MAP: Record<string, string> = {
   default: "Could not create account. Please try again.",
 };
 
+const RESET_PASSWORD_ERRORS: Record<string, string> = {
+  form_identifier_not_found: "No account found with this email. Please sign up first.",
+  form_param_format_invalid__email_address: "Please enter a valid email address.",
+  form_code_incorrect: "That code is incorrect. Please double-check and try again.",
+  form_password_length_too_short: "Password must be at least 8 characters.",
+  form_password_validation_failed: "Please choose a stronger password.",
+  form_password_not_strong_enough: "Please choose a stronger password.",
+  form_password_size_in_bytes_exceeded: "That password is too long. Please choose a shorter one.",
+  form_password_pwned: "That password has appeared in a data breach. Please choose a different one.",
+  form_password_compromised__sign_in: "That password has appeared in a data breach. Please choose a different one.",
+  form_new_password_matches_current: "New password must be different from your current password.",
+  default: "Could not reset password. Please try again.",
+};
+
+function getClerkErrorCode(error: unknown): string | undefined {
+  if (typeof error !== "object" || error === null) return undefined;
+  const { code, errors } = error as { code?: unknown; errors?: unknown };
+  const first = Array.isArray(errors) ? errors[0] : undefined;
+  const firstCode = typeof first === "object" && first !== null ? (first as { code?: unknown }).code : undefined;
+  if (typeof firstCode === "string") return firstCode;
+  if (typeof code === "string") return code;
+  return undefined;
+}
+
 function mapAuthError(errors: Record<string, string>, error: unknown): string {
+  const code = getClerkErrorCode(error);
+  if (code && errors[code]) return errors[code];
   const msg = error instanceof Error ? error.message : String(error);
   return (
     Object.entries(errors).find(([key]) => key !== "default" && msg.includes(key))?.[1] ??
@@ -352,8 +378,7 @@ export function ForgotPasswordForm() {
       setStep("code");
       toast("Reset code sent to your email", "success");
     } catch (err) {
-      const message = err instanceof Error ? err.message : "Could not send reset code. Please try again.";
-      toast(message, "error");
+      toast(mapAuthError(RESET_PASSWORD_ERRORS, err), "error");
     } finally {
       setSendingCode(false);
     }
@@ -368,8 +393,7 @@ export function ForgotPasswordForm() {
       if (result?.error) throw result.error;
       setStep("password");
     } catch (err) {
-      const message = err instanceof Error ? err.message : "Invalid or expired code. Please try again.";
-      toast(message, "error");
+      toast(mapAuthError(RESET_PASSWORD_ERRORS, err), "error");
     } finally {
       setResetting(false);
     }
@@ -386,8 +410,7 @@ export function ForgotPasswordForm() {
       toast("Password reset successfully! Please sign in.", "success");
       await router.navigate({ to: "/login", replace: true });
     } catch (err) {
-      const message = err instanceof Error ? err.message : "Failed to reset password. Please try again.";
-      toast(message, "error");
+      toast(mapAuthError(RESET_PASSWORD_ERRORS, err), "error");
       setResetting(false);
     }
   };

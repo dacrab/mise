@@ -71,8 +71,6 @@ SITE_URL           # production URL
 
 **Bookmarks.** The bookmarks subscription only runs for signed-in visitors; anonymous users never open that query.
 
-**Imports.** Client code can import shared constants from `convex/lib/*` thanks to a dedicated Vite alias (`convex/lib/`) that takes precedence over the npm `convex` package. Regenerate Convex files with `bunx convex dev` after changing function signatures.
-
 ## Development
 
 ```bash

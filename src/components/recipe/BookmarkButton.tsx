@@ -2,7 +2,7 @@ import { BookmarkIcon as BookmarkOutlineIcon } from "@heroicons/react/24/outline
 import { BookmarkIcon as BookmarkSolidIcon } from "@heroicons/react/24/solid";
 import { api } from "convex/_generated/api";
 import type { Id } from "convex/_generated/dataModel";
-import { useQuery } from "convex/react";
+import { useConvexAuth, useQuery } from "convex/react";
 import { useCallback, useState } from "react";
 import { useToast } from "@/components/ui/Toast";
 import { useBookmarks } from "@/lib/bookmarks";
@@ -14,6 +14,7 @@ type BookmarkButtonProps = {
 
 export function BookmarkButton({ recipeId, variant = "page" }: BookmarkButtonProps) {
   const currentUser = useQuery(api.users.currentUser);
+  const { isAuthenticated } = useConvexAuth();
   const { bookmarkedIds, toggle } = useBookmarks();
   const { toast } = useToast();
   const [isPending, setIsPending] = useState(false);
@@ -25,11 +26,15 @@ export function BookmarkButton({ recipeId, variant = "page" }: BookmarkButtonPro
     try {
       await toggle(recipeId);
     } catch {
-      toast("Sign in to save recipes", "error");
+      if (!isAuthenticated) {
+        toast("Sign in to save recipes", "error");
+      } else {
+        toast("Could not save bookmark", "error");
+      }
     } finally {
       setIsPending(false);
     }
-  }, [recipeId, toggle, toast]);
+  }, [recipeId, toggle, toast, isAuthenticated]);
 
   if (variant === "card" && currentUser === null) return null;
 

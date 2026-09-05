@@ -95,7 +95,7 @@ function IngredientScaler({ ingredients, defaultServings = 4 }: { ingredients: s
         />
         <button
           type="button"
-          onClick={() => setServings(servings + 1)}
+          onClick={() => setServings(Math.min(MAX_SERVINGS, servings + 1))}
           className="w-8 h-8 rounded-lg surface-raised hover:bg-stone-light/50 dark:hover:bg-d-border flex items-center justify-center text-primary transition-colors"
           aria-label="Increase servings"
         >

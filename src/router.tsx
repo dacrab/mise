@@ -39,15 +39,13 @@ function createAppRouter() {
     Wrap: ({ children }) => (
       <ClerkProvider publishableKey={env("VITE_CLERK_PUBLISHABLE_KEY")}>
         <ConvexProviderWithClerk client={convexQueryClient.convexClient} useAuth={useAuth}>
-          {/* Anonymous visitors skip the myBookmarks subscription entirely */}
-          <Authenticated>
-            <BookmarksProvider>
-              <ToastProvider>{children}</ToastProvider>
-            </BookmarksProvider>
-          </Authenticated>
-          <Unauthenticated>
-            <ToastProvider>{children}</ToastProvider>
-          </Unauthenticated>
+          <ToastProvider>
+            {/* Anonymous visitors skip the myBookmarks subscription entirely */}
+            <Authenticated>
+              <BookmarksProvider>{children}</BookmarksProvider>
+            </Authenticated>
+            <Unauthenticated>{children}</Unauthenticated>
+          </ToastProvider>
         </ConvexProviderWithClerk>
       </ClerkProvider>
     ),
