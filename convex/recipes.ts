@@ -113,7 +113,9 @@ export const listSlugs = query({
       .withIndex("by_status", (q) => q.eq("status", "published"))
       .order("desc")
       .take(SITEMAP_SLUG_LIMIT);
-    return recipes.map((r) => ({ slug: r.slug, updatedAt: r._creationTime }));
+    // Recipes created before updatedAt existed fall back to creation time,
+    // which is a valid lastmod for never-edited pages.
+    return recipes.map((r) => ({ slug: r.slug, updatedAt: r.updatedAt ?? r._creationTime }));
   },
 });
 
@@ -247,7 +249,7 @@ export const update = mutation({
     // the slug. Old URLs break — there is no redirect infrastructure.
     const slug = args.title === recipe.title ? recipe.slug : await generateUniqueSlug(ctx, args.title);
 
-    await ctx.db.patch(id, { ...args, slug });
+    await ctx.db.patch(id, { ...args, slug, updatedAt: Date.now() });
     if (recipe.coverImage && recipe.coverImage !== args.coverImage) {
       await ctx.storage.delete(recipe.coverImage);
     }
@@ -273,10 +275,6 @@ export const remove = mutation({
   },
 });
 
-export const generateUploadUrl = mutation({
-  args: {},
-  handler: async (ctx) => {
-    await requireUser(ctx);
-    return ctx.storage.generateUploadUrl();
-  },
-});
+// Shared with users.ts (profile images) — defined once, re-exported so the
+// api.recipes.generateUploadUrl reference stays stable for existing callers.
+export { generateUploadUrl } from "./users";
