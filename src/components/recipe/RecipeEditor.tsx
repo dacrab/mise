@@ -12,7 +12,6 @@ import { ProgressBar } from "@/components/ui/Primitives";
 import { Select } from "@/components/ui/Select";
 import { useToast } from "@/components/ui/Toast";
 import { useFileUpload } from "@/hooks/useFileUpload";
-import type { Category } from "@/lib/constants";
 import {
   CATEGORIES,
   DIFFICULTIES,
@@ -36,7 +35,7 @@ const numericStr = (min: number, max: number, minMsg: string, maxMsg: string) =>
 const recipeSchema = z.object({
   title: z.string().min(1, "Please add a title").max(200, "Title must be under 200 characters"),
   description: z.string(),
-  category: z.string(),
+  category: z.enum(CATEGORIES),
   difficulty: z.string(),
   prepTime: numericStr(
     MIN_PREP_MINUTES,
@@ -81,7 +80,7 @@ function buildPayload(
   return {
     title: data.title.trim() || "Untitled",
     description: data.description.trim() || undefined,
-    category: (data.category || "General") as Category,
+    category: data.category,
     prepTime: data.prepTime ? Number(data.prepTime) : undefined,
     cookTime: data.cookTime ? Number(data.cookTime) : undefined,
     servings: data.servings ? Number(data.servings) : undefined,
@@ -376,6 +375,7 @@ export function RecipeEditor({
     register,
     control,
     handleSubmit: rhfHandleSubmit,
+    getValues,
     reset,
     formState: { errors, isDirty },
   } = useForm<RecipeFormData>({
@@ -383,7 +383,7 @@ export function RecipeEditor({
     defaultValues: {
       title: initialData?.title ?? "",
       description: initialData?.description ?? "",
-      category: initialData?.category ?? "General",
+      category: CATEGORIES.find((c) => c === initialData?.category) ?? "General",
       difficulty: initialData?.difficulty ?? "",
       prepTime: initialData?.prepTime != null ? String(initialData.prepTime) : "",
       cookTime: initialData?.cookTime != null ? String(initialData.cookTime) : "",
@@ -430,12 +430,15 @@ export function RecipeEditor({
     onError: () => toast("Could not upload image", "error"),
   });
 
+  // watchedValues re-arms the autosave timer on every form change (debounce
+  // signal); the values themselves are read fresh via getValues() at fire time.
+  // biome-ignore lint/correctness/useExhaustiveDependencies: watchedValues is the timer re-arm signal, not a direct body dependency
   useEffect(() => {
     if (!(isEditing && initialData?.id && isDirty)) return;
     const recipeId = initialData.id;
     const recipeStatus = initialData.status ?? "draft";
     const timer = setTimeout(async () => {
-      const vals = watchedValues as RecipeFormData;
+      const vals = getValues();
       const payload = {
         ...buildPayload(vals, coverImage, unwrap(vals.ingredients), unwrap(vals.steps)),
         status: recipeStatus,
@@ -452,7 +455,18 @@ export function RecipeEditor({
       }
     }, AUTOSAVE_DELAY_MS);
     return () => clearTimeout(timer);
-  }, [isEditing, initialData?.id, initialData?.status, isDirty, watchedValues, coverImage, updateRecipe, reset, toast]);
+  }, [
+    isEditing,
+    initialData?.id,
+    initialData?.status,
+    isDirty,
+    watchedValues,
+    coverImage,
+    updateRecipe,
+    reset,
+    getValues,
+    toast,
+  ]);
 
   useEffect(
     () => () => {

@@ -1,10 +1,13 @@
 import type { Id } from "convex/_generated/dataModel";
 import { useEffect, useRef, useState } from "react";
+import { z } from "zod";
 import { useToast } from "@/components/ui/Toast";
 import { MAX_IMAGE_BYTES } from "@/lib/constants";
 
 const INVALID_TYPE_MESSAGE = "Please select an image file";
 const TOO_LARGE_MESSAGE = `Image must be under ${MAX_IMAGE_BYTES / (1024 * 1024)}MB`;
+
+const uploadResponseSchema = z.object({ storageId: z.string().min(1) });
 
 export function useFileUpload<TStorageId extends string = Id<"_storage">>(
   getUploadUrl: () => Promise<string>,
@@ -51,8 +54,10 @@ export function useFileUpload<TStorageId extends string = Id<"_storage">>(
         xhr.onload = () => {
           if (xhr.status >= 200 && xhr.status < 300) {
             try {
-              const { storageId } = JSON.parse(xhr.responseText) as { storageId: string };
-              resolve(storageId as TStorageId);
+              const parsed = uploadResponseSchema.parse(JSON.parse(xhr.responseText));
+              // Justified cast: the schema guarantees a non-empty string and
+              // TStorageId is a branded string ("_storage" table id).
+              resolve(parsed.storageId as TStorageId);
             } catch {
               reject(new Error("Invalid upload response"));
             }

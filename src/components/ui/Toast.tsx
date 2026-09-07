@@ -29,7 +29,9 @@ function ToastViewport() {
   return (
     <Toast.Viewport className="fixed bottom-4 right-4 z-[100] flex flex-col-reverse gap-2 items-end pointer-events-none">
       {toasts.map((t) => {
-        const type = (t.type as ToastType) ?? "info";
+        // Runtime-check the loose `string | undefined` from the toast manager
+        // instead of casting; unknown types render as the neutral default.
+        const type: ToastType = t.type === "success" || t.type === "error" ? t.type : "info";
         const Icon = ICONS[type];
         return (
           <Toast.Root
