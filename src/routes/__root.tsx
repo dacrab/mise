@@ -2,6 +2,7 @@
 
 import * as Sentry from "@sentry/react";
 import type { QueryClient } from "@tanstack/react-query";
+import type { ErrorComponentProps } from "@tanstack/react-router";
 import { createRootRouteWithContext, HeadContent, Outlet, Scripts, useRouterState } from "@tanstack/react-router";
 import { Analytics } from "@vercel/analytics/react";
 import { SpeedInsights } from "@vercel/speed-insights/react";
@@ -67,14 +68,14 @@ function RootComponent() {
   );
 }
 
-function RootErrorComponent({ error }: { error: Error }) {
+function RootErrorComponent({ error }: ErrorComponentProps) {
   return (
     <html lang="en">
       <head>
         <HeadContent />
       </head>
       <body>
-        <ErrorPage title="Something went wrong" message={error.message || "Unexpected error"} />
+        <ErrorPage title="Something went wrong" message={error instanceof Error ? error.message : "Unexpected error"} />
         <Scripts />
       </body>
     </html>
