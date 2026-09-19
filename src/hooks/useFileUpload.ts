@@ -55,8 +55,7 @@ export function useFileUpload<TStorageId extends string = Id<"_storage">>(
           if (xhr.status >= 200 && xhr.status < 300) {
             try {
               const parsed = uploadResponseSchema.parse(JSON.parse(xhr.responseText));
-              // Justified cast: the schema guarantees a non-empty string and
-              // TStorageId is a branded string ("_storage" table id).
+              // Single brand promotion: Zod validates the wire value but can't carry the TStorageId brand.
               resolve(parsed.storageId as TStorageId);
             } catch {
               reject(new Error("Invalid upload response"));
