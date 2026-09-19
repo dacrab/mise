@@ -88,7 +88,7 @@ export const listPaginated = query({
 export const list = query({
   args: { search: v.optional(v.string()), category: v.optional(v.string()), limit: v.optional(v.number()) },
   handler: async (ctx, { search, category, limit = 50 }) => {
-    const safeLimit = Math.min(limit, MAX_RECIPES_PER_QUERY);
+    const safeLimit = Math.max(0, Math.min(limit, MAX_RECIPES_PER_QUERY));
 
     const rows = search
       ? await ctx.db
