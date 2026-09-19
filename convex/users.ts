@@ -33,7 +33,16 @@ export const getByUsername = query({
       .withIndex("by_username", (q) => q.eq("username", username))
       .first();
     if (!user) return null;
-    return withProfileImageUrl(ctx, user);
+    // Public profile: return display fields only. The raw document also carries
+    // `clerkId` and `email`, which every visitor must not be able to read.
+    return withProfileImageUrl(ctx, {
+      _id: user._id,
+      name: user.name,
+      username: user.username,
+      bio: user.bio,
+      image: user.image,
+      profileImage: user.profileImage,
+    });
   },
 });
 
@@ -48,21 +57,22 @@ export const updateProfile = mutation({
     const user = await requireUser(ctx);
     const patch = { ...args };
 
-    if (patch.username !== undefined) {
-      patch.username = patch.username.toLowerCase();
+    if (args.username !== undefined) {
+      const username = args.username.toLowerCase();
       // Convex has no unique constraints / onConflict; the check-and-patch below
       // is safe because it runs inside one mutation, which is retried when a
       // concurrent claim of the same username writes a conflicting index entry.
-      if (!USERNAME_PATTERN.test(patch.username)) {
+      if (!USERNAME_PATTERN.test(username)) {
         throw new ConvexError("Username must be 3-32 characters: lowercase letters, numbers, underscores");
       }
       const existing = await ctx.db
         .query("users")
-        .withIndex("by_username", (q) => q.eq("username", patch.username as string))
+        .withIndex("by_username", (q) => q.eq("username", username))
         .first();
       if (existing && existing._id !== user._id) {
         throw new ConvexError("Username already taken");
       }
+      patch.username = username;
     }
 
     await ctx.db.patch(user._id, patch);
