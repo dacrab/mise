@@ -4,6 +4,7 @@ import { Link, useRouter } from "@tanstack/react-router";
 import { useState } from "react";
 import { Spinner } from "@/components/ui/Primitives";
 import { useToast } from "@/components/ui/Toast";
+import { asRecord } from "@/lib/utils";
 
 const MIN_PASSWORD_LENGTH = 8;
 
@@ -189,10 +190,10 @@ const RESET_PASSWORD_ERRORS: Record<string, string> = {
 };
 
 function getClerkErrorCode(error: unknown): string | undefined {
-  if (typeof error !== "object" || error === null) return undefined;
-  const { code, errors } = error as { code?: unknown; errors?: unknown };
-  const first = Array.isArray(errors) ? errors[0] : undefined;
-  const firstCode = typeof first === "object" && first !== null ? (first as { code?: unknown }).code : undefined;
+  const record = asRecord(error);
+  if (!record) return undefined;
+  const { code, errors } = record;
+  const firstCode = asRecord(Array.isArray(errors) ? errors[0] : undefined)?.["code"];
   if (typeof firstCode === "string") return firstCode;
   if (typeof code === "string") return code;
   return undefined;
