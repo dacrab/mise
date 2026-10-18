@@ -36,7 +36,10 @@ function createAppRouter() {
     defaultPreload: "intent",
     context: { queryClient },
     scrollRestoration: true,
-    Wrap: ({ children }) => (
+    // InnerWrap (not Wrap) is required: ClerkProvider calls the router hooks
+    // useLocation/useNavigate via useAwaitableNavigate, and only InnerWrap is
+    // rendered with the router context available.
+    InnerWrap: ({ children }) => (
       <ClerkProvider publishableKey={env("VITE_CLERK_PUBLISHABLE_KEY")}>
         <ConvexProviderWithClerk client={convexQueryClient.convexClient} useAuth={useAuth}>
           <ToastProvider>
