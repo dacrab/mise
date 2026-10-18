@@ -9,30 +9,29 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
-import { Route as TermsRouteImport } from './routes/terms'
-import { Route as PrivacyRouteImport } from './routes/privacy'
-import { Route as AboutRouteImport } from './routes/about'
-import { Route as AuthedRouteImport } from './routes/_authed'
 import { Route as IndexRouteImport } from './routes/index'
-import { Route as RecipeSlugRouteImport } from './routes/recipe.$slug'
-import { Route as ChefUsernameRouteImport } from './routes/chef.$username'
-import { Route as AuthedSettingsRouteImport } from './routes/_authed/settings'
-import { Route as authSignupRouteImport } from './routes/(auth)/signup'
-import { Route as authLoginRouteImport } from './routes/(auth)/login'
+import { Route as AuthedRouteImport } from './routes/_authed'
+import { Route as AboutRouteImport } from './routes/about'
+import { Route as PrivacyRouteImport } from './routes/privacy'
+import { Route as TermsRouteImport } from './routes/terms'
 import { Route as authForgotPasswordRouteImport } from './routes/(auth)/forgot-password'
+import { Route as authLoginRouteImport } from './routes/(auth)/login'
+import { Route as authSignupRouteImport } from './routes/(auth)/signup'
+import { Route as AuthedSettingsRouteImport } from './routes/_authed/settings'
+import { Route as ChefUsernameRouteImport } from './routes/chef.$username'
+import { Route as RecipeSlugRouteImport } from './routes/recipe.$slug'
 import { Route as AuthedDashboardIndexRouteImport } from './routes/_authed/dashboard/index'
-import { Route as RecipeSlugPrintRouteImport } from './routes/recipe.$slug.print'
 import { Route as AuthedDashboardCreateRouteImport } from './routes/_authed/dashboard/create'
+import { Route as RecipeSlugPrintRouteImport } from './routes/recipe.$slug.print'
 import { Route as AuthedDashboardEditIdRouteImport } from './routes/_authed/dashboard/edit.$id'
 
-const TermsRoute = TermsRouteImport.update({
-  id: '/terms',
-  path: '/terms',
+const IndexRoute = IndexRouteImport.update({
+  id: '/',
+  path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
-const PrivacyRoute = PrivacyRouteImport.update({
-  id: '/privacy',
-  path: '/privacy',
+const AuthedRoute = AuthedRouteImport.update({
+  id: '/_authed',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AboutRoute = AboutRouteImport.update({
@@ -40,38 +39,14 @@ const AboutRoute = AboutRouteImport.update({
   path: '/about',
   getParentRoute: () => rootRouteImport,
 } as any)
-const AuthedRoute = AuthedRouteImport.update({
-  id: '/_authed',
+const PrivacyRoute = PrivacyRouteImport.update({
+  id: '/privacy',
+  path: '/privacy',
   getParentRoute: () => rootRouteImport,
 } as any)
-const IndexRoute = IndexRouteImport.update({
-  id: '/',
-  path: '/',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const RecipeSlugRoute = RecipeSlugRouteImport.update({
-  id: '/recipe/$slug',
-  path: '/recipe/$slug',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const ChefUsernameRoute = ChefUsernameRouteImport.update({
-  id: '/chef/$username',
-  path: '/chef/$username',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const AuthedSettingsRoute = AuthedSettingsRouteImport.update({
-  id: '/settings',
-  path: '/settings',
-  getParentRoute: () => AuthedRoute,
-} as any)
-const authSignupRoute = authSignupRouteImport.update({
-  id: '/(auth)/signup',
-  path: '/signup',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const authLoginRoute = authLoginRouteImport.update({
-  id: '/(auth)/login',
-  path: '/login',
+const TermsRoute = TermsRouteImport.update({
+  id: '/terms',
+  path: '/terms',
   getParentRoute: () => rootRouteImport,
 } as any)
 const authForgotPasswordRoute = authForgotPasswordRouteImport.update({
@@ -79,20 +54,45 @@ const authForgotPasswordRoute = authForgotPasswordRouteImport.update({
   path: '/forgot-password',
   getParentRoute: () => rootRouteImport,
 } as any)
+const authLoginRoute = authLoginRouteImport.update({
+  id: '/(auth)/login',
+  path: '/login',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const authSignupRoute = authSignupRouteImport.update({
+  id: '/(auth)/signup',
+  path: '/signup',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AuthedSettingsRoute = AuthedSettingsRouteImport.update({
+  id: '/settings',
+  path: '/settings',
+  getParentRoute: () => AuthedRoute,
+} as any)
+const ChefUsernameRoute = ChefUsernameRouteImport.update({
+  id: '/chef/$username',
+  path: '/chef/$username',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const RecipeSlugRoute = RecipeSlugRouteImport.update({
+  id: '/recipe/$slug',
+  path: '/recipe/$slug',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const AuthedDashboardIndexRoute = AuthedDashboardIndexRouteImport.update({
   id: '/dashboard/',
   path: '/dashboard/',
+  getParentRoute: () => AuthedRoute,
+} as any)
+const AuthedDashboardCreateRoute = AuthedDashboardCreateRouteImport.update({
+  id: '/dashboard/create',
+  path: '/dashboard/create',
   getParentRoute: () => AuthedRoute,
 } as any)
 const RecipeSlugPrintRoute = RecipeSlugPrintRouteImport.update({
   id: '/print',
   path: '/print',
   getParentRoute: () => RecipeSlugRoute,
-} as any)
-const AuthedDashboardCreateRoute = AuthedDashboardCreateRouteImport.update({
-  id: '/dashboard/create',
-  path: '/dashboard/create',
-  getParentRoute: () => AuthedRoute,
 } as any)
 const AuthedDashboardEditIdRoute = AuthedDashboardEditIdRouteImport.update({
   id: '/dashboard/edit/$id',
@@ -217,25 +217,11 @@ export interface RootRouteChildren {
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
-    '/terms': {
-      id: '/terms'
-      path: '/terms'
-      fullPath: '/terms'
-      preLoaderRoute: typeof TermsRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/privacy': {
-      id: '/privacy'
-      path: '/privacy'
-      fullPath: '/privacy'
-      preLoaderRoute: typeof PrivacyRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/about': {
-      id: '/about'
-      path: '/about'
-      fullPath: '/about'
-      preLoaderRoute: typeof AboutRouteImport
+    '/': {
+      id: '/'
+      path: '/'
+      fullPath: '/'
+      preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/_authed': {
@@ -245,46 +231,25 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthedRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/': {
-      id: '/'
-      path: '/'
-      fullPath: '/'
-      preLoaderRoute: typeof IndexRouteImport
+    '/about': {
+      id: '/about'
+      path: '/about'
+      fullPath: '/about'
+      preLoaderRoute: typeof AboutRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/recipe/$slug': {
-      id: '/recipe/$slug'
-      path: '/recipe/$slug'
-      fullPath: '/recipe/$slug'
-      preLoaderRoute: typeof RecipeSlugRouteImport
+    '/privacy': {
+      id: '/privacy'
+      path: '/privacy'
+      fullPath: '/privacy'
+      preLoaderRoute: typeof PrivacyRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/chef/$username': {
-      id: '/chef/$username'
-      path: '/chef/$username'
-      fullPath: '/chef/$username'
-      preLoaderRoute: typeof ChefUsernameRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/_authed/settings': {
-      id: '/_authed/settings'
-      path: '/settings'
-      fullPath: '/settings'
-      preLoaderRoute: typeof AuthedSettingsRouteImport
-      parentRoute: typeof AuthedRoute
-    }
-    '/(auth)/signup': {
-      id: '/(auth)/signup'
-      path: '/signup'
-      fullPath: '/signup'
-      preLoaderRoute: typeof authSignupRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/(auth)/login': {
-      id: '/(auth)/login'
-      path: '/login'
-      fullPath: '/login'
-      preLoaderRoute: typeof authLoginRouteImport
+    '/terms': {
+      id: '/terms'
+      path: '/terms'
+      fullPath: '/terms'
+      preLoaderRoute: typeof TermsRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/(auth)/forgot-password': {
@@ -294,11 +259,53 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof authForgotPasswordRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/(auth)/login': {
+      id: '/(auth)/login'
+      path: '/login'
+      fullPath: '/login'
+      preLoaderRoute: typeof authLoginRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/(auth)/signup': {
+      id: '/(auth)/signup'
+      path: '/signup'
+      fullPath: '/signup'
+      preLoaderRoute: typeof authSignupRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/_authed/settings': {
+      id: '/_authed/settings'
+      path: '/settings'
+      fullPath: '/settings'
+      preLoaderRoute: typeof AuthedSettingsRouteImport
+      parentRoute: typeof AuthedRoute
+    }
+    '/chef/$username': {
+      id: '/chef/$username'
+      path: '/chef/$username'
+      fullPath: '/chef/$username'
+      preLoaderRoute: typeof ChefUsernameRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/recipe/$slug': {
+      id: '/recipe/$slug'
+      path: '/recipe/$slug'
+      fullPath: '/recipe/$slug'
+      preLoaderRoute: typeof RecipeSlugRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/_authed/dashboard/': {
       id: '/_authed/dashboard/'
       path: '/dashboard'
       fullPath: '/dashboard/'
       preLoaderRoute: typeof AuthedDashboardIndexRouteImport
+      parentRoute: typeof AuthedRoute
+    }
+    '/_authed/dashboard/create': {
+      id: '/_authed/dashboard/create'
+      path: '/dashboard/create'
+      fullPath: '/dashboard/create'
+      preLoaderRoute: typeof AuthedDashboardCreateRouteImport
       parentRoute: typeof AuthedRoute
     }
     '/recipe/$slug/print': {
@@ -307,13 +314,6 @@ declare module '@tanstack/react-router' {
       fullPath: '/recipe/$slug/print'
       preLoaderRoute: typeof RecipeSlugPrintRouteImport
       parentRoute: typeof RecipeSlugRoute
-    }
-    '/_authed/dashboard/create': {
-      id: '/_authed/dashboard/create'
-      path: '/dashboard/create'
-      fullPath: '/dashboard/create'
-      preLoaderRoute: typeof AuthedDashboardCreateRouteImport
-      parentRoute: typeof AuthedRoute
     }
     '/_authed/dashboard/edit/$id': {
       id: '/_authed/dashboard/edit/$id'
