@@ -4,7 +4,7 @@ import { createFileRoute, Navigate, redirect } from "@tanstack/react-router";
 import { api } from "convex/_generated/api";
 import type { Id } from "convex/_generated/dataModel";
 import { RecipeEditor } from "@/components/recipe/RecipeEditor";
-import { pageHead } from "@/lib/head";
+import { pageHead } from "@/lib/route";
 
 /**
  * Convex document IDs are url-safe base64 strings (22 chars today). The

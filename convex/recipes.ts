@@ -115,8 +115,7 @@ export const listSlugs = query({
       .withIndex("by_status", (q) => q.eq("status", "published"))
       .order("desc")
       .take(SITEMAP_SLUG_LIMIT);
-    // Recipes created before updatedAt existed fall back to creation time,
-    // which is a valid lastmod for never-edited pages.
+    // Never-edited recipes have no updatedAt; creation time is a valid lastmod.
     return recipes.map((r) => ({ slug: r.slug, updatedAt: r.updatedAt ?? r._creationTime }));
   },
 });

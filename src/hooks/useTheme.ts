@@ -41,8 +41,7 @@ function parsePreference(raw: string | null): ThemePreference {
   return raw === "light" || raw === "dark" || raw === "system" ? raw : "system";
 }
 
-// Module-level store keeps every useTheme() instance (Header toggle, Settings
-// options) in sync; the storage event covers cross-tab changes.
+// Module-level store syncs every useTheme() instance; "storage" covers cross-tab changes.
 function subscribe(listener: () => void) {
   listeners.add(listener);
   window.addEventListener("storage", listener);
