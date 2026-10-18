@@ -27,7 +27,13 @@ export function AuthLayout({
         <p className={`${heroFooterClass} text-sm`}>&copy; {new Date().getFullYear()} mise</p>
       </div>
       <div className="center flex-1 p-8 bg-cream dark:bg-d-bg">
-        <div className="w-full max-w-md">{form}</div>
+        <div className="w-full max-w-md">
+          {/* The hero logo is hidden below lg, so small screens get their own. */}
+          <Link to="/" className="lg:hidden font-serif text-2xl font-semibold text-primary block mb-8">
+            mise
+          </Link>
+          {form}
+        </div>
       </div>
     </div>
   );

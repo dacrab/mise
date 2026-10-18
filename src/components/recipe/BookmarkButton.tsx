@@ -20,6 +20,8 @@ export function BookmarkButton({ recipeId, variant = "page" }: BookmarkButtonPro
   const [isPending, setIsPending] = useState(false);
 
   const isBookmarked = bookmarkedIds.has(recipeId);
+  const label = isBookmarked ? "Remove from saved" : "Save recipe";
+  const Icon = isBookmarked ? BookmarkSolidIcon : BookmarkOutlineIcon;
 
   const handleToggle = useCallback(async () => {
     setIsPending(true);
@@ -45,13 +47,13 @@ export function BookmarkButton({ recipeId, variant = "page" }: BookmarkButtonPro
         type="button"
         onClick={() => void handleToggle()}
         disabled={isPending}
-        aria-label={isBookmarked ? "Remove from saved" : "Save recipe"}
+        aria-label={label}
         aria-pressed={isBookmarked}
         className={`p-2 rounded-full shadow-sm transition-all duration-200 backdrop-blur-sm disabled:opacity-50 ${
           isBookmarked ? "bg-charcoal/80 text-honey" : "bg-black/40 text-white hover:bg-charcoal/80"
         }`}
       >
-        {isBookmarked ? <BookmarkSolidIcon className="w-4 h-4" /> : <BookmarkOutlineIcon className="w-4 h-4" />}
+        <Icon className="w-4 h-4" />
       </button>
     );
   }
@@ -61,7 +63,7 @@ export function BookmarkButton({ recipeId, variant = "page" }: BookmarkButtonPro
       type="button"
       onClick={() => void handleToggle()}
       disabled={isPending}
-      aria-label={isBookmarked ? "Remove from saved" : "Save recipe"}
+      aria-label={label}
       aria-pressed={isBookmarked}
       className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all ${
         isBookmarked
@@ -69,7 +71,7 @@ export function BookmarkButton({ recipeId, variant = "page" }: BookmarkButtonPro
           : "bg-cream-dark hover:bg-sage/10 text-stone hover:text-sage dark:bg-d-surface-raised dark:hover:bg-sage/10"
       }`}
     >
-      {isBookmarked ? <BookmarkSolidIcon className="w-4 h-4" /> : <BookmarkOutlineIcon className="w-4 h-4" />}
+      <Icon className="w-4 h-4" />
       {isBookmarked ? "Saved" : "Save"}
     </button>
   );

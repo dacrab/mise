@@ -4,6 +4,7 @@ import { api } from "convex/_generated/api";
 import type { Id } from "convex/_generated/dataModel";
 import { useMutation, useQuery } from "convex/react";
 import { useEffect, useRef, useState } from "react";
+import { EmptyState } from "@/components/ui/EmptyState";
 import { useToast } from "@/components/ui/Toast";
 import { useBookmarks } from "@/lib/bookmarks";
 
@@ -69,7 +70,7 @@ const TABS = [
 
 function DashboardSkeleton() {
   return (
-    <div className="max-w-6xl mx-auto px-5 py-8 animate-pulse">
+    <div className="wrapper py-8 animate-pulse">
       <div className="py-8 md:py-12 mb-8">
         <div className="h-5 w-24 surface-muted rounded mb-3" />
         <div className="h-9 w-64 surface-muted rounded mb-8" />
@@ -140,8 +141,14 @@ export function DashboardView() {
   const recipes = isSavedTab ? myBookmarks : myRecipes;
   const publishedCount = myRecipes.filter((r) => r.status === "published").length;
 
+  const stats = [
+    { label: "Total Recipes", value: myRecipes.length, accent: false, wide: false },
+    { label: "Published", value: publishedCount, accent: true, wide: false },
+    { label: "Bookmarked", value: myBookmarks.length, accent: false, wide: true },
+  ];
+
   return (
-    <div className="max-w-6xl mx-auto px-5 py-8">
+    <div className="wrapper py-8">
       <div className="py-8 md:py-12 mb-8">
         <div className="flex flex-col md:flex-row md:items-start justify-between gap-6 mb-8">
           <div>
@@ -157,18 +164,14 @@ export function DashboardView() {
         </div>
 
         <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
-          <div className="card p-5">
-            <p className="font-serif text-3xl font-medium text-primary">{myRecipes.length}</p>
-            <p className="text-sm text-stone mt-1">Total Recipes</p>
-          </div>
-          <div className="card p-5">
-            <p className="font-serif text-3xl font-medium text-sage">{publishedCount}</p>
-            <p className="text-sm text-stone mt-1">Published</p>
-          </div>
-          <div className="card p-5 col-span-2 sm:col-span-1">
-            <p className="font-serif text-3xl font-medium text-primary">{myBookmarks.length}</p>
-            <p className="text-sm text-stone mt-1">Bookmarked</p>
-          </div>
+          {stats.map((stat) => (
+            <div key={stat.label} className={`card p-5${stat.wide ? " col-span-2 sm:col-span-1" : ""}`}>
+              <p className={`font-serif text-3xl font-medium ${stat.accent ? "text-sage" : "text-primary"}`}>
+                {stat.value}
+              </p>
+              <p className="text-sm text-stone mt-1">{stat.label}</p>
+            </div>
+          ))}
         </div>
       </div>
 
@@ -199,34 +202,26 @@ export function DashboardView() {
       </nav>
 
       {recipes.length === 0 ? (
-        <div className="card p-16 text-center">
-          <div className="w-20 h-20 bg-sage/10 rounded-full flex items-center justify-center mx-auto mb-6">
-            {isSavedTab ? (
-              <BookmarkIcon className="w-9 h-9 text-sage" />
-            ) : (
-              <BookOpenIcon className="w-9 h-9 text-sage" />
-            )}
-          </div>
-          <h2 className="font-serif text-2xl font-medium mb-2">
-            {isSavedTab ? "Your bookshelf is empty" : "Start your recipe collection"}
-          </h2>
-          <p className="text-stone max-w-sm mx-auto mb-8">
-            {isSavedTab
+        <EmptyState
+          icon={isSavedTab ? BookmarkIcon : BookOpenIcon}
+          title={isSavedTab ? "Your bookshelf is empty" : "Start your recipe collection"}
+          description={
+            isSavedTab
               ? "When you find recipes you love, bookmark them and they'll be waiting here."
-              : "Every great chef starts with one recipe. Share yours with the world."}
-          </p>
-          {!isSavedTab && (
+              : "Every great chef starts with one recipe. Share yours with the world."
+          }
+        >
+          {isSavedTab ? (
+            <Link to="/" className="btn-secondary inline-flex items-center gap-2 text-sm">
+              Browse recipes
+            </Link>
+          ) : (
             <Link to="/dashboard/create" className="btn-primary inline-flex items-center gap-2">
               <PlusIcon className="w-4 h-4" />
               Create your first recipe
             </Link>
           )}
-          {isSavedTab && (
-            <Link to="/" className="btn-secondary inline-flex items-center gap-2 text-sm">
-              Browse recipes
-            </Link>
-          )}
-        </div>
+        </EmptyState>
       ) : (
         <div className="space-y-3">
           {recipes.map((recipe) => (

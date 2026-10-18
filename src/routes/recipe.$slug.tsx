@@ -12,7 +12,7 @@ import { Avatar, LoadingState } from "@/components/ui/Primitives";
 import { RouteError } from "@/components/ui/RouteError";
 import { useToast } from "@/components/ui/Toast";
 import { APP_TITLE_SUFFIX, MAX_SERVINGS, MIN_SERVINGS } from "@/lib/constants";
-import { scaleIngredient } from "@/lib/utils";
+import { avatarSource, scaleIngredient } from "@/lib/utils";
 
 export const Route = createFileRoute("/recipe/$slug")({
   loader: ({ params, context: { queryClient } }) =>
@@ -142,7 +142,7 @@ function RecipeAuthor({
   const content = (
     <>
       <Avatar
-        src={author?.profileImageUrl ?? author?.image}
+        src={avatarSource(author)}
         name={author?.name ?? "Chef"}
         size="md"
         className="ring-2 ring-cream-dark dark:ring-d-border"
@@ -226,7 +226,7 @@ function RecipePage() {
             </div>
           </div>
         ) : (
-          <div className="pt-12 pb-6 wrapper max-w-5xl">
+          <div className="pt-12 pb-6 wrapper-narrow">
             <span className="inline-block px-3 py-1 rounded-full bg-sage/10 text-sage text-xs font-medium mb-4">
               {recipe.category}
             </span>
@@ -236,7 +236,7 @@ function RecipePage() {
           </div>
         )}
 
-        <div className="max-w-5xl mx-auto px-5 sm:px-8">
+        <div className="wrapper-narrow">
           <div className="flex flex-wrap items-center justify-between gap-4 py-6 border-b border-subtle">
             <RecipeAuthor author={recipe.author} createdAt={recipe._creationTime} />
 
@@ -268,14 +268,14 @@ function RecipePage() {
             <aside className="lg:self-start">
               <div className="sticky top-24">
                 <div className="card p-6">
-                  <h2 className="font-serif text-xl font-medium mb-5">Ingredients</h2>
+                  <h2 className="section-title mb-5">Ingredients</h2>
                   <IngredientScaler ingredients={recipe.ingredients} defaultServings={recipe.servings ?? 4} />
                 </div>
               </div>
             </aside>
 
             <section>
-              <h2 className="font-serif text-xl font-medium mb-8">Instructions</h2>
+              <h2 className="section-title mb-8">Instructions</h2>
               <ol className="space-y-6">
                 {recipe.steps.map((step, i) => (
                   // biome-ignore lint/suspicious/noArrayIndexKey: steps may repeat, so value alone is not a unique key
@@ -285,7 +285,7 @@ function RecipePage() {
                       {i < recipe.steps.length - 1 && <div className="step-line mt-2" />}
                     </div>
                     <div className="pt-1 pb-2">
-                      <p className="text-charcoal-light dark:text-d-text-secondary leading-relaxed">{step}</p>
+                      <p className="text-secondary leading-relaxed">{step}</p>
                     </div>
                   </li>
                 ))}

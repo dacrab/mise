@@ -5,9 +5,9 @@ import { api } from "convex/_generated/api";
 import type { Id } from "convex/_generated/dataModel";
 import { useConvexAuth, useMutation } from "convex/react";
 import { useEffect, useRef, useState } from "react";
-import type { FieldError as RHFFieldError } from "react-hook-form";
 import { Controller, FormProvider, useFieldArray, useForm, useFormContext, useWatch } from "react-hook-form";
 import { z } from "zod";
+import { FieldError } from "@/components/ui/Field";
 import { LoadingState, ProgressBar } from "@/components/ui/Primitives";
 import { Select } from "@/components/ui/Select";
 import { useToast } from "@/components/ui/Toast";
@@ -65,15 +65,6 @@ const recipeSchema = z.object({
 type RecipeFormData = z.infer<typeof recipeSchema>;
 
 const unwrap = (arr?: Array<{ value?: string }>) => (arr ?? []).map((x) => x.value ?? "");
-
-function FieldError({ id, error }: { id: string; error?: RHFFieldError | { message?: string } }) {
-  if (!error?.message) return null;
-  return (
-    <p id={id} className="text-xs text-terracotta mt-1">
-      {error.message}
-    </p>
-  );
-}
 
 function buildPayload(
   data: RecipeFormData,
@@ -309,13 +300,9 @@ function EditorHeader({
 }) {
   return (
     <div className="sticky top-16 z-30 glass border-b border-cream-dark dark:border-d-border">
-      <div className="max-w-7xl mx-auto px-5 sm:px-8 flex items-center justify-between h-14">
+      <div className="wrapper-wide flex items-center justify-between h-14">
         <div className="flex items-center gap-4">
-          <Link
-            to="/dashboard"
-            className="cursor-pointer text-stone hover:text-charcoal dark:hover:text-d-text transition-colors"
-            aria-label="Back to dashboard"
-          >
+          <Link to="/dashboard" className="link-muted cursor-pointer" aria-label="Back to dashboard">
             <ArrowLeftIcon className="w-5 h-5" />
           </Link>
           <h1 className="font-serif text-lg font-medium">{isEditing ? "Edit recipe" : "New recipe"}</h1>
@@ -541,7 +528,7 @@ export function RecipeEditor({
           onPublish={() => triggerSubmit("published")}
         />
 
-        <div className="max-w-7xl mx-auto px-5 sm:px-8 py-8">
+        <div className="wrapper-wide py-8">
           <div className="grid lg:grid-cols-[1fr_380px] gap-8">
             <div className="space-y-6">
               <CoverUploader
@@ -569,7 +556,7 @@ export function RecipeEditor({
               <div>
                 <textarea
                   id="recipe-description"
-                  className="w-full bg-transparent border-none outline-none placeholder:text-stone text-charcoal-light resize-none focus:ring-0 text-base leading-relaxed dark:text-d-text-secondary"
+                  className="w-full bg-transparent border-none outline-none placeholder:text-stone text-secondary resize-none focus:ring-0 text-base leading-relaxed"
                   placeholder="Write a short intro — what inspired this dish, what makes it special…"
                   rows={3}
                   aria-label="Description"
@@ -582,7 +569,7 @@ export function RecipeEditor({
 
               <section className="card p-6 space-y-4">
                 <div className="flex items-center justify-between">
-                  <h2 className="font-serif text-xl font-medium">Ingredients</h2>
+                  <h2 className="section-title">Ingredients</h2>
                   <span className="text-xs text-stone">
                     {ingredientFields.filter((_, i) => watchedValues.ingredients?.[i]?.value).length} items
                   </span>
@@ -611,7 +598,7 @@ export function RecipeEditor({
                 </div>
                 <button
                   onClick={() => appendIngredient({ value: "" })}
-                  className="flex items-center gap-2 text-sm font-medium text-sage hover:text-sage-light transition-colors pt-2"
+                  className="flex items-center gap-2 text-sm font-medium link-sage pt-2"
                   type="button"
                 >
                   <PlusIcon className="w-4 h-4" />
@@ -621,7 +608,7 @@ export function RecipeEditor({
 
               <section className="card p-6 space-y-4">
                 <div className="flex items-center justify-between">
-                  <h2 className="font-serif text-xl font-medium">Instructions</h2>
+                  <h2 className="section-title">Instructions</h2>
                   <span className="text-xs text-stone">
                     {stepFields.filter((_, i) => watchedValues.steps?.[i]?.value).length} steps
                   </span>
@@ -654,7 +641,7 @@ export function RecipeEditor({
                 </div>
                 <button
                   onClick={() => appendStep({ value: "" })}
-                  className="flex items-center gap-2 text-sm font-medium text-sage hover:text-sage-light transition-colors"
+                  className="flex items-center gap-2 text-sm font-medium link-sage"
                   type="button"
                 >
                   <PlusIcon className="w-4 h-4" />

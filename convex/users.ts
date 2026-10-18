@@ -3,7 +3,9 @@ import { internal } from "./_generated/api";
 import type { Id } from "./_generated/dataModel";
 import type { QueryCtx } from "./_generated/server";
 import { action, internalMutation, mutation, query } from "./_generated/server";
-import { getCurrentUser, requireUser } from "./lib/auth";
+import { findUserByClerkId, getCurrentUser, requireUser } from "./lib/auth";
+import { storageUrl } from "./lib/media";
+import { deleteRecipeCascade } from "./lib/recipes";
 
 const USERNAME_PATTERN = /^[a-z0-9_]{3,32}$/;
 
@@ -13,7 +15,7 @@ async function withProfileImageUrl<T extends { profileImage?: Id<"_storage"> | n
 ): Promise<T & { profileImageUrl: string | null }> {
   return {
     ...user,
-    profileImageUrl: user.profileImage ? await ctx.storage.getUrl(user.profileImage) : null,
+    profileImageUrl: await storageUrl(ctx, user.profileImage),
   };
 }
 
@@ -128,10 +130,7 @@ export const deleteAccount = action({
 export const deleteAccountData = internalMutation({
   args: { clerkId: v.string() },
   handler: async (ctx, { clerkId }) => {
-    const user = await ctx.db
-      .query("users")
-      .withIndex("by_clerkId", (q) => q.eq("clerkId", clerkId))
-      .first();
+    const user = await findUserByClerkId(ctx, clerkId);
     if (!user) return;
 
     // Recipes the user authored, plus bookmarks other users left on them.
@@ -139,15 +138,7 @@ export const deleteAccountData = internalMutation({
       .query("recipes")
       .withIndex("by_user", (q) => q.eq("userId", user._id))
       .collect();
-    for (const recipe of recipes) {
-      const recipeBookmarks = await ctx.db
-        .query("bookmarks")
-        .withIndex("by_recipe", (q) => q.eq("recipeId", recipe._id))
-        .collect();
-      for (const bookmark of recipeBookmarks) await ctx.db.delete(bookmark._id);
-      if (recipe.coverImage) await ctx.storage.delete(recipe.coverImage);
-      await ctx.db.delete(recipe._id);
-    }
+    for (const recipe of recipes) await deleteRecipeCascade(ctx, recipe);
 
     // Bookmarks the user saved on other people's recipes.
     const savedBookmarks = await ctx.db

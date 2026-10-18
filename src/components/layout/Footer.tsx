@@ -12,18 +12,11 @@ export function Footer() {
           </div>
           <nav className="flex flex-wrap gap-x-6 gap-y-2 text-sm">
             {FOOTER_LINKS.map(({ to, label }) => (
-              <Link
-                key={to}
-                to={to}
-                className="text-stone hover:text-charcoal dark:hover:text-d-text transition-colors"
-              >
+              <Link key={to} to={to} className="link-muted">
                 {label}
               </Link>
             ))}
-            <a
-              href="https://github.com/dacrab/mise"
-              className="text-stone hover:text-charcoal dark:hover:text-d-text transition-colors"
-            >
+            <a href="https://github.com/dacrab/mise" className="link-muted">
               GitHub
             </a>
           </nav>

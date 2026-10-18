@@ -1,7 +1,24 @@
+import { ComputerDesktopIcon, MoonIcon, SunIcon } from "@heroicons/react/24/outline";
 import { useCallback, useEffect, useSyncExternalStore } from "react";
 
 export type ThemePreference = "light" | "dark" | "system";
 type ResolvedTheme = "light" | "dark";
+
+/** Selectable themes, in cycle order. Shared by the header toggle and settings. */
+export const THEME_OPTIONS = [
+  { value: "light", label: "Light", ariaLabel: "Light mode", icon: SunIcon },
+  { value: "dark", label: "Dark", ariaLabel: "Dark mode", icon: MoonIcon },
+  { value: "system", label: "System", ariaLabel: "System theme", icon: ComputerDesktopIcon },
+] as const;
+
+export function themeOption(preference: ThemePreference) {
+  return THEME_OPTIONS.find((option) => option.value === preference) ?? THEME_OPTIONS[0];
+}
+
+export function nextTheme(preference: ThemePreference): ThemePreference {
+  const index = THEME_OPTIONS.findIndex((option) => option.value === preference);
+  return THEME_OPTIONS[(index + 1) % THEME_OPTIONS.length]?.value ?? "light";
+}
 
 const THEME_KEY = "theme";
 const MEDIA_QUERY = "(prefers-color-scheme: dark)";

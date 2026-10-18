@@ -1,4 +1,5 @@
 import { isNotFound, Link, useRouter } from "@tanstack/react-router";
+import type { ReactNode } from "react";
 import { PageLayout } from "@/components/layout/PageLayout";
 
 interface RouteErrorProps {
@@ -6,40 +7,43 @@ interface RouteErrorProps {
   reset?: () => void;
 }
 
+function ErrorLayout({ title, message, children }: { title: string; message: string; children?: ReactNode }) {
+  return (
+    <PageLayout>
+      <div className="wrapper py-20 text-center">
+        <h1 className="page-title mb-4">{title}</h1>
+        <p className="text-secondary mb-8">{message}</p>
+        {children}
+      </div>
+    </PageLayout>
+  );
+}
+
 export function RouteError({ error, reset }: RouteErrorProps) {
   const router = useRouter();
-  const notFound = isNotFound(error);
 
-  if (notFound) {
+  if (isNotFound(error)) {
     return (
-      <PageLayout>
-        <div className="wrapper py-20 text-center">
-          <h1 className="font-serif text-4xl font-medium mb-4">Page not found</h1>
-          <p className="text-secondary mb-8">The page you're looking for doesn't exist or has been moved.</p>
-          <Link to="/" className="btn-primary">
-            Go home
-          </Link>
-        </div>
-      </PageLayout>
+      <ErrorLayout title="Page not found" message="The page you're looking for doesn't exist or has been moved.">
+        <Link to="/" className="btn-primary">
+          Go home
+        </Link>
+      </ErrorLayout>
     );
   }
 
   return (
-    <PageLayout>
-      <div className="wrapper py-20 text-center">
-        <h1 className="font-serif text-4xl font-medium mb-4">Something went wrong</h1>
-        <p className="text-secondary mb-8">We encountered an error while loading this page.</p>
-        <div className="flex gap-4 justify-center">
-          {reset && (
-            <button type="button" onClick={reset} className="btn-primary">
-              Try again
-            </button>
-          )}
-          <button type="button" onClick={() => router.history.back()} className="btn-secondary">
-            Go back
+    <ErrorLayout title="Something went wrong" message="We encountered an error while loading this page.">
+      <div className="flex gap-4 justify-center">
+        {reset && (
+          <button type="button" onClick={reset} className="btn-primary">
+            Try again
           </button>
-        </div>
+        )}
+        <button type="button" onClick={() => router.history.back()} className="btn-secondary">
+          Go back
+        </button>
       </div>
-    </PageLayout>
+    </ErrorLayout>
   );
 }

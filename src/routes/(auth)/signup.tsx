@@ -1,24 +1,15 @@
 import { useUser } from "@clerk/tanstack-react-start";
 import { createFileRoute, Link, Navigate } from "@tanstack/react-router";
-import { z } from "zod";
 import { SignupForm } from "@/components/auth/AuthForms";
 import { AuthLayout } from "@/components/layout/AuthLayout";
-import { Spinner } from "@/components/ui/Primitives";
-import { APP_TITLE_SUFFIX } from "@/lib/constants";
+import { PageLoader } from "@/components/ui/Primitives";
+import { pageHead } from "@/lib/head";
+import { redirectSearchSchema } from "@/lib/search";
 import { safeRedirect } from "@/lib/utils";
 
-const searchSchema = z.object({
-  redirect: z.string().optional(),
-});
-
 export const Route = createFileRoute("/(auth)/signup")({
-  validateSearch: searchSchema,
-  head: () => ({
-    meta: [
-      { title: `Create account${APP_TITLE_SUFFIX}` },
-      { name: "description", content: "Create your Mise account to save, share, and manage recipes." },
-    ],
-  }),
+  validateSearch: redirectSearchSchema,
+  head: () => pageHead("Create account", "Create your Mise account to save, share, and manage recipes."),
   component: SignupPage,
 });
 
@@ -28,11 +19,7 @@ function SignupPage() {
   const safeTarget = safeRedirect(redirect);
 
   if (!isLoaded) {
-    return (
-      <div className="center min-h-screen">
-        <Spinner className="w-8 h-8 text-sage" />
-      </div>
-    );
+    return <PageLoader />;
   }
 
   if (isSignedIn) {
@@ -47,9 +34,6 @@ function SignupPage() {
       heroFooterClass="text-cream/60"
       form={
         <>
-          <Link to="/" className="lg:hidden font-serif text-2xl font-semibold text-primary block mb-8">
-            mise
-          </Link>
           <h1 className="font-serif text-3xl font-medium mb-2">Create account</h1>
           <p className="text-stone mb-8">
             Already have an account?{" "}

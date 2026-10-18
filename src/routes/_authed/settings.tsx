@@ -3,10 +3,7 @@ import {
   ArrowRightOnRectangleIcon,
   CalendarIcon,
   CameraIcon,
-  ComputerDesktopIcon,
   EnvelopeIcon,
-  MoonIcon,
-  SunIcon,
   TrashIcon,
 } from "@heroicons/react/24/outline";
 import { createFileRoute } from "@tanstack/react-router";
@@ -20,17 +17,12 @@ import { TextField } from "@/components/ui/TextField";
 import { useToast } from "@/components/ui/Toast";
 import { useFileUpload } from "@/hooks/useFileUpload";
 import { useSignOut } from "@/hooks/useSignOut";
-import { type ThemePreference, useTheme } from "@/hooks/useTheme";
-import { APP_TITLE_SUFFIX } from "@/lib/constants";
-import { getErrorMessage } from "@/lib/utils";
+import { THEME_OPTIONS, type ThemePreference, useTheme } from "@/hooks/useTheme";
+import { pageHead } from "@/lib/head";
+import { avatarSource, getErrorMessage } from "@/lib/utils";
 
 export const Route = createFileRoute("/_authed/settings")({
-  head: () => ({
-    meta: [
-      { title: `Settings${APP_TITLE_SUFFIX}` },
-      { name: "description", content: "Update your profile, username, bio, and profile image." },
-    ],
-  }),
+  head: () => pageHead("Settings", "Update your profile, username, bio, and profile image."),
   component: Settings,
 });
 
@@ -140,7 +132,7 @@ function Settings() {
     window.location.replace("/");
   };
 
-  const avatar = previewUrl ?? user.profileImageUrl ?? user.image;
+  const avatar = previewUrl ?? avatarSource(user);
 
   return (
     <div className="min-h-[calc(100vh-4rem)]">
@@ -154,13 +146,13 @@ function Settings() {
         onInputChange={handleInputChange}
       />
 
-      <div className="max-w-5xl mx-auto px-5 sm:px-8 py-8">
+      <div className="wrapper-narrow py-8">
         <form onSubmit={handleSubmit}>
           <div className="grid lg:grid-cols-[1fr_320px] gap-8">
             {/* Left column */}
             <div className="space-y-10">
               <section className="space-y-6">
-                <h2 className="font-serif text-xl font-medium">Profile</h2>
+                <h2 className="section-title">Profile</h2>
                 <TextField
                   id="name"
                   label="Display name"
@@ -215,8 +207,7 @@ function Settings() {
             {/* Right column — sidebar */}
             <aside className="lg:self-start">
               <div className="sticky top-24 space-y-6">
-                <section className="rounded-xl surface-muted p-6 space-y-4">
-                  <h3 className="text-xs font-semibold uppercase tracking-wider text-stone">Account</h3>
+                <SidebarSection title="Account">
                   <dl className="space-y-4 text-sm">
                     <div>
                       <dt className="text-xs text-stone mb-1 flex items-center gap-1.5">
@@ -233,12 +224,11 @@ function Settings() {
                       </dd>
                     </div>
                   </dl>
-                </section>
+                </SidebarSection>
 
-                <section className="rounded-xl surface-muted p-6 space-y-4">
-                  <h3 className="text-xs font-semibold uppercase tracking-wider text-stone">Your kitchen</h3>
+                <SidebarSection title="Your kitchen">
                   <QuickStats />
-                </section>
+                </SidebarSection>
 
                 {/* Save — desktop */}
                 <div className="hidden lg:block">
@@ -257,6 +247,15 @@ function Settings() {
         </form>
       </div>
     </div>
+  );
+}
+
+function SidebarSection({ title, children }: { title: string; children: React.ReactNode }) {
+  return (
+    <section className="rounded-xl surface-muted p-6 space-y-4">
+      <h3 className="text-xs font-semibold uppercase tracking-wider text-stone">{title}</h3>
+      {children}
+    </section>
   );
 }
 
@@ -279,7 +278,7 @@ function ProfileHero({
 }) {
   return (
     <div className="hero-banner py-12 px-5 sm:px-8">
-      <div className="max-w-5xl mx-auto flex items-center gap-6">
+      <div className="wrapper-narrow flex items-center gap-6">
         <div className="relative w-24 h-24 sm:w-28 sm:h-28 rounded-full overflow-hidden surface-raised shrink-0 ring-4 ring-cream/20">
           {avatar ? (
             <img src={avatar} alt="Profile" className="w-full h-full object-cover" />
@@ -330,17 +329,18 @@ function AppearanceSection({
 }) {
   return (
     <section className="space-y-4">
-      <h2 className="font-serif text-xl font-medium">Appearance</h2>
+      <h2 className="section-title">Appearance</h2>
       <p className="text-sm text-stone">Choose how Mise looks to you.</p>
       <div className="grid grid-cols-3 gap-3">
-        <ThemeOption icon={SunIcon} label="Light" active={preference === "light"} onClick={() => setTheme("light")} />
-        <ThemeOption icon={MoonIcon} label="Dark" active={preference === "dark"} onClick={() => setTheme("dark")} />
-        <ThemeOption
-          icon={ComputerDesktopIcon}
-          label="System"
-          active={preference === "system"}
-          onClick={() => setTheme("system")}
-        />
+        {THEME_OPTIONS.map(({ value, label, icon }) => (
+          <ThemeOption
+            key={value}
+            icon={icon}
+            label={label}
+            active={preference === value}
+            onClick={() => setTheme(value)}
+          />
+        ))}
       </div>
     </section>
   );
@@ -349,26 +349,43 @@ function AppearanceSection({
 function DangerZone({ onSignOut, onDeleteAccount }: { onSignOut: () => void; onDeleteAccount: () => void }) {
   return (
     <section className="space-y-4 pt-6 border-t border-subtle">
-      <h2 className="font-serif text-xl font-medium text-terracotta">Danger zone</h2>
+      <h2 className="section-title text-terracotta">Danger zone</h2>
       <div className="flex flex-col sm:flex-row gap-3">
-        <button
-          type="button"
-          onClick={onSignOut}
-          className="flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg border border-field text-sm text-secondary hover:bg-cream-dark transition-colors"
-        >
-          <ArrowRightOnRectangleIcon className="w-4 h-4" />
+        <DangerButton icon={ArrowRightOnRectangleIcon} onClick={onSignOut}>
           Sign out
-        </button>
-        <button
-          type="button"
-          onClick={onDeleteAccount}
-          className="flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg border border-terracotta/30 text-sm text-terracotta hover:bg-terracotta/5 transition-colors"
-        >
-          <TrashIcon className="w-4 h-4" />
+        </DangerButton>
+        <DangerButton icon={TrashIcon} onClick={onDeleteAccount} danger>
           Delete account
-        </button>
+        </DangerButton>
       </div>
     </section>
+  );
+}
+
+function DangerButton({
+  icon: Icon,
+  children,
+  onClick,
+  danger = false,
+}: {
+  icon: React.ComponentType<{ className?: string }>;
+  children: React.ReactNode;
+  onClick: () => void;
+  danger?: boolean;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className={`flex items-center justify-center gap-2 rounded-lg border px-4 py-2.5 text-sm transition-colors ${
+        danger
+          ? "border-terracotta/30 text-terracotta hover:bg-terracotta/5"
+          : "border-field text-secondary hover:bg-cream-dark dark:hover:bg-d-surface-raised"
+      }`}
+    >
+      <Icon className="w-4 h-4" />
+      {children}
+    </button>
   );
 }
 
@@ -398,7 +415,7 @@ function DeleteAccountDialog({
       <Dialog.Portal>
         <Dialog.Backdrop className="fixed inset-0 z-[90] bg-charcoal/40 backdrop-blur-sm transition-opacity duration-200 data-[starting-style]:opacity-0 data-[ending-style]:opacity-0" />
         <Dialog.Popup className="fixed left-1/2 top-1/2 z-[100] w-[calc(100vw-2rem)] max-w-md -translate-x-1/2 -translate-y-1/2 rounded-2xl border border-cream-dark bg-warm-white p-6 shadow-hover outline-none transition-opacity duration-200 dark:border-d-border dark:bg-d-surface data-[starting-style]:opacity-0 data-[ending-style]:opacity-0">
-          <Dialog.Title className="font-serif text-xl font-medium text-primary">Delete account</Dialog.Title>
+          <Dialog.Title className="section-title text-primary">Delete account</Dialog.Title>
           <Dialog.Description className="mt-2 text-sm text-stone">
             This permanently deletes your account and cannot be undone. It removes:
           </Dialog.Description>

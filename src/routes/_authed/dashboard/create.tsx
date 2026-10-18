@@ -1,13 +1,8 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { RecipeEditor } from "@/components/recipe/RecipeEditor";
-import { APP_TITLE_SUFFIX } from "@/lib/constants";
+import { pageHead } from "@/lib/head";
 
 export const Route = createFileRoute("/_authed/dashboard/create")({
-  head: () => ({
-    meta: [
-      { title: `Create Recipe${APP_TITLE_SUFFIX}` },
-      { name: "description", content: "Share a new recipe with the Mise community." },
-    ],
-  }),
+  head: () => pageHead("Create Recipe", "Share a new recipe with the Mise community."),
   component: RecipeEditor,
 });

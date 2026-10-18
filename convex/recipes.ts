@@ -5,6 +5,8 @@ import type { MutationCtx, QueryCtx } from "./_generated/server";
 import { mutation, query } from "./_generated/server";
 import { getCurrentUser, requireUser } from "./lib/auth";
 import { RECIPE_CATEGORIES } from "./lib/categories";
+import { storageUrl } from "./lib/media";
+import { deleteRecipeCascade } from "./lib/recipes";
 import { checkRateLimit } from "./rateLimit";
 
 const MAX_RECIPES_PER_QUERY = 100;
@@ -50,7 +52,7 @@ async function withCoverUrl<T extends { coverImage?: Id<"_storage"> | null }>(
 ): Promise<T & { coverImageUrl: string | null }> {
   return {
     ...item,
-    coverImageUrl: item.coverImage ? await ctx.storage.getUrl(item.coverImage) : null,
+    coverImageUrl: await storageUrl(ctx, item.coverImage),
   };
 }
 
@@ -146,7 +148,7 @@ export const getBySlug = query({
             name: author.name,
             username: author.username,
             image: author.image,
-            profileImageUrl: author.profileImage ? await ctx.storage.getUrl(author.profileImage) : null,
+            profileImageUrl: await storageUrl(ctx, author.profileImage),
           }
         : null,
       isBookmarked,
@@ -264,15 +266,6 @@ export const remove = mutation({
     const user = await requireUser(ctx);
     const recipe = await ctx.db.get(id);
     if (!recipe || recipe.userId !== user._id) throw new Error("Not found");
-
-    const bookmarks = await ctx.db
-      .query("bookmarks")
-      .withIndex("by_recipe", (q) => q.eq("recipeId", id))
-      .collect();
-
-    const ops = [...bookmarks.map((b) => ctx.db.delete(b._id))];
-    if (recipe.coverImage) ops.push(ctx.storage.delete(recipe.coverImage));
-    ops.push(ctx.db.delete(id));
-    await Promise.all(ops);
+    await deleteRecipeCascade(ctx, recipe);
   },
 });
