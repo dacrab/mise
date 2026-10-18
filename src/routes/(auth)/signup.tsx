@@ -3,8 +3,7 @@ import { createFileRoute, Link, Navigate } from "@tanstack/react-router";
 import { SignupForm } from "@/components/auth/AuthForms";
 import { AuthLayout } from "@/components/layout/AuthLayout";
 import { PageLoader } from "@/components/ui/Primitives";
-import { pageHead } from "@/lib/head";
-import { redirectSearchSchema } from "@/lib/search";
+import { pageHead, redirectSearchSchema } from "@/lib/route";
 import { safeRedirect } from "@/lib/utils";
 
 export const Route = createFileRoute("/(auth)/signup")({

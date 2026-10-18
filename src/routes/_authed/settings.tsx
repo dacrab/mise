@@ -18,7 +18,7 @@ import { useToast } from "@/components/ui/Toast";
 import { useFileUpload } from "@/hooks/useFileUpload";
 import { useSignOut } from "@/hooks/useSignOut";
 import { THEME_OPTIONS, type ThemePreference, useTheme } from "@/hooks/useTheme";
-import { pageHead } from "@/lib/head";
+import { pageHead } from "@/lib/route";
 import { avatarSource, getErrorMessage } from "@/lib/utils";
 
 export const Route = createFileRoute("/_authed/settings")({
@@ -149,7 +149,6 @@ function Settings() {
       <div className="wrapper-narrow py-8">
         <form onSubmit={handleSubmit}>
           <div className="grid lg:grid-cols-[1fr_320px] gap-8">
-            {/* Left column */}
             <div className="space-y-10">
               <section className="space-y-6">
                 <h2 className="section-title">Profile</h2>
@@ -204,7 +203,6 @@ function Settings() {
               </div>
             </div>
 
-            {/* Right column — sidebar */}
             <aside className="lg:self-start">
               <div className="sticky top-24 space-y-6">
                 <SidebarSection title="Account">

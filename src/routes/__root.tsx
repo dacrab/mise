@@ -3,11 +3,10 @@
 import * as Sentry from "@sentry/react";
 import type { QueryClient } from "@tanstack/react-query";
 import type { ErrorComponentProps } from "@tanstack/react-router";
-import { createRootRouteWithContext, HeadContent, Outlet, Scripts, useRouterState } from "@tanstack/react-router";
+import { createRootRouteWithContext, HeadContent, Link, Outlet, Scripts, useRouterState } from "@tanstack/react-router";
 import { Analytics } from "@vercel/analytics/react";
 import { SpeedInsights } from "@vercel/speed-insights/react";
 import { useEffect, useRef } from "react";
-import { ErrorPage } from "@/components/layout/PageLayout";
 import appCss from "../styles.css?url";
 
 const PAGE_TRANSITION_MS = 400;
@@ -66,6 +65,20 @@ function RootComponent() {
         <Scripts />
       </body>
     </html>
+  );
+}
+
+function ErrorPage({ title, message }: { title: string; message?: string }) {
+  return (
+    <div className="center min-h-screen bg-cream dark:bg-d-bg p-8 text-center">
+      <div>
+        <h1 className="font-serif text-4xl font-medium text-primary mb-4">{title}</h1>
+        {message && <p className="text-stone mb-6">{message}</p>}
+        <Link to="/" className="btn-primary">
+          Back to recipes
+        </Link>
+      </div>
+    </div>
   );
 }
 

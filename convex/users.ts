@@ -65,9 +65,8 @@ export const updateProfile = mutation({
       if (user.username && username !== user.username) {
         throw new ConvexError("Username cannot be changed");
       }
-      // Convex has no unique constraints / onConflict; the check-and-patch below
-      // is safe because it runs inside one mutation, which is retried when a
-      // concurrent claim of the same username writes a conflicting index entry.
+      // No unique index in Convex: this check-then-patch is safe because a racing
+      // duplicate write conflicts and Convex retries the mutation.
       if (!USERNAME_PATTERN.test(username)) {
         throw new ConvexError("Username must be 3-32 characters: lowercase letters, numbers, underscores");
       }

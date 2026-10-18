@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { StaticPageLayout } from "@/components/StaticPageLayout";
-import { pageHead } from "@/lib/head";
+import { StaticPageLayout } from "@/components/layout/StaticPageLayout";
+import { pageHead } from "@/lib/route";
 
 export const Route = createFileRoute("/privacy")({
   head: () => pageHead("Privacy Policy", "How Mise handles your personal data."),

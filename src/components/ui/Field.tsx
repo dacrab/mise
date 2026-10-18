@@ -8,8 +8,7 @@ export const FLOATED_LABEL =
 /** Resting position shared by the floating labels of TextField/TextArea. */
 export const FIELD_LABEL = "absolute top-3 text-sm text-stone pointer-events-none";
 
-// Keeps the native placeholder invisible until focus so it never collides with
-// the resting label sitting on top of it.
+// Hide the native placeholder until focus so it can't collide with the resting label.
 export const FIELD_PLACEHOLDER =
   "placeholder:text-transparent! focus:placeholder:text-stone/50 dark:focus:placeholder:text-d-text-muted";
 
