@@ -1,7 +1,7 @@
-import { defineConfig } from "vitest/config";
+import { createRequire } from "node:module";
+import { resolve } from "node:path";
 import react from "@vitejs/plugin-react";
-import { createRequire } from "module";
-import { resolve } from "path";
+import { defineConfig } from "vitest/config";
 
 const require = createRequire(import.meta.url);
 
@@ -18,9 +18,9 @@ export default defineConfig({
   // Aliases must be defined here since vitest runs outside of vite's build pipeline
   resolve: {
     alias: [
-      { find: "@", replacement: resolve(__dirname, "./src") },
+      { find: "@", replacement: resolve(import.meta.dirname, "./src") },
       ...convexFrameworkAliases,
-      { find: "convex", replacement: resolve(__dirname, "./convex") },
+      { find: "convex", replacement: resolve(import.meta.dirname, "./convex") },
     ],
   },
   test: {
@@ -33,10 +33,7 @@ export default defineConfig({
       provider: "v8",
       reporter: ["text", "json", "html"],
       include: ["src/**/*.{ts,tsx}"],
-      exclude: [
-        "src/routeTree.gen.ts",
-        "src/**/*.d.ts",
-      ],
+      exclude: ["src/routeTree.gen.ts", "src/**/*.d.ts"],
     },
   },
 });

@@ -14,10 +14,10 @@ export function RouteError({ error, reset }: RouteErrorProps) {
     return (
       <PageLayout>
         <div className="wrapper py-20 text-center">
-          <h1 className="font-serif text-4xl font-medium mb-4">Page Not Found</h1>
-          <p className="text-charcoal-light mb-8">The page you're looking for doesn't exist or has been moved.</p>
+          <h1 className="font-serif text-4xl font-medium mb-4">Page not found</h1>
+          <p className="text-secondary mb-8">The page you're looking for doesn't exist or has been moved.</p>
           <Link to="/" className="btn-primary">
-            Go Home
+            Go home
           </Link>
         </div>
       </PageLayout>
@@ -27,16 +27,16 @@ export function RouteError({ error, reset }: RouteErrorProps) {
   return (
     <PageLayout>
       <div className="wrapper py-20 text-center">
-        <h1 className="font-serif text-4xl font-medium mb-4">Something Went Wrong</h1>
-        <p className="text-charcoal-light mb-8">We encountered an error while loading this page.</p>
+        <h1 className="font-serif text-4xl font-medium mb-4">Something went wrong</h1>
+        <p className="text-secondary mb-8">We encountered an error while loading this page.</p>
         <div className="flex gap-4 justify-center">
           {reset && (
             <button type="button" onClick={reset} className="btn-primary">
-              Try Again
+              Try again
             </button>
           )}
           <button type="button" onClick={() => router.history.back()} className="btn-secondary">
-            Go Back
+            Go back
           </button>
         </div>
       </div>

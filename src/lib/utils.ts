@@ -45,7 +45,8 @@ export function asRecord(value: unknown): Record<string, unknown> | null {
 }
 
 export function safeRedirect(value?: string): string | undefined {
-  if (!value) return undefined;
-  // Reject protocol-relative URLs (//host) to prevent open redirects
-  return value.startsWith("/") && !value.startsWith("//") ? value : undefined;
+  if (!value?.startsWith("/") || value.startsWith("//")) return undefined;
+  // Browsers normalize backslashes to slashes and strip whitespace, so a value
+  // like "/\evil.com" would resolve cross-origin. Only accept clean local paths.
+  return /[\\\s]/.test(value) ? undefined : value;
 }

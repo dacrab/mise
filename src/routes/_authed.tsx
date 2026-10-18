@@ -9,7 +9,7 @@ export const Route = createFileRoute("/_authed")({
 
 function AuthedLayout() {
   const { isLoaded, isSignedIn } = useUser();
-  const location = useRouterState({ select: (s) => s.location });
+  const href = useRouterState({ select: (s) => s.location.href });
 
   if (!isLoaded) {
     return (
@@ -20,7 +20,7 @@ function AuthedLayout() {
   }
 
   if (!isSignedIn) {
-    return <Navigate to="/login" search={{ redirect: location.pathname + location.search }} replace />;
+    return <Navigate to="/login" search={{ redirect: href }} replace />;
   }
 
   return (

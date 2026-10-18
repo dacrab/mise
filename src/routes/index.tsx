@@ -2,7 +2,7 @@ import { MagnifyingGlassIcon, XMarkIcon } from "@heroicons/react/24/outline";
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { api } from "convex/_generated/api";
 import type { Id } from "convex/_generated/dataModel";
-import { usePaginatedQuery, useQuery } from "convex/react";
+import { type PaginationStatus, usePaginatedQuery, useQuery } from "convex/react";
 import { useRef } from "react";
 import { z } from "zod";
 import { PageLayout } from "@/components/layout/PageLayout";
@@ -16,7 +16,7 @@ const searchSchema = z.object({
 });
 
 export const Route = createFileRoute("/")({
-  validateSearch: searchSchema.parse,
+  validateSearch: searchSchema,
   component: HomePage,
   head: () => ({
     meta: [
@@ -275,15 +275,8 @@ function RecipeResultsSection({
   showEmpty: boolean;
   isSearching: boolean;
   emptyState: React.ReactNode;
-  grid: Array<{
-    _id: Id<"recipes">;
-    slug: string;
-    title: string;
-    description?: string | null;
-    category: string;
-    coverImageUrl?: string | null;
-  }>;
-  loadMoreStatus: "LoadingFirstPage" | "CanLoadMore" | "LoadingMore" | "Exhausted";
+  grid: FeedItem[];
+  loadMoreStatus: PaginationStatus;
   onLoadMore: () => void;
   count: number;
 }) {

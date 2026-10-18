@@ -5,7 +5,7 @@
     "moduleResolution": "bundler",
     "lib": ["ES2022", "DOM"],
     "jsx": "react-jsx",
-    
+
     // Strict type safety
     "strict": true,
     // exactOptionalPropertyTypes is intentionally omitted — @convex-dev/auth and
@@ -25,17 +25,17 @@
     "allowUnusedLabels": false,
     "noFallthroughCasesInSwitch": true,
     "forceConsistentCasingInFileNames": true,
-    
+
     "skipLibCheck": true,
     "resolveJsonModule": true,
     "isolatedModules": true,
     "noEmit": true,
-    
+
     "paths": {
       "@/*": ["./src/*"],
       "convex/*": ["./convex/*"]
     }
   },
-  "include": ["src/**/*", "tests/**/*"],
+  "include": ["src/**/*", "tests/**/*", "vite.config.ts", "vitest.config.ts"],
   "exclude": ["node_modules", "dist", ".output", ".vinxi", ".tanstack"]
 }

@@ -42,7 +42,10 @@ export const Route = createFileRoute("/chef/$username")({
         content: loaderData?.bio ?? (loaderData?.name ? `Recipes by ${loaderData.name} on Mise` : "Chef on Mise"),
       },
       { property: "og:title", content: loaderData?.name ? `${loaderData.name}'s Kitchen` : "Chef" },
+      { property: "og:description", content: loaderData?.bio ?? "Recipes shared on Mise." },
+      ...(loaderData?.profileImageUrl ? [{ property: "og:image", content: loaderData.profileImageUrl }] : []),
       { property: "og:type", content: "profile" },
+      { name: "twitter:card", content: "summary" },
     ],
   }),
 });

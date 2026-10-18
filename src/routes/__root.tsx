@@ -13,13 +13,14 @@ import appCss from "../styles.css?url";
 const PAGE_TRANSITION_MS = 400;
 
 function RootComponent() {
-  const { isLoading, location } = useRouterState();
+  const isLoading = useRouterState({ select: (s) => s.isLoading });
+  const pathname = useRouterState({ select: (s) => s.location.pathname });
   const wrapperRef = useRef<HTMLDivElement>(null);
-  const prevPathRef = useRef(location.pathname);
+  const prevPathRef = useRef(pathname);
 
   useEffect(() => {
-    if (location.pathname === prevPathRef.current) return;
-    prevPathRef.current = location.pathname;
+    if (pathname === prevPathRef.current) return;
+    prevPathRef.current = pathname;
 
     const el = wrapperRef.current;
     if (!el) return;
@@ -37,7 +38,7 @@ function RootComponent() {
       cancelled = true;
       clearTimeout(timer);
     };
-  }, [location.pathname]);
+  }, [pathname]);
 
   return (
     <html lang="en">

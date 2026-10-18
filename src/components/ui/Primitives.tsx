@@ -31,11 +31,22 @@ export function Avatar({
 
 export function Spinner({ className = "w-5 h-5 text-sage" }: { className?: string }) {
   return (
-    <svg className={`animate-spin ${className}`} xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+    <svg
+      className={`animate-spin ${className}`}
+      xmlns="http://www.w3.org/2000/svg"
+      fill="none"
+      viewBox="0 0 24 24"
+      role="status"
+      aria-label="Loading"
+    >
       <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
       <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z" />
     </svg>
   );
+}
+
+export function LoadingState({ className = "center min-h-[60vh]" }: { className?: string }) {
+  return <div className={`${className} text-stone animate-pulse`}>Loading…</div>;
 }
 
 export function ProgressBar({ value, label, className = "" }: { value: number; label?: string; className?: string }) {

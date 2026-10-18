@@ -32,7 +32,7 @@ export default defineSchema({
     updatedAt: v.optional(v.number()),
   })
     .index("by_slug", ["slug"])
-    .index("by_category", ["category"])
+    .index("by_category_status", ["category", "status"])
     .index("by_user", ["userId"])
     .index("by_status", ["status"])
     .searchIndex("search_title", { searchField: "title", filterFields: ["status", "category"] }),

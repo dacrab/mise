@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef } from "react";
 
 interface TextAreaProps extends React.TextareaHTMLAttributes<HTMLTextAreaElement> {
   id: string;
@@ -6,20 +6,13 @@ interface TextAreaProps extends React.TextareaHTMLAttributes<HTMLTextAreaElement
   maxLength?: number;
 }
 
-export function TextArea({
-  id,
-  label,
-  maxLength,
-  className = "",
-  onFocus,
-  onBlur,
-  value = "",
-  rows = 3,
-  placeholder,
-  ...rest
-}: TextAreaProps) {
+// See TextField: the label float is driven purely by native focus state, and the
+// caller's placeholder stays transparent until focus.
+const FLOATED =
+  "peer-focus:-top-2.5 peer-focus:text-[11px] peer-focus:font-medium peer-focus:floating-label-bg peer-focus:px-1 peer-focus:text-sage peer-[:not(:placeholder-shown)]:-top-2.5 peer-[:not(:placeholder-shown)]:text-[11px] peer-[:not(:placeholder-shown)]:font-medium peer-[:not(:placeholder-shown)]:floating-label-bg peer-[:not(:placeholder-shown)]:px-1 peer-[:not(:placeholder-shown)]:text-sage";
+
+export function TextArea({ id, label, maxLength, className = "", value = "", rows = 3, ...rest }: TextAreaProps) {
   const internalRef = useRef<HTMLTextAreaElement>(null);
-  const [focused, setFocused] = useState(false);
 
   useEffect(() => {
     const el = internalRef.current;
@@ -31,45 +24,26 @@ export function TextArea({
   const strValue = typeof value === "string" ? value : "";
   const charRatio = maxLength ? strValue.length / maxLength : 0;
   const counterColor = charRatio > 0.9 ? "text-terracotta" : charRatio > 0.7 ? "text-honey" : "text-stone";
-  const hasValue = strValue.length > 0;
 
   return (
     <div className={`relative group ${className}`}>
-      {label && (
-        <label
-          htmlFor={id}
-          className={`absolute left-3 transition-all duration-200 pointer-events-none z-10 ${
-            focused || hasValue
-              ? "-top-2.5 text-[11px] font-medium floating-label-bg px-1 text-sage"
-              : "top-3 text-sm text-stone"
-          }`}
-        >
-          {label}
-        </label>
-      )}
       <textarea
         ref={internalRef}
         id={id}
         value={value}
-        onFocus={(e) => {
-          setFocused(true);
-          onFocus?.(e);
-        }}
-        onBlur={(e) => {
-          setFocused(false);
-          onBlur?.(e);
-        }}
-        placeholder={label ? (focused ? placeholder : undefined) : placeholder}
         rows={rows}
         maxLength={maxLength}
-        className={`field-base resize-none leading-relaxed ${focused ? "field-focus" : ""}`}
+        className="peer field-base resize-none leading-relaxed focus:field-focus placeholder:text-transparent! focus:placeholder:text-stone/50 dark:focus:placeholder:text-d-text-muted"
         {...rest}
       />
+      {label && (
+        <label htmlFor={id} className={`absolute left-3 top-3 text-sm text-stone pointer-events-none ${FLOATED}`}>
+          {label}
+        </label>
+      )}
       {maxLength && (
         <div
-          className={`absolute bottom-2 right-3 text-[11px] tabular-nums transition-opacity ${
-            focused || hasValue ? "opacity-100" : "opacity-0"
-          } ${counterColor}`}
+          className={`absolute bottom-2 right-3 text-[11px] tabular-nums transition-opacity opacity-0 peer-focus:opacity-100 peer-[:not(:placeholder-shown)]:opacity-100 ${counterColor}`}
         >
           {strValue.length}/{maxLength}
         </div>

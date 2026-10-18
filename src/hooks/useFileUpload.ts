@@ -38,7 +38,10 @@ export function useFileUpload<TStorageId extends string = Id<"_storage">>(
       return null;
     }
 
-    abortRef.current = new AbortController();
+    // Cancel any in-flight upload so two concurrent uploads can't race.
+    abortRef.current?.abort();
+    const controller = new AbortController();
+    abortRef.current = controller;
     setUploading(true);
     setProgress(0);
 
@@ -66,7 +69,7 @@ export function useFileUpload<TStorageId extends string = Id<"_storage">>(
         };
         xhr.onerror = () => reject(new Error("Upload failed"));
         xhr.onabort = () => reject(new DOMException("Upload aborted", "AbortError"));
-        abortRef.current?.signal.addEventListener("abort", () => xhr.abort());
+        controller.signal.addEventListener("abort", () => xhr.abort());
         xhr.send(file);
       });
 

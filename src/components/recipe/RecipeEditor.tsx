@@ -5,10 +5,10 @@ import { api } from "convex/_generated/api";
 import type { Id } from "convex/_generated/dataModel";
 import { useConvexAuth, useMutation } from "convex/react";
 import { useEffect, useRef, useState } from "react";
-import type { Control, FieldErrors, FieldError as RHFFieldError, UseFormRegister } from "react-hook-form";
-import { Controller, useFieldArray, useForm, useWatch } from "react-hook-form";
+import type { FieldError as RHFFieldError } from "react-hook-form";
+import { Controller, FormProvider, useFieldArray, useForm, useFormContext, useWatch } from "react-hook-form";
 import { z } from "zod";
-import { ProgressBar } from "@/components/ui/Primitives";
+import { LoadingState, ProgressBar } from "@/components/ui/Primitives";
 import { Select } from "@/components/ui/Select";
 import { useToast } from "@/components/ui/Toast";
 import { useFileUpload } from "@/hooks/useFileUpload";
@@ -66,9 +66,13 @@ type RecipeFormData = z.infer<typeof recipeSchema>;
 
 const unwrap = (arr?: Array<{ value?: string }>) => (arr ?? []).map((x) => x.value ?? "");
 
-function FieldError({ error }: { error?: RHFFieldError | { message?: string } }) {
+function FieldError({ id, error }: { id: string; error?: RHFFieldError | { message?: string } }) {
   if (!error?.message) return null;
-  return <p className="text-xs text-terracotta mt-1">{error.message}</p>;
+  return (
+    <p id={id} className="text-xs text-terracotta mt-1">
+      {error.message}
+    </p>
+  );
 }
 
 function buildPayload(
@@ -92,13 +96,13 @@ function buildPayload(
   };
 }
 
-type EditorSidebarProps = {
-  register: UseFormRegister<RecipeFormData>;
-  errors: FieldErrors<RecipeFormData>;
-  control: Control<RecipeFormData>;
-};
+function EditorSidebar() {
+  const {
+    register,
+    control,
+    formState: { errors },
+  } = useFormContext<RecipeFormData>();
 
-function EditorSidebar({ register, errors, control }: EditorSidebarProps) {
   return (
     <aside className="lg:self-start">
       <div className="sticky top-[7.5rem] space-y-6">
@@ -158,9 +162,11 @@ function EditorSidebar({ register, errors, control }: EditorSidebarProps) {
                 max={MAX_PREP_MINUTES}
                 className="input-field text-sm py-2.5"
                 placeholder="15"
+                aria-invalid={!!errors.prepTime}
+                aria-describedby={errors.prepTime ? "recipe-prep-time-error" : undefined}
                 {...register("prepTime")}
               />
-              <FieldError error={errors.prepTime} />
+              <FieldError id="recipe-prep-time-error" error={errors.prepTime} />
             </div>
             <div>
               <label htmlFor="recipe-cook-time" className="label text-xs">
@@ -173,9 +179,11 @@ function EditorSidebar({ register, errors, control }: EditorSidebarProps) {
                 max={MAX_COOK_MINUTES}
                 className="input-field text-sm py-2.5"
                 placeholder="30"
+                aria-invalid={!!errors.cookTime}
+                aria-describedby={errors.cookTime ? "recipe-cook-time-error" : undefined}
                 {...register("cookTime")}
               />
-              <FieldError error={errors.cookTime} />
+              <FieldError id="recipe-cook-time-error" error={errors.cookTime} />
             </div>
           </div>
           <div>
@@ -189,9 +197,11 @@ function EditorSidebar({ register, errors, control }: EditorSidebarProps) {
               max={MAX_SERVINGS}
               className="input-field text-sm py-2.5"
               placeholder="4"
+              aria-invalid={!!errors.servings}
+              aria-describedby={errors.servings ? "recipe-servings-error" : undefined}
               {...register("servings")}
             />
-            <FieldError error={errors.servings} />
+            <FieldError id="recipe-servings-error" error={errors.servings} />
           </div>
         </div>
 
@@ -206,9 +216,11 @@ function EditorSidebar({ register, errors, control }: EditorSidebarProps) {
               type="url"
               placeholder="YouTube or TikTok URL"
               className="input-field"
+              aria-invalid={!!errors.videoUrl}
+              aria-describedby={errors.videoUrl ? "recipe-video-error" : undefined}
               {...register("videoUrl")}
             />
-            <FieldError error={errors.videoUrl} />
+            <FieldError id="recipe-video-error" error={errors.videoUrl} />
           </div>
         </div>
       </div>
@@ -371,14 +383,7 @@ export function RecipeEditor({
   const pendingStatusRef = useRef<"draft" | "published" | null>(null);
   const lastSavedPayloadRef = useRef<string | null>(null);
 
-  const {
-    register,
-    control,
-    handleSubmit: rhfHandleSubmit,
-    getValues,
-    reset,
-    formState: { errors, isDirty },
-  } = useForm<RecipeFormData>({
+  const form = useForm<RecipeFormData>({
     resolver: zodResolver(recipeSchema),
     defaultValues: {
       title: initialData?.title ?? "",
@@ -393,6 +398,15 @@ export function RecipeEditor({
       steps: (initialData?.steps ?? [""]).map((v) => ({ value: v })),
     },
   });
+
+  const {
+    register,
+    control,
+    handleSubmit: rhfHandleSubmit,
+    getValues,
+    reset,
+    formState: { errors, isDirty },
+  } = form;
 
   const {
     fields: ingredientFields,
@@ -412,7 +426,7 @@ export function RecipeEditor({
     return () => window.removeEventListener("beforeunload", handler);
   }, [isDirty]);
 
-  const generateUploadUrl = useMutation(api.recipes.generateUploadUrl);
+  const generateUploadUrl = useMutation(api.users.generateUploadUrl);
   const createRecipe = useMutation(api.recipes.create);
   const updateRecipe = useMutation(api.recipes.update);
 
@@ -476,7 +490,7 @@ export function RecipeEditor({
   );
 
   if (isAuthLoading) {
-    return <div className="center min-h-[60vh] text-stone animate-pulse">Loading…</div>;
+    return <LoadingState />;
   }
 
   const handleSubmit = async (data: RecipeFormData) => {
@@ -517,134 +531,142 @@ export function RecipeEditor({
   };
 
   return (
-    <div className="min-h-[calc(100vh-4rem)]">
-      <EditorHeader
-        isEditing={!!isEditing}
-        loading={loading}
-        lastSaved={lastSaved}
-        onSaveDraft={() => triggerSubmit("draft")}
-        onPublish={() => triggerSubmit("published")}
-      />
+    <FormProvider {...form}>
+      <div className="min-h-[calc(100vh-4rem)]">
+        <EditorHeader
+          isEditing={!!isEditing}
+          loading={loading}
+          lastSaved={lastSaved}
+          onSaveDraft={() => triggerSubmit("draft")}
+          onPublish={() => triggerSubmit("published")}
+        />
 
-      <div className="max-w-7xl mx-auto px-5 sm:px-8 py-8">
-        <div className="grid lg:grid-cols-[1fr_380px] gap-8">
-          <div className="space-y-6">
-            <CoverUploader
-              coverImageUrl={coverImageUrl}
-              uploading={uploading}
-              uploadProgress={uploadProgress}
-              onInputChange={handleInputChange}
-            />
-
-            <div>
-              <input
-                id="recipe-title"
-                type="text"
-                className="w-full text-2xl sm:text-3xl font-serif font-medium bg-transparent border-none outline-none placeholder:text-stone-light focus:ring-0 py-2 dark:text-d-text-heading"
-                placeholder="Recipe title"
-                maxLength={200}
-                {...register("title")}
+        <div className="max-w-7xl mx-auto px-5 sm:px-8 py-8">
+          <div className="grid lg:grid-cols-[1fr_380px] gap-8">
+            <div className="space-y-6">
+              <CoverUploader
+                coverImageUrl={coverImageUrl}
+                uploading={uploading}
+                uploadProgress={uploadProgress}
+                onInputChange={handleInputChange}
               />
-              <FieldError error={errors.title} />
-            </div>
 
-            <div>
-              <textarea
-                id="recipe-description"
-                className="w-full bg-transparent border-none outline-none placeholder:text-stone text-charcoal-light resize-none focus:ring-0 text-base leading-relaxed dark:text-d-text-secondary"
-                placeholder="Write a short intro — what inspired this dish, what makes it special…"
-                rows={3}
-                {...register("description")}
-              />
-              <FieldError error={errors.description} />
-            </div>
+              <div>
+                <input
+                  id="recipe-title"
+                  type="text"
+                  className="w-full text-2xl sm:text-3xl font-serif font-medium bg-transparent border-none outline-none placeholder:text-stone-light focus:ring-0 py-2 dark:text-d-text-heading"
+                  placeholder="Recipe title"
+                  maxLength={200}
+                  aria-label="Recipe title"
+                  aria-invalid={!!errors.title}
+                  aria-describedby={errors.title ? "recipe-title-error" : undefined}
+                  {...register("title")}
+                />
+                <FieldError id="recipe-title-error" error={errors.title} />
+              </div>
 
-            <section className="card p-6 space-y-4">
-              <div className="flex items-center justify-between">
-                <h2 className="font-serif text-xl font-medium">Ingredients</h2>
-                <span className="text-xs text-stone">
-                  {ingredientFields.filter((_, i) => watchedValues.ingredients?.[i]?.value).length} items
-                </span>
+              <div>
+                <textarea
+                  id="recipe-description"
+                  className="w-full bg-transparent border-none outline-none placeholder:text-stone text-charcoal-light resize-none focus:ring-0 text-base leading-relaxed dark:text-d-text-secondary"
+                  placeholder="Write a short intro — what inspired this dish, what makes it special…"
+                  rows={3}
+                  aria-label="Description"
+                  aria-invalid={!!errors.description}
+                  aria-describedby={errors.description ? "recipe-description-error" : undefined}
+                  {...register("description")}
+                />
+                <FieldError id="recipe-description-error" error={errors.description} />
               </div>
-              <div className="space-y-2">
-                {ingredientFields.map((field, i) => (
-                  <div key={field.id} className="group flex items-center gap-2">
-                    <span className="w-1.5 h-1.5 rounded-full bg-sage shrink-0" />
-                    <input
-                      type="text"
-                      className="flex-1 px-3 py-2.5 bg-transparent border-b border-transparent hover:border-stone-light focus:border-sage focus:outline-none text-sm transition-colors dark:hover:border-d-border-strong dark:focus:border-sage"
-                      placeholder={i === 0 ? "e.g. 2 cups all-purpose flour" : "Add ingredient…"}
-                      {...register(`ingredients.${i}.value`)}
-                      aria-label={`Ingredient ${i + 1}`}
-                    />
-                    <button
-                      onClick={() => removeIngredient(i)}
-                      className="opacity-0 group-hover:opacity-100 text-stone hover:text-terracotta transition-opacity p-1"
-                      aria-label={`Remove ingredient ${i + 1}`}
-                      type="button"
-                    >
-                      <XMarkIcon className="w-4 h-4" />
-                    </button>
-                  </div>
-                ))}
-              </div>
-              <button
-                onClick={() => appendIngredient({ value: "" })}
-                className="flex items-center gap-2 text-sm font-medium text-sage hover:text-sage-light transition-colors pt-2"
-                type="button"
-              >
-                <PlusIcon className="w-4 h-4" />
-                Add ingredient
-              </button>
-            </section>
 
-            <section className="card p-6 space-y-4">
-              <div className="flex items-center justify-between">
-                <h2 className="font-serif text-xl font-medium">Instructions</h2>
-                <span className="text-xs text-stone">
-                  {stepFields.filter((_, i) => watchedValues.steps?.[i]?.value).length} steps
-                </span>
-              </div>
-              <div className="space-y-4">
-                {stepFields.map((field, i) => (
-                  <div key={field.id} className="group flex gap-4">
-                    <div className="flex flex-col items-center">
-                      <span className="w-8 h-8 step-number text-sm">{i + 1}</span>
-                      {i < stepFields.length - 1 && <div className="step-line mt-2" />}
-                    </div>
-                    <div className="flex-1 pb-4">
-                      <textarea
-                        className="w-full px-3 py-2.5 surface-muted rounded-lg border border-transparent hover:border-stone-light focus:border-sage focus:outline-none focus:ring-1 focus:ring-sage/20 text-sm resize-none transition-all min-h-[80px]"
-                        placeholder="Describe this step…"
-                        {...register(`steps.${i}.value`)}
-                        aria-label={`Step ${i + 1}`}
+              <section className="card p-6 space-y-4">
+                <div className="flex items-center justify-between">
+                  <h2 className="font-serif text-xl font-medium">Ingredients</h2>
+                  <span className="text-xs text-stone">
+                    {ingredientFields.filter((_, i) => watchedValues.ingredients?.[i]?.value).length} items
+                  </span>
+                </div>
+                <div className="space-y-2">
+                  {ingredientFields.map((field, i) => (
+                    <div key={field.id} className="group flex items-center gap-2">
+                      <span className="w-1.5 h-1.5 rounded-full bg-sage shrink-0" />
+                      <input
+                        type="text"
+                        className="flex-1 px-3 py-2.5 bg-transparent border-b border-transparent hover:border-stone-light focus:border-sage focus:outline-none text-sm transition-colors dark:hover:border-d-border-strong dark:focus:border-sage"
+                        placeholder={i === 0 ? "e.g. 2 cups all-purpose flour" : "Add ingredient…"}
+                        {...register(`ingredients.${i}.value`)}
+                        aria-label={`Ingredient ${i + 1}`}
                       />
                       <button
-                        onClick={() => removeStep(i)}
-                        className="opacity-0 group-hover:opacity-100 text-xs text-stone hover:text-terracotta mt-1.5 transition-opacity"
-                        aria-label={`Remove step ${i + 1}`}
+                        onClick={() => removeIngredient(i)}
+                        className="opacity-0 group-hover:opacity-100 text-stone hover:text-terracotta transition-opacity p-1"
+                        aria-label={`Remove ingredient ${i + 1}`}
                         type="button"
                       >
-                        Remove step
+                        <XMarkIcon className="w-4 h-4" />
                       </button>
                     </div>
-                  </div>
-                ))}
-              </div>
-              <button
-                onClick={() => appendStep({ value: "" })}
-                className="flex items-center gap-2 text-sm font-medium text-sage hover:text-sage-light transition-colors"
-                type="button"
-              >
-                <PlusIcon className="w-4 h-4" />
-                Add step
-              </button>
-            </section>
-          </div>
+                  ))}
+                </div>
+                <button
+                  onClick={() => appendIngredient({ value: "" })}
+                  className="flex items-center gap-2 text-sm font-medium text-sage hover:text-sage-light transition-colors pt-2"
+                  type="button"
+                >
+                  <PlusIcon className="w-4 h-4" />
+                  Add ingredient
+                </button>
+              </section>
 
-          <EditorSidebar register={register} errors={errors} control={control} />
+              <section className="card p-6 space-y-4">
+                <div className="flex items-center justify-between">
+                  <h2 className="font-serif text-xl font-medium">Instructions</h2>
+                  <span className="text-xs text-stone">
+                    {stepFields.filter((_, i) => watchedValues.steps?.[i]?.value).length} steps
+                  </span>
+                </div>
+                <div className="space-y-4">
+                  {stepFields.map((field, i) => (
+                    <div key={field.id} className="group flex gap-4">
+                      <div className="flex flex-col items-center">
+                        <span className="w-8 h-8 step-number text-sm">{i + 1}</span>
+                        {i < stepFields.length - 1 && <div className="step-line mt-2" />}
+                      </div>
+                      <div className="flex-1 pb-4">
+                        <textarea
+                          className="w-full px-3 py-2.5 surface-muted rounded-lg border border-transparent hover:border-stone-light focus:border-sage focus:outline-none focus:ring-1 focus:ring-sage/20 text-sm resize-none transition-all min-h-[80px]"
+                          placeholder="Describe this step…"
+                          {...register(`steps.${i}.value`)}
+                          aria-label={`Step ${i + 1}`}
+                        />
+                        <button
+                          onClick={() => removeStep(i)}
+                          className="opacity-0 group-hover:opacity-100 text-xs text-stone hover:text-terracotta mt-1.5 transition-opacity"
+                          aria-label={`Remove step ${i + 1}`}
+                          type="button"
+                        >
+                          Remove step
+                        </button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+                <button
+                  onClick={() => appendStep({ value: "" })}
+                  className="flex items-center gap-2 text-sm font-medium text-sage hover:text-sage-light transition-colors"
+                  type="button"
+                >
+                  <PlusIcon className="w-4 h-4" />
+                  Add step
+                </button>
+              </section>
+            </div>
+
+            <EditorSidebar />
+          </div>
         </div>
       </div>
-    </div>
+    </FormProvider>
   );
 }

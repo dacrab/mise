@@ -44,7 +44,7 @@ async function generateUniqueSlug(ctx: MutationCtx, title: string): Promise<stri
   }
 }
 
-export async function withCoverUrl<T extends { coverImage?: Id<"_storage"> | null }>(
+async function withCoverUrl<T extends { coverImage?: Id<"_storage"> | null }>(
   ctx: QueryCtx,
   item: T,
 ): Promise<T & { coverImageUrl: string | null }> {
@@ -65,8 +65,7 @@ function publishedRecipesQuery(ctx: QueryCtx, category?: string) {
   return category
     ? ctx.db
         .query("recipes")
-        .withIndex("by_category", (q) => q.eq("category", category))
-        .filter((q) => q.eq(q.field("status"), "published"))
+        .withIndex("by_category_status", (q) => q.eq("category", category).eq("status", "published"))
     : ctx.db.query("recipes").withIndex("by_status", (q) => q.eq("status", "published"));
 }
 
@@ -80,7 +79,8 @@ async function getRecipesByUser(ctx: QueryCtx, userId: Id<"users">, includeDraft
 export const listPaginated = query({
   args: { paginationOpts: paginationOptsValidator, category: v.optional(v.string()) },
   handler: async (ctx, { paginationOpts, category }) => {
-    const results = await publishedRecipesQuery(ctx, category).order("desc").paginate(paginationOpts);
+    const opts = { ...paginationOpts, numItems: Math.min(paginationOpts.numItems, MAX_RECIPES_PER_QUERY) };
+    const results = await publishedRecipesQuery(ctx, category).order("desc").paginate(opts);
     return { ...results, page: await withCoverUrls(ctx, results.page) };
   },
 });
@@ -182,7 +182,7 @@ export const myBookmarks = query({
       .order("desc")
       .take(MAX_BOOKMARKS_PER_QUERY);
     const recipes = (await Promise.all(bookmarks.map((b) => ctx.db.get(b.recipeId)))).filter(
-      (r): r is NonNullable<typeof r> => r !== null,
+      (r): r is NonNullable<typeof r> => r !== null && r.status === "published",
     );
     return withCoverUrls(ctx, recipes);
   },
@@ -193,7 +193,7 @@ export const getById = query({
   handler: async (ctx, { id }) => {
     const recipe = await ctx.db.get(id);
     if (!recipe) return null;
-    if (recipe.status === "draft") {
+    if (recipe.status !== "published") {
       const user = await getCurrentUser(ctx);
       if (recipe.userId !== user?._id) return null;
     }
@@ -218,9 +218,11 @@ const recipeArgs = {
 
 type RecipeArgs = ObjectType<typeof recipeArgs>;
 
-function assertPublishable(args: Pick<RecipeArgs, "status" | "ingredients" | "steps">) {
-  if (args.status === "published" && (args.ingredients.length === 0 || args.steps.length === 0)) {
-    throw new Error("Published recipes need at least one ingredient and one step");
+function assertPublishable(args: Pick<RecipeArgs, "status" | "title" | "ingredients" | "steps">) {
+  if (args.status !== "published") return;
+  const hasText = (items: string[]) => items.some((item) => item.trim() !== "");
+  if (!(args.title.trim() && hasText(args.ingredients) && hasText(args.steps))) {
+    throw new Error("Published recipes need a title, at least one ingredient, and one step");
   }
 }
 
@@ -231,7 +233,7 @@ export const create = mutation({
     await checkRateLimit(ctx, user._id, "recipe:create");
     assertPublishable(args);
     const slug = await generateUniqueSlug(ctx, args.title);
-    const id = await ctx.db.insert("recipes", { ...args, slug, userId: user._id });
+    const id = await ctx.db.insert("recipes", { ...args, slug, userId: user._id, updatedAt: Date.now() });
     return { id, slug };
   },
 });
@@ -250,7 +252,7 @@ export const update = mutation({
     const slug = args.title === recipe.title ? recipe.slug : await generateUniqueSlug(ctx, args.title);
 
     await ctx.db.patch(id, { ...args, slug, updatedAt: Date.now() });
-    if (recipe.coverImage && recipe.coverImage !== args.coverImage) {
+    if (args.coverImage !== undefined && recipe.coverImage && recipe.coverImage !== args.coverImage) {
       await ctx.storage.delete(recipe.coverImage);
     }
   },
@@ -274,7 +276,3 @@ export const remove = mutation({
     await Promise.all(ops);
   },
 });
-
-// Shared with users.ts (profile images) — defined once, re-exported so the
-// api.recipes.generateUploadUrl reference stays stable for existing callers.
-export { generateUploadUrl } from "./users";

@@ -65,7 +65,7 @@ function RecipeListRow({
 const TABS = [
   { id: "my-recipes", label: "My Recipes", icon: BookOpenIcon },
   { id: "saved", label: "Saved", icon: BookmarkIcon },
-];
+] as const;
 
 function DashboardSkeleton() {
   return (
@@ -131,13 +131,13 @@ export function DashboardView() {
   };
 
   const { tab = "my-recipes" } = useSearch({ from: "/_authed/dashboard/" });
-  const isSavedTab = tab === "saved";
-  const recipes = isSavedTab ? myBookmarks : myRecipes;
 
   if (user === undefined || myRecipes === undefined || myBookmarks === undefined) {
     return <DashboardSkeleton />;
   }
 
+  const isSavedTab = tab === "saved";
+  const recipes = isSavedTab ? myBookmarks : myRecipes;
   const publishedCount = myRecipes.filter((r) => r.status === "published").length;
 
   return (
@@ -198,7 +198,7 @@ export function DashboardView() {
         })}
       </nav>
 
-      {!recipes || recipes.length === 0 ? (
+      {recipes.length === 0 ? (
         <div className="card p-16 text-center">
           <div className="w-20 h-20 bg-sage/10 rounded-full flex items-center justify-center mx-auto mb-6">
             {isSavedTab ? (

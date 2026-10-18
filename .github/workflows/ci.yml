@@ -4,6 +4,7 @@ on:
   push:
     branches: [main, "renovate/**"]
   pull_request:
+  workflow_dispatch:
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
@@ -33,3 +34,22 @@ jobs:
         run: doppler run -- bun run build
         env:
           DOPPLER_TOKEN: ${{ secrets.DOPPLER_TOKEN }}
+
+  # Deploys the Convex backend only after CI passes on main. The `convex`
+  # environment carries the production protection rules.
+  deploy:
+    needs: ci
+    if: ${{ (github.event_name == 'push' || github.event_name == 'workflow_dispatch') && github.ref == 'refs/heads/main' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    environment: convex
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: oven-sh/setup-bun@0c5077e51419868618aeaa5fe8019c62421857d6 # v2.2.0
+      - run: bun install --frozen-lockfile
+      # convex is a direct dependency, so bunx uses the lockfile version.
+      - run: bunx convex deploy
+        env:
+          CONVEX_DEPLOY_KEY: ${{ secrets.CONVEX_DEPLOY_KEY }}
