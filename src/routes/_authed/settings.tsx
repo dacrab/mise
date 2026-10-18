@@ -1,3 +1,4 @@
+import { Dialog } from "@base-ui/react/dialog";
 import {
   ArrowRightOnRectangleIcon,
   CalendarIcon,
@@ -11,9 +12,9 @@ import {
 import { createFileRoute } from "@tanstack/react-router";
 import { api } from "convex/_generated/api";
 import type { Id } from "convex/_generated/dataModel";
-import { useMutation, useQuery } from "convex/react";
+import { useAction, useMutation, useQuery } from "convex/react";
 import { useEffect, useRef, useState } from "react";
-import { ProgressBar } from "@/components/ui/Primitives";
+import { LoadingState, ProgressBar } from "@/components/ui/Primitives";
 import { TextArea } from "@/components/ui/TextArea";
 import { TextField } from "@/components/ui/TextField";
 import { useToast } from "@/components/ui/Toast";
@@ -21,6 +22,7 @@ import { useFileUpload } from "@/hooks/useFileUpload";
 import { useSignOut } from "@/hooks/useSignOut";
 import { type ThemePreference, useTheme } from "@/hooks/useTheme";
 import { APP_TITLE_SUFFIX } from "@/lib/constants";
+import { getErrorMessage } from "@/lib/utils";
 
 export const Route = createFileRoute("/_authed/settings")({
   head: () => ({
@@ -36,6 +38,7 @@ function Settings() {
   const user = useQuery(api.users.currentUser);
   const updateProfile = useMutation(api.users.updateProfile);
   const generateUploadUrl = useMutation(api.users.generateUploadUrl);
+  const deleteAccount = useAction(api.users.deleteAccount);
   const { toast } = useToast();
   const signOut = useSignOut();
   const { preference, setTheme } = useTheme();
@@ -61,6 +64,8 @@ function Settings() {
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [newProfileImage, setNewProfileImage] = useState<Id<"_storage"> | null>(null);
   const [saving, setSaving] = useState(false);
+  const [deleteOpen, setDeleteOpen] = useState(false);
+  const [deleting, setDeleting] = useState(false);
   const previewUrlRef = useRef<string | null>(null);
 
   const userIdRef = useRef<string | undefined>(undefined);
@@ -94,8 +99,8 @@ function Settings() {
       toast("Name cannot be empty", "error");
       return;
     }
-    if (username.trim() && !/^[a-z0-9_]+$/.test(username.trim())) {
-      toast("Username can only contain letters, numbers, and underscores", "error");
+    if (username.trim() && !/^[a-z0-9_]{3,32}$/.test(username.trim())) {
+      toast("Username must be 3-32 characters: letters, numbers, and underscores", "error");
       return;
     }
     setSaving(true);
@@ -116,11 +121,23 @@ function Settings() {
   };
 
   if (!user) {
-    return <div className="center min-h-[60vh] text-stone animate-pulse">Loading…</div>;
+    return <LoadingState />;
   }
 
-  const handleSignOut = async () => {
-    await signOut();
+  const handleDeleteAccount = async () => {
+    setDeleting(true);
+    try {
+      await deleteAccount();
+    } catch (err) {
+      toast(getErrorMessage(err), "error");
+      setDeleting(false);
+      return;
+    }
+    toast("Your account has been deleted", "success");
+    await signOut("/");
+    // signOut navigates on success; if the session was already invalidated by
+    // the deletion, force a hard redirect so the user is not left signed in.
+    window.location.replace("/");
   };
 
   const avatar = previewUrl ?? user.profileImageUrl ?? user.image;
@@ -178,9 +195,13 @@ function Settings() {
 
               <AppearanceSection preference={preference} setTheme={setTheme} />
 
-              <DangerZone
-                onSignOut={() => void handleSignOut()}
-                onDeleteAccount={() => toast("Account deletion is not yet available", "error")}
+              <DangerZone onSignOut={() => void signOut()} onDeleteAccount={() => setDeleteOpen(true)} />
+
+              <DeleteAccountDialog
+                open={deleteOpen}
+                onOpenChange={setDeleteOpen}
+                deleting={deleting}
+                onConfirm={() => void handleDeleteAccount()}
               />
 
               {/* Save — mobile */}
@@ -348,6 +369,72 @@ function DangerZone({ onSignOut, onDeleteAccount }: { onSignOut: () => void; onD
         </button>
       </div>
     </section>
+  );
+}
+
+function DeleteAccountDialog({
+  open,
+  onOpenChange,
+  deleting,
+  onConfirm,
+}: {
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  deleting: boolean;
+  onConfirm: () => void;
+}) {
+  const [confirmation, setConfirmation] = useState("");
+  const confirmed = confirmation.trim().toUpperCase() === "DELETE";
+
+  return (
+    <Dialog.Root
+      open={open}
+      onOpenChange={(next) => {
+        if (deleting) return;
+        if (!next) setConfirmation("");
+        onOpenChange(next);
+      }}
+    >
+      <Dialog.Portal>
+        <Dialog.Backdrop className="fixed inset-0 z-[90] bg-charcoal/40 backdrop-blur-sm transition-opacity duration-200 data-[starting-style]:opacity-0 data-[ending-style]:opacity-0" />
+        <Dialog.Popup className="fixed left-1/2 top-1/2 z-[100] w-[calc(100vw-2rem)] max-w-md -translate-x-1/2 -translate-y-1/2 rounded-2xl border border-cream-dark bg-warm-white p-6 shadow-hover outline-none transition-opacity duration-200 dark:border-d-border dark:bg-d-surface data-[starting-style]:opacity-0 data-[ending-style]:opacity-0">
+          <Dialog.Title className="font-serif text-xl font-medium text-primary">Delete account</Dialog.Title>
+          <Dialog.Description className="mt-2 text-sm text-stone">
+            This permanently deletes your account and cannot be undone. It removes:
+          </Dialog.Description>
+          <ul className="mt-3 list-disc space-y-1 pl-5 text-sm text-secondary">
+            <li>Your profile and sign-in</li>
+            <li>All recipes you've published or drafted</li>
+            <li>Your saved bookmarks</li>
+          </ul>
+          <label htmlFor="delete-confirm" className="label mt-6">
+            Type <span className="font-mono font-semibold text-terracotta">DELETE</span> to confirm
+          </label>
+          <input
+            id="delete-confirm"
+            type="text"
+            autoComplete="off"
+            value={confirmation}
+            onChange={(e) => setConfirmation(e.target.value)}
+            disabled={deleting}
+            className="input-field"
+          />
+          <div className="mt-6 flex justify-end gap-3">
+            <Dialog.Close disabled={deleting} className="btn-secondary">
+              Cancel
+            </Dialog.Close>
+            <button
+              type="button"
+              onClick={onConfirm}
+              disabled={!confirmed || deleting}
+              className="btn rounded-lg bg-terracotta px-5 py-2.5 text-white hover:bg-terracotta/90"
+            >
+              {deleting ? "Deleting…" : "Delete account"}
+            </button>
+          </div>
+        </Dialog.Popup>
+      </Dialog.Portal>
+    </Dialog.Root>
   );
 }
 

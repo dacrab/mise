@@ -14,6 +14,14 @@ type BookmarksContextValue = {
 
 const BookmarksContext = createContext<BookmarksContextValue | null>(null);
 
+// Fallback for anonymous visitors, who are rendered outside BookmarksProvider.
+// `toggle` rejects so callers can still surface a "sign in to save" prompt.
+const NO_PROVIDER: BookmarksContextValue = {
+  bookmarks: undefined,
+  bookmarkedIds: new Set(),
+  toggle: () => Promise.reject(new Error("Not authenticated")),
+};
+
 export function BookmarksProvider({ children }: { children: React.ReactNode }) {
   const bookmarks = useQuery(api.recipes.myBookmarks);
   const toggleBookmarkMutation = useMutation(api.social.toggleBookmark);
@@ -31,7 +39,5 @@ export function BookmarksProvider({ children }: { children: React.ReactNode }) {
 }
 
 export function useBookmarks() {
-  const ctx = useContext(BookmarksContext);
-  if (!ctx) throw new Error("useBookmarks must be used within a BookmarksProvider");
-  return ctx;
+  return useContext(BookmarksContext) ?? NO_PROVIDER;
 }

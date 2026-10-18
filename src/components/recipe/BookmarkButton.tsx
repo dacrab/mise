@@ -36,23 +36,17 @@ export function BookmarkButton({ recipeId, variant = "page" }: BookmarkButtonPro
     }
   }, [recipeId, toggle, toast, isAuthenticated]);
 
-  if (variant === "card" && currentUser === null) return null;
-
-  const handleClick = (e: React.MouseEvent) => {
-    if (variant === "card") {
-      e.preventDefault();
-      e.stopPropagation();
-    }
-    void handleToggle();
-  };
+  // Hide the overlay variant for signed-out (and still-loading) visitors.
+  if (variant === "card" && !currentUser) return null;
 
   if (variant === "card") {
     return (
       <button
         type="button"
-        onClick={handleClick}
+        onClick={() => void handleToggle()}
         disabled={isPending}
         aria-label={isBookmarked ? "Remove from saved" : "Save recipe"}
+        aria-pressed={isBookmarked}
         className={`p-2 rounded-full shadow-sm transition-all duration-200 backdrop-blur-sm disabled:opacity-50 ${
           isBookmarked ? "bg-charcoal/80 text-honey" : "bg-black/40 text-white hover:bg-charcoal/80"
         }`}
@@ -65,7 +59,7 @@ export function BookmarkButton({ recipeId, variant = "page" }: BookmarkButtonPro
   return (
     <button
       type="button"
-      onClick={handleClick}
+      onClick={() => void handleToggle()}
       disabled={isPending}
       aria-label={isBookmarked ? "Remove from saved" : "Save recipe"}
       aria-pressed={isBookmarked}

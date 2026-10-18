@@ -35,8 +35,26 @@ function subscribe(listener: () => void) {
   };
 }
 
+function readPreference(): ThemePreference {
+  try {
+    return parsePreference(localStorage.getItem(THEME_KEY));
+  } catch {
+    // Storage can throw when cookies/site data are blocked (e.g. private mode).
+    return "system";
+  }
+}
+
+function writePreference(pref: ThemePreference) {
+  try {
+    if (pref === "system") localStorage.removeItem(THEME_KEY);
+    else localStorage.setItem(THEME_KEY, pref);
+  } catch {
+    // Ignore: the in-memory store still updates for this session.
+  }
+}
+
 function getSnapshot(): ThemePreference {
-  return parsePreference(localStorage.getItem(THEME_KEY));
+  return readPreference();
 }
 
 function getServerSnapshot(): ThemePreference {
@@ -53,7 +71,7 @@ export function useTheme() {
   useEffect(() => {
     const mq = window.matchMedia(MEDIA_QUERY);
     const handler = () => {
-      if (parsePreference(localStorage.getItem(THEME_KEY)) === "system") {
+      if (readPreference() === "system") {
         applyTheme(getSystemTheme());
       }
     };
@@ -62,11 +80,7 @@ export function useTheme() {
   }, []);
 
   const setTheme = useCallback((pref: ThemePreference) => {
-    if (pref === "system") {
-      localStorage.removeItem(THEME_KEY);
-    } else {
-      localStorage.setItem(THEME_KEY, pref);
-    }
+    writePreference(pref);
     applyTheme(resolveTheme(pref));
     for (const listener of listeners) listener();
   }, []);

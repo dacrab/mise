@@ -19,31 +19,33 @@ export function RecipeCard({
   coverImageUrl?: string | null;
 }) {
   return (
-    <Link to="/recipe/$slug" params={{ slug }} className="recipe-card group">
-      <div className="relative overflow-hidden">
-        {coverImageUrl ? (
-          <img src={coverImageUrl} alt={title} className="recipe-card-image" />
-        ) : (
-          <div className="center aspect-[4/3] bg-cream-dark dark:bg-d-surface-raised">
-            <RecipePlaceholder size={32} />
-          </div>
-        )}
-        <span className="absolute top-3 left-3 tag bg-warm-white/90 dark:bg-d-surface/90 backdrop-blur-sm">
-          {category}
-        </span>
-        <div className="absolute top-3 right-3 flex items-center gap-1.5">
-          {recipeId && (
-            <div className="opacity-0 group-hover:opacity-100 focus-within:opacity-100 transition-opacity duration-200">
-              <BookmarkButton recipeId={recipeId} variant="card" />
+    <div className="recipe-card group relative">
+      <Link to="/recipe/$slug" params={{ slug }} className="block">
+        <div className="relative overflow-hidden">
+          {coverImageUrl ? (
+            <img src={coverImageUrl} alt={title} className="recipe-card-image" />
+          ) : (
+            <div className="center aspect-[4/3] bg-cream-dark dark:bg-d-surface-raised">
+              <RecipePlaceholder size={32} />
             </div>
           )}
+          <span className="absolute top-3 left-3 tag bg-warm-white/90 dark:bg-d-surface/90 backdrop-blur-sm">
+            {category}
+          </span>
         </div>
-      </div>
-      <div className="p-5">
-        <h3 className="font-serif text-lg font-medium group-hover:text-sage transition-colors line-clamp-1">{title}</h3>
-        {description && <p className="text-sm text-stone line-clamp-2 mt-1">{description}</p>}
-      </div>
-    </Link>
+        <div className="p-5">
+          <h3 className="font-serif text-lg font-medium group-hover:text-sage transition-colors line-clamp-1">
+            {title}
+          </h3>
+          {description && <p className="text-sm text-stone line-clamp-2 mt-1">{description}</p>}
+        </div>
+      </Link>
+      {recipeId && (
+        <div className="absolute top-3 right-3 z-10 opacity-0 pointer-events-none group-hover:opacity-100 group-hover:pointer-events-auto focus-within:opacity-100 focus-within:pointer-events-auto transition-opacity duration-200">
+          <BookmarkButton recipeId={recipeId} variant="card" />
+        </div>
+      )}
+    </div>
   );
 }
 

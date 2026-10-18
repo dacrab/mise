@@ -22,7 +22,7 @@ import { Route as ChefUsernameRouteImport } from './routes/chef.$username'
 import { Route as RecipeSlugRouteImport } from './routes/recipe.$slug'
 import { Route as AuthedDashboardIndexRouteImport } from './routes/_authed/dashboard/index'
 import { Route as AuthedDashboardCreateRouteImport } from './routes/_authed/dashboard/create'
-import { Route as RecipeSlugPrintRouteImport } from './routes/recipe.$slug.print'
+import { Route as RecipeSlugPrintRouteImport } from './routes/recipe.$slug_.print'
 import { Route as AuthedDashboardEditIdRouteImport } from './routes/_authed/dashboard/edit.$id'
 
 const IndexRoute = IndexRouteImport.update({
@@ -90,9 +90,9 @@ const AuthedDashboardCreateRoute = AuthedDashboardCreateRouteImport.update({
   getParentRoute: () => AuthedRoute,
 } as any)
 const RecipeSlugPrintRoute = RecipeSlugPrintRouteImport.update({
-  id: '/print',
-  path: '/print',
-  getParentRoute: () => RecipeSlugRoute,
+  id: '/recipe/$slug_/print',
+  path: '/recipe/$slug/print',
+  getParentRoute: () => rootRouteImport,
 } as any)
 const AuthedDashboardEditIdRoute = AuthedDashboardEditIdRouteImport.update({
   id: '/dashboard/edit/$id',
@@ -110,7 +110,7 @@ export interface FileRoutesByFullPath {
   '/signup': typeof authSignupRoute
   '/settings': typeof AuthedSettingsRoute
   '/chef/$username': typeof ChefUsernameRoute
-  '/recipe/$slug': typeof RecipeSlugRouteWithChildren
+  '/recipe/$slug': typeof RecipeSlugRoute
   '/dashboard/create': typeof AuthedDashboardCreateRoute
   '/recipe/$slug/print': typeof RecipeSlugPrintRoute
   '/dashboard/': typeof AuthedDashboardIndexRoute
@@ -126,7 +126,7 @@ export interface FileRoutesByTo {
   '/signup': typeof authSignupRoute
   '/settings': typeof AuthedSettingsRoute
   '/chef/$username': typeof ChefUsernameRoute
-  '/recipe/$slug': typeof RecipeSlugRouteWithChildren
+  '/recipe/$slug': typeof RecipeSlugRoute
   '/dashboard/create': typeof AuthedDashboardCreateRoute
   '/recipe/$slug/print': typeof RecipeSlugPrintRoute
   '/dashboard': typeof AuthedDashboardIndexRoute
@@ -144,9 +144,9 @@ export interface FileRoutesById {
   '/(auth)/signup': typeof authSignupRoute
   '/_authed/settings': typeof AuthedSettingsRoute
   '/chef/$username': typeof ChefUsernameRoute
-  '/recipe/$slug': typeof RecipeSlugRouteWithChildren
+  '/recipe/$slug': typeof RecipeSlugRoute
   '/_authed/dashboard/create': typeof AuthedDashboardCreateRoute
-  '/recipe/$slug/print': typeof RecipeSlugPrintRoute
+  '/recipe/$slug_/print': typeof RecipeSlugPrintRoute
   '/_authed/dashboard/': typeof AuthedDashboardIndexRoute
   '/_authed/dashboard/edit/$id': typeof AuthedDashboardEditIdRoute
 }
@@ -197,7 +197,7 @@ export interface FileRouteTypes {
     | '/chef/$username'
     | '/recipe/$slug'
     | '/_authed/dashboard/create'
-    | '/recipe/$slug/print'
+    | '/recipe/$slug_/print'
     | '/_authed/dashboard/'
     | '/_authed/dashboard/edit/$id'
   fileRoutesById: FileRoutesById
@@ -212,7 +212,8 @@ export interface RootRouteChildren {
   authLoginRoute: typeof authLoginRoute
   authSignupRoute: typeof authSignupRoute
   ChefUsernameRoute: typeof ChefUsernameRoute
-  RecipeSlugRoute: typeof RecipeSlugRouteWithChildren
+  RecipeSlugRoute: typeof RecipeSlugRoute
+  RecipeSlugPrintRoute: typeof RecipeSlugPrintRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -308,12 +309,12 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthedDashboardCreateRouteImport
       parentRoute: typeof AuthedRoute
     }
-    '/recipe/$slug/print': {
-      id: '/recipe/$slug/print'
-      path: '/print'
+    '/recipe/$slug_/print': {
+      id: '/recipe/$slug_/print'
+      path: '/recipe/$slug/print'
       fullPath: '/recipe/$slug/print'
       preLoaderRoute: typeof RecipeSlugPrintRouteImport
-      parentRoute: typeof RecipeSlugRoute
+      parentRoute: typeof rootRouteImport
     }
     '/_authed/dashboard/edit/$id': {
       id: '/_authed/dashboard/edit/$id'
@@ -342,18 +343,6 @@ const AuthedRouteChildren: AuthedRouteChildren = {
 const AuthedRouteWithChildren =
   AuthedRoute._addFileChildren(AuthedRouteChildren)
 
-interface RecipeSlugRouteChildren {
-  RecipeSlugPrintRoute: typeof RecipeSlugPrintRoute
-}
-
-const RecipeSlugRouteChildren: RecipeSlugRouteChildren = {
-  RecipeSlugPrintRoute: RecipeSlugPrintRoute,
-}
-
-const RecipeSlugRouteWithChildren = RecipeSlugRoute._addFileChildren(
-  RecipeSlugRouteChildren,
-)
-
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AuthedRoute: AuthedRouteWithChildren,
@@ -364,7 +353,8 @@ const rootRouteChildren: RootRouteChildren = {
   authLoginRoute: authLoginRoute,
   authSignupRoute: authSignupRoute,
   ChefUsernameRoute: ChefUsernameRoute,
-  RecipeSlugRoute: RecipeSlugRouteWithChildren,
+  RecipeSlugRoute: RecipeSlugRoute,
+  RecipeSlugPrintRoute: RecipeSlugPrintRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

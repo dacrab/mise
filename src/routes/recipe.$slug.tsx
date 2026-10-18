@@ -8,7 +8,7 @@ import { useMemo, useState } from "react";
 import { PageLayout } from "@/components/layout/PageLayout";
 import { BookmarkButton } from "@/components/recipe/BookmarkButton";
 import { MetaStat } from "@/components/ui/MetaStat";
-import { Avatar } from "@/components/ui/Primitives";
+import { Avatar, LoadingState } from "@/components/ui/Primitives";
 import { RouteError } from "@/components/ui/RouteError";
 import { useToast } from "@/components/ui/Toast";
 import { APP_TITLE_SUFFIX, MAX_SERVINGS, MIN_SERVINGS } from "@/lib/constants";
@@ -18,7 +18,7 @@ export const Route = createFileRoute("/recipe/$slug")({
   loader: ({ params, context: { queryClient } }) =>
     queryClient.ensureQueryData(convexQuery(api.recipes.getBySlug, { slug: params.slug })),
   component: RecipePage,
-  pendingComponent: () => <div className="center min-h-[60vh] text-stone animate-pulse">Loading…</div>,
+  pendingComponent: LoadingState,
   errorComponent: ({ error, reset }) => <RouteError error={error} reset={reset} />,
   head: ({ loaderData }) => ({
     meta: [
@@ -26,7 +26,7 @@ export const Route = createFileRoute("/recipe/$slug")({
       { name: "description", content: loaderData?.description ?? "A delicious recipe on Mise" },
       { property: "og:title", content: loaderData?.title ?? "Recipe" },
       { property: "og:description", content: loaderData?.description ?? "A delicious recipe on Mise" },
-      { property: "og:image", content: loaderData?.coverImageUrl ?? "" },
+      ...(loaderData?.coverImageUrl ? [{ property: "og:image", content: loaderData.coverImageUrl }] : []),
       { property: "og:type", content: "article" },
       { name: "twitter:card", content: "summary_large_image" },
     ],
@@ -217,7 +217,7 @@ function RecipePage() {
             <div className="absolute bottom-0 left-0 right-0 p-6 sm:p-10 lg:p-12">
               <div className="max-w-5xl mx-auto">
                 <span className="inline-block px-3 py-1 rounded-full bg-white/20 backdrop-blur-sm text-white text-xs font-medium mb-4">
-                  {recipe.category ?? "Recipe"}
+                  {recipe.category}
                 </span>
                 <h1 className="font-serif text-3xl sm:text-4xl lg:text-5xl font-medium text-white leading-tight max-w-3xl">
                   {recipe.title}
@@ -228,7 +228,7 @@ function RecipePage() {
         ) : (
           <div className="pt-12 pb-6 wrapper max-w-5xl">
             <span className="inline-block px-3 py-1 rounded-full bg-sage/10 text-sage text-xs font-medium mb-4">
-              {recipe.category ?? "Recipe"}
+              {recipe.category}
             </span>
             <h1 className="font-serif text-3xl sm:text-4xl lg:text-5xl font-medium leading-tight max-w-3xl">
               {recipe.title}

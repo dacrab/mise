@@ -4,7 +4,7 @@ import type { MutationCtx } from "./_generated/server";
 
 const RATE_LIMIT_ACTIONS = ["recipe:create", "recipe:update", "bookmark:toggle"] as const;
 
-export type RateLimitAction = (typeof RATE_LIMIT_ACTIONS)[number];
+type RateLimitAction = (typeof RATE_LIMIT_ACTIONS)[number];
 
 export const LIMITS: Record<RateLimitAction, { max: number; windowMs: number }> = {
   "recipe:create": { max: 10, windowMs: 60 * 60 * 1000 }, // 10/hour

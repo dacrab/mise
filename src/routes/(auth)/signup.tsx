@@ -3,6 +3,7 @@ import { createFileRoute, Link, Navigate } from "@tanstack/react-router";
 import { z } from "zod";
 import { SignupForm } from "@/components/auth/AuthForms";
 import { AuthLayout } from "@/components/layout/AuthLayout";
+import { Spinner } from "@/components/ui/Primitives";
 import { APP_TITLE_SUFFIX } from "@/lib/constants";
 import { safeRedirect } from "@/lib/utils";
 
@@ -26,7 +27,15 @@ function SignupPage() {
   const { redirect } = Route.useSearch();
   const safeTarget = safeRedirect(redirect);
 
-  if (isLoaded && isSignedIn) {
+  if (!isLoaded) {
+    return (
+      <div className="center min-h-screen">
+        <Spinner className="w-8 h-8 text-sage" />
+      </div>
+    );
+  }
+
+  if (isSignedIn) {
     return <Navigate to={safeTarget ?? "/dashboard"} replace />;
   }
 

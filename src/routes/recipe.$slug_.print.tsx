@@ -4,17 +4,18 @@ import { useSuspenseQuery } from "@tanstack/react-query";
 import { createFileRoute, notFound } from "@tanstack/react-router";
 import { api } from "convex/_generated/api";
 import { MetaStat } from "@/components/ui/MetaStat";
+import { LoadingState } from "@/components/ui/Primitives";
 
 const statBox = "stat-box";
 const statIcon = "w-4 h-4 text-stone";
 const statLabel = "text-xs text-stone uppercase tracking-wide";
 const statValue = "text-sm font-medium text-charcoal";
 
-export const Route = createFileRoute("/recipe/$slug/print")({
+export const Route = createFileRoute("/recipe/$slug_/print")({
   loader: ({ params, context: { queryClient } }) =>
     queryClient.ensureQueryData(convexQuery(api.recipes.getBySlug, { slug: params.slug })),
   component: PrintRecipe,
-  pendingComponent: () => <div className="center min-h-screen text-stone animate-pulse">Loading…</div>,
+  pendingComponent: () => <LoadingState className="center min-h-screen" />,
   errorComponent: ({ reset }) => (
     <div className="max-w-2xl mx-auto p-8 text-center">
       <h1 className="text-xl font-bold mb-4">Could not load recipe</h1>

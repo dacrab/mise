@@ -4,6 +4,7 @@ import { createFileRoute, Navigate, redirect } from "@tanstack/react-router";
 import { api } from "convex/_generated/api";
 import type { Id } from "convex/_generated/dataModel";
 import { RecipeEditor } from "@/components/recipe/RecipeEditor";
+import { APP_TITLE_SUFFIX } from "@/lib/constants";
 
 /**
  * Convex document IDs are url-safe base64 strings (22 chars today). The
@@ -23,6 +24,12 @@ export const Route = createFileRoute("/_authed/dashboard/edit/$id")({
     const recipe = await queryClient.ensureQueryData(convexQuery(api.recipes.getById, { id: params.id }));
     if (!recipe) throw redirect({ to: "/dashboard", replace: true });
   },
+  head: () => ({
+    meta: [
+      { title: `Edit Recipe${APP_TITLE_SUFFIX}` },
+      { name: "description", content: "Update your recipe details, ingredients, and steps." },
+    ],
+  }),
   component: EditRecipePage,
 });
 

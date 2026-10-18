@@ -156,7 +156,7 @@ export function Header() {
   const closeMenu = () => setMobileOpen(false);
 
   return (
-    <Dialog.Root open={mobileOpen} onOpenChange={(open) => setMobileOpen(open)}>
+    <Dialog.Root open={mobileOpen} onOpenChange={setMobileOpen}>
       <header className="fixed top-0 w-full z-50 glass">
         <div className="wrapper h-16 flex items-center justify-between">
           <Link

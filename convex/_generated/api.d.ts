@@ -10,6 +10,7 @@
 
 import type * as http from "../http.js";
 import type * as lib_auth from "../lib/auth.js";
+import type * as lib_categories from "../lib/categories.js";
 import type * as rateLimit from "../rateLimit.js";
 import type * as recipes from "../recipes.js";
 import type * as social from "../social.js";
@@ -24,6 +25,7 @@ import type {
 declare const fullApi: ApiFromModules<{
   http: typeof http;
   "lib/auth": typeof lib_auth;
+  "lib/categories": typeof lib_categories;
   rateLimit: typeof rateLimit;
   recipes: typeof recipes;
   social: typeof social;

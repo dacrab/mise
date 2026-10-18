@@ -13,7 +13,7 @@ const STRENGTH = [
   { color: "bg-terracotta", label: "Weak" },
   { color: "bg-honey", label: "Good" },
   { color: "bg-sage", label: "Strong" },
-  { color: "bg-sage", label: "Strong" },
+  { color: "bg-sage", label: "Very strong" },
 ] as const;
 
 function calculatePasswordStrength(password: string): number {
@@ -97,7 +97,7 @@ function FormField({
 
 function PasswordField({
   label,
-  id = "password",
+  id,
   value,
   onChange,
   show,
@@ -106,7 +106,7 @@ function PasswordField({
   strength,
 }: {
   label: string;
-  id?: string;
+  id: string;
   value: string;
   onChange: (v: string) => void;
   show: boolean;
@@ -252,7 +252,6 @@ export function LoginForm() {
         onChange={setPassword}
         show={showPassword}
         onToggleShow={() => setShowPassword((s) => !s)}
-        autoComplete="current-password"
       />
       <div className="text-right">
         <Link to="/forgot-password" className="text-sm text-sage hover:text-sage-light">
@@ -330,27 +329,16 @@ export function SignupForm() {
         autoComplete="new-password"
         strength={strength}
       />
-      <div>
-        <label htmlFor="signup-confirm" className="label">
-          Confirm password
-        </label>
-        <input
-          id="signup-confirm"
-          type={showPassword ? "text" : "password"}
-          value={confirmPassword}
-          onChange={(e) => setConfirmPassword(e.target.value)}
-          className={`input-field w-full${!passwordsMatch ? " border-terracotta" : ""}`}
-          placeholder="••••••••"
-          autoComplete="new-password"
-          aria-invalid={!passwordsMatch}
-          aria-describedby={!passwordsMatch ? "confirm-error" : undefined}
-        />
-        {!passwordsMatch && (
-          <p id="confirm-error" className="text-xs text-terracotta mt-1">
-            Passwords don't match
-          </p>
-        )}
-      </div>
+      <FormField
+        id="signup-confirm"
+        label="Confirm password"
+        type={showPassword ? "text" : "password"}
+        value={confirmPassword}
+        onChange={setConfirmPassword}
+        placeholder="••••••••"
+        autoComplete="new-password"
+        error={!passwordsMatch ? "Passwords don't match" : undefined}
+      />
       <SubmitButton pending={isPending} pendingLabel="Creating…" label="Sign up" disabled={!(canSubmit && isLoaded)} />
     </form>
   );
@@ -364,6 +352,7 @@ export function ForgotPasswordForm() {
   const [email, setEmail] = useState("");
   const [code, setCode] = useState("");
   const [newPassword, setNewPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
   const [sendingCode, setSendingCode] = useState(false);
   const [resetting, setResetting] = useState(false);
 
@@ -456,14 +445,15 @@ export function ForgotPasswordForm() {
         <h1 className="font-serif text-2xl font-medium mb-2">Set new password</h1>
         <p className="text-stone mb-6">Choose a new password for your account.</p>
         <form onSubmit={handleSetNewPassword} className="space-y-4">
-          <FormField
+          <PasswordField
             id="reset-password"
             label="New password"
-            type="password"
             value={newPassword}
             onChange={setNewPassword}
-            placeholder="At least 8 characters"
+            show={showPassword}
+            onToggleShow={() => setShowPassword((s) => !s)}
             autoComplete="new-password"
+            strength={calculatePasswordStrength(newPassword)}
           />
           <SubmitButton
             pending={resetting}

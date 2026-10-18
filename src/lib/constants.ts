@@ -5,7 +5,7 @@ export const APP_TITLE_SUFFIX = ` | ${APP_NAME}`;
 
 export const CATEGORIES = RECIPE_CATEGORIES;
 
-export type Category = (typeof CATEGORIES)[number];
+type Category = (typeof CATEGORIES)[number];
 
 export const CATEGORY_ICONS: Record<Category, string> = {
   General: "🍽️",
