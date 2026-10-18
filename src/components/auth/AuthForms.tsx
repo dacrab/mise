@@ -1,7 +1,11 @@
 import { useSignIn, useSignUp } from "@clerk/tanstack-react-start";
 import { ArrowLeftIcon, EyeIcon, EyeSlashIcon } from "@heroicons/react/24/outline";
+import { zodResolver } from "@hookform/resolvers/zod";
 import { Link, useRouter } from "@tanstack/react-router";
-import { useState } from "react";
+import { forwardRef, useState } from "react";
+import { useForm, useWatch } from "react-hook-form";
+import { z } from "zod";
+import { FieldError } from "@/components/ui/Field";
 import { Spinner } from "@/components/ui/Primitives";
 import { useToast } from "@/components/ui/Toast";
 import { asRecord } from "@/lib/utils";
@@ -26,142 +30,34 @@ function calculatePasswordStrength(password: string): number {
   return Math.min(score, 4);
 }
 
-function SubmitButton({
-  pending,
-  pendingLabel,
-  label,
-  disabled,
-}: {
-  pending: boolean;
-  pendingLabel: string;
-  label: string;
-  disabled?: boolean;
-}) {
-  return (
-    <button type="submit" disabled={disabled || pending} className="btn-primary w-full disabled:opacity-50">
-      {pending ? (
-        <span className="flex items-center justify-center gap-2">
-          <Spinner /> {pendingLabel}
-        </span>
-      ) : (
-        label
-      )}
-    </button>
-  );
-}
+const loginSchema = z.object({
+  email: z.email("Enter a valid email address"),
+  password: z.string().min(1, "Enter your password"),
+});
 
-function FormField({
-  label,
-  id,
-  type = "text",
-  value,
-  onChange,
-  placeholder,
-  error,
-  autoComplete,
-}: {
-  label: string;
-  id: string;
-  type?: string;
-  value: string;
-  onChange: (v: string) => void;
-  placeholder?: string;
-  error?: string;
-  autoComplete?: string;
-}) {
-  const errorId = `${id}-error`;
-  return (
-    <div>
-      <label htmlFor={id} className="label">
-        {label}
-      </label>
-      <input
-        id={id}
-        type={type}
-        value={value}
-        onChange={(e) => onChange(e.target.value)}
-        className={`input-field w-full${error ? " border-terracotta" : ""}`}
-        placeholder={placeholder}
-        aria-invalid={!!error}
-        aria-describedby={error ? errorId : undefined}
-        autoComplete={autoComplete}
-      />
-      {error && (
-        <p id={errorId} className="text-xs text-terracotta mt-1">
-          {error}
-        </p>
-      )}
-    </div>
-  );
-}
+const signupSchema = z
+  .object({
+    name: z.string().trim().min(1, "Enter your name"),
+    email: z.email("Enter a valid email address"),
+    password: z.string().min(MIN_PASSWORD_LENGTH, `Password must be at least ${MIN_PASSWORD_LENGTH} characters`),
+    confirmPassword: z.string(),
+  })
+  .refine((data) => data.password === data.confirmPassword, {
+    path: ["confirmPassword"],
+    message: "Passwords don't match",
+  });
 
-function PasswordField({
-  label,
-  id,
-  value,
-  onChange,
-  show,
-  onToggleShow,
-  autoComplete,
-  strength,
-}: {
-  label: string;
-  id: string;
-  value: string;
-  onChange: (v: string) => void;
-  show: boolean;
-  onToggleShow: () => void;
-  autoComplete?: string;
-  strength?: number;
-}) {
-  const strengthEntry = strength != null ? STRENGTH[Math.min(strength, STRENGTH.length - 1)] : undefined;
-  return (
-    <div>
-      <label htmlFor={id} className="label">
-        {label}
-      </label>
-      <div className="relative">
-        <input
-          id={id}
-          type={show ? "text" : "password"}
-          value={value}
-          onChange={(e) => onChange(e.target.value)}
-          className="input-field w-full pr-10"
-          placeholder="••••••••"
-          autoComplete={autoComplete ?? "current-password"}
-          aria-describedby={strength ? `${id}-strength` : undefined}
-        />
-        <button
-          type="button"
-          onClick={onToggleShow}
-          className="absolute right-3 top-1/2 -translate-y-1/2 text-stone hover:text-primary"
-          aria-label={show ? "Hide password" : "Show password"}
-        >
-          {show ? <EyeSlashIcon className="w-5 h-5" /> : <EyeIcon className="w-5 h-5" />}
-        </button>
-      </div>
-      {strength != null && value && (
-        <div id={`${id}-strength`} className="mt-3 space-y-1" aria-live="polite">
-          <div
-            className="flex gap-1 h-1"
-            role="progressbar"
-            aria-valuenow={strength}
-            aria-valuemin={0}
-            aria-valuemax={4}
-          >
-            {[1, 2, 3, 4].map((i) => (
-              <div
-                key={i}
-                className={`flex-1 rounded-full ${i <= strength ? (strengthEntry?.color ?? "bg-sage") : "surface-raised"}`}
-              />
-            ))}
-          </div>
-          <p className="text-xs text-stone">{strengthEntry?.label}</p>
-        </div>
-      )}
-    </div>
-  );
-}
+const resetRequestSchema = z.object({ email: z.email("Enter a valid email address") });
+const resetCodeSchema = z.object({ code: z.string().trim().min(1, "Enter the code from your email") });
+const newPasswordSchema = z.object({
+  newPassword: z.string().min(MIN_PASSWORD_LENGTH, `Password must be at least ${MIN_PASSWORD_LENGTH} characters`),
+});
+
+type LoginValues = z.infer<typeof loginSchema>;
+type SignupValues = z.infer<typeof signupSchema>;
+type ResetRequestValues = z.infer<typeof resetRequestSchema>;
+type ResetCodeValues = z.infer<typeof resetCodeSchema>;
+type NewPasswordValues = z.infer<typeof newPasswordSchema>;
 
 const LOGIN_ERRORS: Record<string, string> = {
   InvalidAccountId: "No account found with this email. Please sign up first.",
@@ -189,6 +85,8 @@ const RESET_PASSWORD_ERRORS: Record<string, string> = {
   default: "Could not reset password. Please try again.",
 };
 
+const BACK_LINK_CLASS = "link-muted flex items-center gap-1 mb-6";
+
 function getClerkErrorCode(error: unknown): string | undefined {
   const record = asRecord(error);
   if (!record) return undefined;
@@ -210,60 +108,181 @@ function mapAuthError(errors: Record<string, string>, error: unknown): string {
   );
 }
 
+function SubmitButton({
+  pending,
+  pendingLabel,
+  label,
+  disabled,
+}: {
+  pending: boolean;
+  pendingLabel: string;
+  label: string;
+  disabled?: boolean;
+}) {
+  return (
+    <button type="submit" disabled={disabled || pending} className="btn-primary w-full disabled:opacity-50">
+      {pending ? (
+        <span className="flex items-center justify-center gap-2">
+          <Spinner /> {pendingLabel}
+        </span>
+      ) : (
+        label
+      )}
+    </button>
+  );
+}
+
+type FormFieldProps = React.InputHTMLAttributes<HTMLInputElement> & {
+  id: string;
+  label: string;
+  error?: string;
+};
+
+const FormField = forwardRef<HTMLInputElement, FormFieldProps>(({ id, label, error, ...rest }, ref) => {
+  const errorId = `${id}-error`;
+  return (
+    <div>
+      <label htmlFor={id} className="label">
+        {label}
+      </label>
+      <input
+        ref={ref}
+        id={id}
+        className={`input-field w-full${error ? " border-terracotta" : ""}`}
+        aria-invalid={!!error}
+        aria-describedby={error ? errorId : undefined}
+        {...rest}
+      />
+      <FieldError id={errorId} error={{ message: error }} />
+    </div>
+  );
+});
+FormField.displayName = "FormField";
+
+type PasswordFieldProps = Omit<React.InputHTMLAttributes<HTMLInputElement>, "type"> & {
+  id: string;
+  label: string;
+  show: boolean;
+  onToggleShow: () => void;
+  strength?: number;
+  error?: string;
+};
+
+const PasswordField = forwardRef<HTMLInputElement, PasswordFieldProps>(
+  ({ id, label, show, onToggleShow, strength, error, ...rest }, ref) => {
+    const strengthEntry = strength != null ? STRENGTH[Math.min(strength, STRENGTH.length - 1)] : undefined;
+    return (
+      <div>
+        <label htmlFor={id} className="label">
+          {label}
+        </label>
+        <div className="relative">
+          <input
+            ref={ref}
+            id={id}
+            type={show ? "text" : "password"}
+            className={`input-field w-full pr-10${error ? " border-terracotta" : ""}`}
+            placeholder="••••••••"
+            aria-invalid={!!error}
+            aria-describedby={strength != null ? `${id}-strength` : undefined}
+            {...rest}
+          />
+          <button
+            type="button"
+            onClick={onToggleShow}
+            className="absolute right-3 top-1/2 -translate-y-1/2 text-stone hover:text-primary"
+            aria-label={show ? "Hide password" : "Show password"}
+          >
+            {show ? <EyeSlashIcon className="w-5 h-5" /> : <EyeIcon className="w-5 h-5" />}
+          </button>
+        </div>
+        <FieldError id={`${id}-error`} error={{ message: error }} />
+        {strength != null && (
+          <div id={`${id}-strength`} className="mt-3 space-y-1" aria-live="polite">
+            <div
+              className="flex gap-1 h-1"
+              role="progressbar"
+              aria-valuenow={strength}
+              aria-valuemin={0}
+              aria-valuemax={4}
+            >
+              {[1, 2, 3, 4].map((i) => (
+                <div
+                  key={i}
+                  className={`flex-1 rounded-full ${i <= strength ? (strengthEntry?.color ?? "bg-sage") : "surface-raised"}`}
+                />
+              ))}
+            </div>
+            <p className="text-xs text-stone">{strengthEntry?.label}</p>
+          </div>
+        )}
+      </div>
+    );
+  },
+);
+PasswordField.displayName = "PasswordField";
+
+function StepHeader({ title, description }: { title: string; description: React.ReactNode }) {
+  return (
+    <>
+      <h1 className="font-serif text-2xl font-medium mb-2">{title}</h1>
+      <p className="text-stone mb-6">{description}</p>
+    </>
+  );
+}
+
 export function LoginForm() {
   const { signIn, fetchStatus } = useSignIn();
   const { toast } = useToast();
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
-  const [isPending, setIsPending] = useState(false);
+  const {
+    register,
+    handleSubmit,
+    formState: { errors, isSubmitting },
+  } = useForm<LoginValues>({
+    resolver: zodResolver(loginSchema),
+    defaultValues: { email: "", password: "" },
+  });
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!(signIn && email && password) || isPending) return;
-    setIsPending(true);
+  const isLoaded = fetchStatus === "idle";
+
+  const onSubmit = handleSubmit(async (values) => {
+    if (!signIn) return;
     try {
-      const result = await signIn.create({ identifier: email, password });
+      const result = await signIn.create({ identifier: values.email, password: values.password });
       if (result?.error) throw result.error;
       toast("Welcome back!", "success");
     } catch (err) {
       toast(mapAuthError(LOGIN_ERRORS, err), "error");
-    } finally {
-      setIsPending(false);
     }
-  };
-
-  const isLoaded = fetchStatus === "idle";
+  });
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-4">
+    <form onSubmit={onSubmit} className="space-y-4">
       <FormField
         id="login-email"
         label="Email"
         type="email"
-        value={email}
-        onChange={setEmail}
         placeholder="you@example.com"
+        autoComplete="email"
+        error={errors.email?.message}
+        {...register("email")}
       />
       <PasswordField
         id="login-password"
         label="Password"
-        value={password}
-        onChange={setPassword}
         show={showPassword}
         onToggleShow={() => setShowPassword((s) => !s)}
+        autoComplete="current-password"
+        error={errors.password?.message}
+        {...register("password")}
       />
       <div className="text-right">
-        <Link to="/forgot-password" className="text-sm text-sage hover:text-sage-light">
+        <Link to="/forgot-password" className="text-sm link-sage">
           Forgot password?
         </Link>
       </div>
-      <SubmitButton
-        pending={isPending}
-        pendingLabel="Signing in…"
-        label="Sign in"
-        disabled={!(email && password && isLoaded)}
-      />
+      <SubmitButton pending={isSubmitting} pendingLabel="Signing in…" label="Sign in" disabled={!isLoaded} />
     </form>
   );
 }
@@ -271,75 +290,75 @@ export function LoginForm() {
 export function SignupForm() {
   const { signUp, fetchStatus } = useSignUp();
   const { toast } = useToast();
-  const [name, setName] = useState("");
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const [confirmPassword, setConfirmPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
-  const [isPending, setIsPending] = useState(false);
+  const {
+    register,
+    handleSubmit,
+    control,
+    formState: { errors, isSubmitting },
+  } = useForm<SignupValues>({
+    resolver: zodResolver(signupSchema),
+    defaultValues: { name: "", email: "", password: "", confirmPassword: "" },
+  });
 
-  const strength = calculatePasswordStrength(password);
-  const passwordsMatch = !confirmPassword || password === confirmPassword;
-  const canSubmit =
-    !isPending && !!name && !!email && password.length >= MIN_PASSWORD_LENGTH && password === confirmPassword;
+  const passwordInput = useWatch({ control, name: "password" }) ?? "";
+  const isLoaded = fetchStatus === "idle";
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!(signUp && canSubmit)) return;
-    setIsPending(true);
+  const onSubmit = handleSubmit(async (values) => {
+    if (!signUp) return;
     try {
-      const result = await signUp.create({ emailAddress: email, password, firstName: name });
+      const result = await signUp.create({
+        emailAddress: values.email,
+        password: values.password,
+        firstName: values.name,
+      });
       if (result?.error) throw result.error;
       toast("Account created! Welcome to Mise", "success");
     } catch (err) {
       toast(mapAuthError(SIGNUP_ERRORS_MAP, err), "error");
-    } finally {
-      setIsPending(false);
     }
-  };
-
-  const isLoaded = fetchStatus === "idle";
+  });
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-4">
+    <form onSubmit={onSubmit} className="space-y-4">
       <FormField
         id="signup-name"
         label="Name"
         type="text"
-        value={name}
-        onChange={setName}
         placeholder="Your name"
         autoComplete="name"
+        error={errors.name?.message}
+        {...register("name")}
       />
       <FormField
         id="signup-email"
         label="Email"
         type="email"
-        value={email}
-        onChange={setEmail}
         placeholder="you@example.com"
+        autoComplete="email"
+        error={errors.email?.message}
+        {...register("email")}
       />
       <PasswordField
         id="signup-password"
         label="Password"
-        value={password}
-        onChange={setPassword}
         show={showPassword}
         onToggleShow={() => setShowPassword((s) => !s)}
         autoComplete="new-password"
-        strength={strength}
+        strength={passwordInput ? calculatePasswordStrength(passwordInput) : undefined}
+        error={errors.password?.message}
+        {...register("password")}
       />
       <FormField
         id="signup-confirm"
         label="Confirm password"
         type={showPassword ? "text" : "password"}
-        value={confirmPassword}
-        onChange={setConfirmPassword}
         placeholder="••••••••"
         autoComplete="new-password"
-        error={!passwordsMatch ? "Passwords don't match" : undefined}
+        error={errors.confirmPassword?.message}
+        {...register("confirmPassword")}
       />
-      <SubmitButton pending={isPending} pendingLabel="Creating…" label="Sign up" disabled={!(canSubmit && isLoaded)} />
+      <SubmitButton pending={isSubmitting} pendingLabel="Creating…" label="Sign up" disabled={!isLoaded} />
     </form>
   );
 }
@@ -349,19 +368,29 @@ export function ForgotPasswordForm() {
   const { toast } = useToast();
   const router = useRouter();
   const [step, setStep] = useState<"email" | "code" | "password">("email");
-  const [email, setEmail] = useState("");
-  const [code, setCode] = useState("");
-  const [newPassword, setNewPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
-  const [sendingCode, setSendingCode] = useState(false);
-  const [resetting, setResetting] = useState(false);
 
-  const handleRequestReset = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!(signIn && email.trim()) || sendingCode) return;
-    setSendingCode(true);
+  const emailForm = useForm<ResetRequestValues>({
+    resolver: zodResolver(resetRequestSchema),
+    defaultValues: { email: "" },
+  });
+  const codeForm = useForm<ResetCodeValues>({
+    resolver: zodResolver(resetCodeSchema),
+    defaultValues: { code: "" },
+  });
+  const passwordForm = useForm<NewPasswordValues>({
+    resolver: zodResolver(newPasswordSchema),
+    defaultValues: { newPassword: "" },
+  });
+
+  const email = useWatch({ control: emailForm.control, name: "email" }) ?? "";
+  const newPassword = useWatch({ control: passwordForm.control, name: "newPassword" }) ?? "";
+  const isLoaded = fetchStatus === "idle";
+
+  const handleRequestReset = emailForm.handleSubmit(async (values) => {
+    if (!signIn) return;
     try {
-      const result = await signIn.create({ identifier: email });
+      const result = await signIn.create({ identifier: values.email });
       if (result?.error) throw result.error;
       const sendResult = await signIn.resetPasswordEmailCode.sendCode();
       if (sendResult?.error) throw sendResult.error;
@@ -369,67 +398,55 @@ export function ForgotPasswordForm() {
       toast("Reset code sent to your email", "success");
     } catch (err) {
       toast(mapAuthError(RESET_PASSWORD_ERRORS, err), "error");
-    } finally {
-      setSendingCode(false);
     }
-  };
+  });
 
-  const handleVerifyCode = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!(signIn && code.trim()) || resetting) return;
-    setResetting(true);
+  const handleVerifyCode = codeForm.handleSubmit(async (values) => {
+    if (!signIn) return;
     try {
-      const result = await signIn.resetPasswordEmailCode.verifyCode({ code });
+      const result = await signIn.resetPasswordEmailCode.verifyCode({ code: values.code });
       if (result?.error) throw result.error;
       setStep("password");
     } catch (err) {
       toast(mapAuthError(RESET_PASSWORD_ERRORS, err), "error");
-    } finally {
-      setResetting(false);
     }
-  };
+  });
 
-  const handleSetNewPassword = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!signIn || newPassword.length < MIN_PASSWORD_LENGTH || resetting) return;
-    setResetting(true);
+  const handleSetNewPassword = passwordForm.handleSubmit(async (values) => {
+    if (!signIn) return;
     try {
-      const result = await signIn.resetPasswordEmailCode.submitPassword({ password: newPassword });
+      const result = await signIn.resetPasswordEmailCode.submitPassword({ password: values.newPassword });
       if (result?.error) throw result.error;
       await signIn.finalize();
       toast("Password reset successfully! Please sign in.", "success");
       await router.navigate({ to: "/login", replace: true });
     } catch (err) {
       toast(mapAuthError(RESET_PASSWORD_ERRORS, err), "error");
-      setResetting(false);
     }
-  };
-
-  const isLoaded = fetchStatus === "idle";
+  });
 
   if (step === "code") {
     return (
       <div>
-        <button type="button" onClick={() => setStep("email")} className="link-muted flex items-center gap-1 mb-6">
+        <button type="button" onClick={() => setStep("email")} className={BACK_LINK_CLASS}>
           <ArrowLeftIcon className="w-4 h-4" /> Back
         </button>
-        <h1 className="font-serif text-2xl font-medium mb-2">Enter reset code</h1>
-        <p className="text-stone mb-6">We sent a code to {email}</p>
+        <StepHeader title="Enter reset code" description={`We sent a code to ${email}`} />
         <form onSubmit={handleVerifyCode} className="space-y-4">
           <FormField
             id="reset-code"
             label="Reset code"
             type="text"
-            value={code}
-            onChange={setCode}
             placeholder="Enter code"
             autoComplete="one-time-code"
+            error={codeForm.formState.errors.code?.message}
+            {...codeForm.register("code")}
           />
           <SubmitButton
-            pending={resetting}
+            pending={codeForm.formState.isSubmitting}
             pendingLabel="Verifying…"
             label="Verify code"
-            disabled={!(code.trim() && isLoaded)}
+            disabled={!isLoaded}
           />
         </form>
       </div>
@@ -439,27 +456,26 @@ export function ForgotPasswordForm() {
   if (step === "password") {
     return (
       <div>
-        <button type="button" onClick={() => setStep("code")} className="link-muted flex items-center gap-1 mb-6">
+        <button type="button" onClick={() => setStep("code")} className={BACK_LINK_CLASS}>
           <ArrowLeftIcon className="w-4 h-4" /> Back
         </button>
-        <h1 className="font-serif text-2xl font-medium mb-2">Set new password</h1>
-        <p className="text-stone mb-6">Choose a new password for your account.</p>
+        <StepHeader title="Set new password" description="Choose a new password for your account." />
         <form onSubmit={handleSetNewPassword} className="space-y-4">
           <PasswordField
             id="reset-password"
             label="New password"
-            value={newPassword}
-            onChange={setNewPassword}
             show={showPassword}
             onToggleShow={() => setShowPassword((s) => !s)}
             autoComplete="new-password"
-            strength={calculatePasswordStrength(newPassword)}
+            strength={newPassword ? calculatePasswordStrength(newPassword) : undefined}
+            error={passwordForm.formState.errors.newPassword?.message}
+            {...passwordForm.register("newPassword")}
           />
           <SubmitButton
-            pending={resetting}
+            pending={passwordForm.formState.isSubmitting}
             pendingLabel="Resetting…"
             label="Reset password"
-            disabled={newPassword.length < MIN_PASSWORD_LENGTH || !isLoaded}
+            disabled={!isLoaded}
           />
         </form>
       </div>
@@ -468,25 +484,25 @@ export function ForgotPasswordForm() {
 
   return (
     <div>
-      <Link to="/login" className="link-muted flex items-center gap-1 mb-6">
+      <Link to="/login" className={BACK_LINK_CLASS}>
         <ArrowLeftIcon className="w-4 h-4" /> Back to login
       </Link>
-      <h1 className="font-serif text-2xl font-medium mb-2">Forgot password?</h1>
-      <p className="text-stone mb-6">Enter your email and we'll send you a reset code.</p>
+      <StepHeader title="Forgot password?" description="Enter your email and we'll send you a reset code." />
       <form onSubmit={handleRequestReset} className="space-y-4">
         <FormField
           id="forgot-email"
           label="Email"
           type="email"
-          value={email}
-          onChange={setEmail}
           placeholder="you@example.com"
+          autoComplete="email"
+          error={emailForm.formState.errors.email?.message}
+          {...emailForm.register("email")}
         />
         <SubmitButton
-          pending={sendingCode}
+          pending={emailForm.formState.isSubmitting}
           pendingLabel="Sending…"
           label="Send reset code"
-          disabled={!(email.trim() && isLoaded)}
+          disabled={!isLoaded}
         />
       </form>
     </div>

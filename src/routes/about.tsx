@@ -1,21 +1,16 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { StaticPageLayout } from "@/components/StaticPageLayout";
-import { APP_TITLE_SUFFIX } from "@/lib/constants";
+import { pageHead } from "@/lib/head";
 
 export const Route = createFileRoute("/about")({
-  head: () => ({
-    meta: [
-      { title: `About${APP_TITLE_SUFFIX}` },
-      { name: "description", content: "Mise — a place for home cooks to share recipes." },
-    ],
-  }),
+  head: () => pageHead("About", "Mise — a place for home cooks to share recipes."),
   component: AboutPage,
 });
 
 function AboutPage() {
   return (
     <StaticPageLayout>
-      <h1 className="font-serif text-4xl font-medium mb-4">A place for home cooks</h1>
+      <h1 className="page-title mb-4">A place for home cooks</h1>
       <p className="font-hand text-xl text-sage mb-3">our story</p>
       <p className="text-lg text-secondary leading-relaxed mb-12">
         Mise is a platform born from the love of home cooking and the desire to share culinary secrets with a global
@@ -31,7 +26,7 @@ function AboutPage() {
         />
       </div>
 
-      <div className="space-y-4 text-charcoal-light leading-relaxed">
+      <div className="space-y-4 text-secondary leading-relaxed">
         <p>
           Our mission is simple: provide a beautiful, fast, and secure space for cooks of all levels to document their
           creations and discover new tastes.

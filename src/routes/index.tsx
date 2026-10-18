@@ -170,35 +170,46 @@ function HomePage() {
   );
 }
 
+function CategoryChip({
+  label,
+  icon,
+  active,
+  onClick,
+}: {
+  label: string;
+  icon?: string;
+  active: boolean;
+  onClick: () => void;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className={`shrink-0 flex items-center gap-1.5 px-4 py-2 rounded-full text-sm font-medium transition-colors ${
+        active
+          ? "bg-charcoal text-cream dark:bg-cream dark:text-charcoal"
+          : "surface-raised text-stone hover:text-charcoal dark:hover:text-d-text"
+      }`}
+    >
+      {icon && <span>{icon}</span>}
+      {label}
+    </button>
+  );
+}
+
 function CategoryFilter({ category, onPick }: { category?: string; onPick: (cat: string | undefined) => void }) {
   return (
     <section className="wrapper -mt-4 mb-6">
       <div className="flex gap-2 overflow-x-auto pb-2 scrollbar-minimal">
-        <button
-          type="button"
-          onClick={() => onPick(undefined)}
-          className={`shrink-0 px-4 py-2 rounded-full text-sm font-medium transition-colors ${
-            !category
-              ? "bg-charcoal text-cream dark:bg-cream dark:text-charcoal"
-              : "bg-cream-dark dark:bg-d-surface-raised text-stone hover:text-charcoal dark:hover:text-d-text"
-          }`}
-        >
-          All
-        </button>
+        <CategoryChip label="All" active={!category} onClick={() => onPick(undefined)} />
         {CATEGORIES.map((c) => (
-          <button
-            type="button"
+          <CategoryChip
             key={c}
+            icon={CATEGORY_ICONS[c]}
+            label={c}
+            active={category === c}
             onClick={() => onPick(category === c ? undefined : c)}
-            className={`shrink-0 flex items-center gap-1.5 px-4 py-2 rounded-full text-sm font-medium transition-colors ${
-              category === c
-                ? "bg-charcoal text-cream dark:bg-cream dark:text-charcoal"
-                : "bg-cream-dark dark:bg-d-surface-raised text-stone hover:text-charcoal dark:hover:text-d-text"
-            }`}
-          >
-            <span>{CATEGORY_ICONS[c]}</span>
-            {c}
-          </button>
+          />
         ))}
       </div>
     </section>
@@ -283,7 +294,7 @@ function RecipeResultsSection({
   return (
     <section id="recipes" className="wrapper pb-24">
       <div className="flex items-baseline justify-between mb-6">
-        <h2 className="font-serif text-xl font-medium">{heading}</h2>
+        <h2 className="section-title">{heading}</h2>
         {!isLoading && <span className="text-sm text-stone">{count} recipes</span>}
       </div>
 
@@ -291,7 +302,7 @@ function RecipeResultsSection({
         <RecipeGridSkeleton />
       ) : !showEmpty ? (
         <>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
+          <div className="recipe-grid">
             {grid.map((r) => (
               <RecipeCard
                 key={r._id}

@@ -4,16 +4,18 @@ import { useSuspenseQuery } from "@tanstack/react-query";
 import { createFileRoute, notFound } from "@tanstack/react-router";
 import { api } from "convex/_generated/api";
 import { PageLayout } from "@/components/layout/PageLayout";
+import { EmptyState } from "@/components/ui/EmptyState";
 import { Avatar } from "@/components/ui/Primitives";
 import { RecipeCard, RecipeGridSkeleton } from "@/components/ui/RecipeCard";
 import { RouteError } from "@/components/ui/RouteError";
 import { APP_TITLE_SUFFIX } from "@/lib/constants";
+import { avatarSource } from "@/lib/utils";
 
 function ChefSkeleton() {
   return (
     <PageLayout>
       <div className="hero-banner py-16 px-5 animate-pulse">
-        <div className="max-w-6xl mx-auto flex flex-col sm:flex-row items-center sm:items-end gap-6">
+        <div className="wrapper flex flex-col sm:flex-row items-center sm:items-end gap-6">
           <div className="w-28 h-28 rounded-full bg-white/10 shrink-0" />
           <div className="space-y-3">
             <div className="h-8 w-48 bg-white/10 rounded" />
@@ -21,7 +23,7 @@ function ChefSkeleton() {
           </div>
         </div>
       </div>
-      <div className="max-w-6xl mx-auto px-5 py-10">
+      <div className="wrapper py-10">
         <RecipeGridSkeleton />
       </div>
     </PageLayout>
@@ -61,9 +63,9 @@ function ChefPage() {
   return (
     <PageLayout>
       <div className="hero-banner py-14 md:py-20 px-5">
-        <div className="max-w-6xl mx-auto flex flex-col sm:flex-row items-center sm:items-end gap-6">
+        <div className="wrapper flex flex-col sm:flex-row items-center sm:items-end gap-6">
           <Avatar
-            src={chef.profileImageUrl ?? chef.image}
+            src={avatarSource(chef)}
             name={chef.name}
             size="lg"
             className="!w-28 !h-28 text-3xl ring-4 ring-white/20"
@@ -80,10 +82,10 @@ function ChefPage() {
         </div>
       </div>
 
-      <div className="max-w-6xl mx-auto px-5 py-10 md:py-14">
-        <h2 className="font-serif text-xl font-medium mb-6">Recipes</h2>
+      <div className="wrapper py-10 md:py-14">
+        <h2 className="section-title mb-6">Recipes</h2>
         {recipes.length > 0 ? (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+          <div className="recipe-grid">
             {recipes.map((r) => (
               <RecipeCard
                 key={r._id}
@@ -97,13 +99,11 @@ function ChefPage() {
             ))}
           </div>
         ) : (
-          <div className="card p-16 text-center">
-            <div className="w-20 h-20 bg-sage/10 rounded-full flex items-center justify-center mx-auto mb-6">
-              <BookOpenIcon className="w-9 h-9 text-sage" />
-            </div>
-            <h3 className="font-serif text-2xl font-medium mb-2">No recipes yet</h3>
-            <p className="text-stone max-w-sm mx-auto">This chef hasn't published any recipes yet. Check back soon!</p>
-          </div>
+          <EmptyState
+            icon={BookOpenIcon}
+            title="No recipes yet"
+            description="This chef hasn't published any recipes yet. Check back soon!"
+          />
         )}
       </div>
     </PageLayout>

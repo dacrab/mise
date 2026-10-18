@@ -5,10 +5,7 @@ import {
   Bars3Icon,
   ChevronDownIcon,
   Cog6ToothIcon,
-  ComputerDesktopIcon,
   HomeIcon,
-  MoonIcon,
-  SunIcon,
   XMarkIcon,
 } from "@heroicons/react/24/outline";
 import { Link } from "@tanstack/react-router";
@@ -17,8 +14,9 @@ import { Authenticated, Unauthenticated, useQuery } from "convex/react";
 import { useState } from "react";
 import { Avatar } from "@/components/ui/Primitives";
 import { useSignOut } from "@/hooks/useSignOut";
-import { useTheme } from "@/hooks/useTheme";
+import { nextTheme, themeOption, useTheme } from "@/hooks/useTheme";
 import { FOOTER_LINKS } from "@/lib/constants";
+import { avatarSource } from "@/lib/utils";
 
 const USER_MENU_LINKS = [
   { to: "/dashboard", label: "Dashboard", icon: HomeIcon },
@@ -39,7 +37,7 @@ function UserMenu({ onClose }: { onClose?: () => void }) {
       <div className="hidden sm:flex items-center gap-2">
         <Menu.Root>
           <Menu.Trigger className="btn-ghost text-sm flex items-center gap-2">
-            <Avatar src={user?.profileImageUrl ?? user?.image} name={user?.name} size="sm" />
+            <Avatar src={avatarSource(user)} name={user?.name} size="sm" />
             <span className="hidden sm:inline max-w-[120px] truncate">
               {user?.name?.split(" ")[0] ?? user?.email?.split("@")[0] ?? "Chef"}
             </span>
@@ -49,7 +47,7 @@ function UserMenu({ onClose }: { onClose?: () => void }) {
             <Menu.Positioner className="z-50" sideOffset={8} align="end">
               <Menu.Popup className="min-w-[200px] bg-warm-white dark:bg-d-surface rounded-xl shadow-card border border-cream-dark dark:border-d-border py-1.5 animate-scale-in">
                 <div className="flex items-center gap-3 px-4 py-2.5 border-b border-cream-dark mb-1">
-                  <Avatar src={user?.profileImageUrl ?? user?.image} name={user?.name} size="sm" />
+                  <Avatar src={avatarSource(user)} name={user?.name} size="sm" />
                   <div className="min-w-0">
                     <p className="text-sm font-medium text-primary truncate">{user?.name ?? "Chef"}</p>
                     {user?.username && <p className="text-xs text-stone truncate">@{user.username}</p>}
@@ -75,7 +73,7 @@ function UserMenu({ onClose }: { onClose?: () => void }) {
 
       <div className="sm:hidden">
         <div className="flex items-center gap-3 p-3 mb-4 surface-raised rounded-xl">
-          <Avatar src={user?.profileImageUrl ?? user?.image} name={user?.name} size="md" />
+          <Avatar src={avatarSource(user)} name={user?.name} size="md" />
           <div className="min-w-0">
             <p className="font-medium text-primary truncate">{user?.name ?? "Chef"}</p>
             {user?.username ? (
@@ -134,18 +132,16 @@ function GuestNav({ onClose }: { onClose?: () => void }) {
 
 function ThemeToggle() {
   const { preference, setTheme } = useTheme();
-
-  const cycle = () => {
-    if (preference === "light") setTheme("dark");
-    else if (preference === "dark") setTheme("system");
-    else setTheme("light");
-  };
-
-  const label = preference === "system" ? "System theme" : preference === "dark" ? "Dark mode" : "Light mode";
-  const Icon = preference === "dark" ? MoonIcon : preference === "system" ? ComputerDesktopIcon : SunIcon;
+  const { ariaLabel, icon: Icon } = themeOption(preference);
 
   return (
-    <button type="button" onClick={cycle} className="btn-ghost p-2" aria-label={label} title={label}>
+    <button
+      type="button"
+      onClick={() => setTheme(nextTheme(preference))}
+      className="btn-ghost p-2"
+      aria-label={ariaLabel}
+      title={ariaLabel}
+    >
       <Icon className="w-5 h-5" />
     </button>
   );

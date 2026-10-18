@@ -25,7 +25,7 @@ export function RecipeCard({
           {coverImageUrl ? (
             <img src={coverImageUrl} alt={title} className="recipe-card-image" />
           ) : (
-            <div className="center aspect-[4/3] bg-cream-dark dark:bg-d-surface-raised">
+            <div className="center aspect-[4/3] surface-raised">
               <RecipePlaceholder size={32} />
             </div>
           )}
@@ -62,7 +62,7 @@ export function FeaturedRecipeCard({
 }) {
   return (
     <Link to="/recipe/$slug" params={{ slug }} className="group relative block">
-      <div className="aspect-[4/3] rounded-2xl overflow-hidden bg-cream-dark dark:bg-d-surface-raised">
+      <div className="aspect-[4/3] rounded-2xl overflow-hidden surface-raised">
         {coverImageUrl ? (
           <img
             src={coverImageUrl}
@@ -83,12 +83,12 @@ export function FeaturedRecipeCard({
 
 export function RecipeGridSkeleton({ count = 6 }: { count?: number }) {
   return (
-    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
+    <div className="recipe-grid">
       {Array.from({ length: count }).map((_, i) => {
         return (
           // biome-ignore lint/suspicious/noArrayIndexKey: static skeleton with fixed count
           <div key={i} className="card overflow-hidden animate-pulse">
-            <div className="w-full aspect-[4/3] bg-cream-dark dark:bg-d-surface-raised" />
+            <div className="w-full aspect-[4/3] surface-raised" />
             <div className="p-4 space-y-2">
               <div className="h-4 surface-raised rounded w-3/4" />
               <div className="h-3 surface-raised rounded w-1/2" />

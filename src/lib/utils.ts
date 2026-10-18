@@ -32,6 +32,13 @@ export function scaleIngredient(ingredient: string, scale: number): string {
   });
 }
 
+/** Prefer the uploaded profile image, falling back to the Clerk avatar URL. */
+export function avatarSource(
+  user?: { image?: string | null; profileImageUrl?: string | null } | null,
+): string | undefined {
+  return user?.profileImageUrl ?? user?.image ?? undefined;
+}
+
 export function getErrorMessage(err: unknown): string {
   if (err instanceof Error) return err.message;
   if (typeof err === "string") return err;

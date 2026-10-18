@@ -1,7 +1,7 @@
 import type { Doc } from "../_generated/dataModel";
 import type { MutationCtx, QueryCtx } from "../_generated/server";
 
-function findUserByClerkId(ctx: QueryCtx, clerkId: string): Promise<Doc<"users"> | null> {
+export function findUserByClerkId(ctx: QueryCtx, clerkId: string): Promise<Doc<"users"> | null> {
   return ctx.db
     .query("users")
     .withIndex("by_clerkId", (q) => q.eq("clerkId", clerkId))

@@ -1,24 +1,15 @@
 import { useUser } from "@clerk/tanstack-react-start";
 import { createFileRoute, Link, Navigate } from "@tanstack/react-router";
-import { z } from "zod";
 import { LoginForm } from "@/components/auth/AuthForms";
 import { AuthLayout } from "@/components/layout/AuthLayout";
-import { Spinner } from "@/components/ui/Primitives";
-import { APP_TITLE_SUFFIX } from "@/lib/constants";
+import { PageLoader } from "@/components/ui/Primitives";
+import { pageHead } from "@/lib/head";
+import { redirectSearchSchema } from "@/lib/search";
 import { safeRedirect } from "@/lib/utils";
 
-const searchSchema = z.object({
-  redirect: z.string().optional(),
-});
-
 export const Route = createFileRoute("/(auth)/login")({
-  validateSearch: searchSchema,
-  head: () => ({
-    meta: [
-      { title: `Sign in${APP_TITLE_SUFFIX}` },
-      { name: "description", content: "Sign in to access your kitchen, recipes, and saved collections." },
-    ],
-  }),
+  validateSearch: redirectSearchSchema,
+  head: () => pageHead("Sign in", "Sign in to access your kitchen, recipes, and saved collections."),
   component: LoginPage,
 });
 
@@ -28,11 +19,7 @@ function LoginPage() {
   const safeTarget = safeRedirect(redirect);
 
   if (!isLoaded) {
-    return (
-      <div className="center min-h-screen">
-        <Spinner className="w-8 h-8 text-sage" />
-      </div>
-    );
+    return <PageLoader />;
   }
 
   if (isSignedIn) {
@@ -45,9 +32,6 @@ function LoginPage() {
       heroDescription="Your kitchen awaits."
       form={
         <>
-          <Link to="/" className="lg:hidden font-serif text-2xl font-semibold text-primary block mb-8">
-            mise
-          </Link>
           <h1 className="font-serif text-3xl font-medium mb-2">Sign in</h1>
           <p className="text-stone mb-8">
             Don't have an account?{" "}

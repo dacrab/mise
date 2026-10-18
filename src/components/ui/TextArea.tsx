@@ -1,15 +1,11 @@
 import { useEffect, useRef } from "react";
+import { FIELD_LABEL, FIELD_PLACEHOLDER, FLOATED_LABEL } from "./Field";
 
 interface TextAreaProps extends React.TextareaHTMLAttributes<HTMLTextAreaElement> {
   id: string;
   label?: string;
   maxLength?: number;
 }
-
-// See TextField: the label float is driven purely by native focus state, and the
-// caller's placeholder stays transparent until focus.
-const FLOATED =
-  "peer-focus:-top-2.5 peer-focus:text-[11px] peer-focus:font-medium peer-focus:floating-label-bg peer-focus:px-1 peer-focus:text-sage peer-[:not(:placeholder-shown)]:-top-2.5 peer-[:not(:placeholder-shown)]:text-[11px] peer-[:not(:placeholder-shown)]:font-medium peer-[:not(:placeholder-shown)]:floating-label-bg peer-[:not(:placeholder-shown)]:px-1 peer-[:not(:placeholder-shown)]:text-sage";
 
 export function TextArea({ id, label, maxLength, className = "", value = "", rows = 3, ...rest }: TextAreaProps) {
   const internalRef = useRef<HTMLTextAreaElement>(null);
@@ -33,11 +29,11 @@ export function TextArea({ id, label, maxLength, className = "", value = "", row
         value={value}
         rows={rows}
         maxLength={maxLength}
-        className="peer field-base resize-none leading-relaxed focus:field-focus placeholder:text-transparent! focus:placeholder:text-stone/50 dark:focus:placeholder:text-d-text-muted"
+        className={`peer field-base resize-none leading-relaxed focus:field-focus ${FIELD_PLACEHOLDER}`}
         {...rest}
       />
       {label && (
-        <label htmlFor={id} className={`absolute left-3 top-3 text-sm text-stone pointer-events-none ${FLOATED}`}>
+        <label htmlFor={id} className={`${FIELD_LABEL} left-3 ${FLOATED_LABEL}`}>
           {label}
         </label>
       )}

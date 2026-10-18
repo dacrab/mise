@@ -49,6 +49,15 @@ export function LoadingState({ className = "center min-h-[60vh]" }: { className?
   return <div className={`${className} text-stone animate-pulse`}>Loading…</div>;
 }
 
+/** Centered spinner for full-page auth/session gates. */
+export function PageLoader() {
+  return (
+    <div className="center min-h-screen">
+      <Spinner className="w-8 h-8 text-sage" />
+    </div>
+  );
+}
+
 export function ProgressBar({ value, label, className = "" }: { value: number; label?: string; className?: string }) {
   const pct = Math.min(100, Math.max(0, value));
   return (

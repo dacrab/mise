@@ -67,6 +67,14 @@
   @apply max-w-6xl mx-auto px-5 sm:px-8;
 }
 
+@utility wrapper-narrow {
+  @apply max-w-5xl mx-auto px-5 sm:px-8;
+}
+
+@utility wrapper-wide {
+  @apply max-w-7xl mx-auto px-5 sm:px-8;
+}
+
 @utility center {
   @apply flex items-center justify-center;
 }
@@ -133,6 +141,14 @@
   @apply text-stone dark:text-d-text-muted;
 }
 
+@utility section-title {
+  @apply font-serif text-xl font-medium;
+}
+
+@utility page-title {
+  @apply font-serif text-4xl font-medium;
+}
+
 /* ─── Borders ─── */
 
 @utility border-subtle {
@@ -159,6 +175,10 @@
 
 @utility field-focus {
   @apply border-sage ring-2 ring-sage/15;
+}
+
+@utility field-error {
+  @apply text-xs text-terracotta mt-1;
 }
 
 @utility floating-label-bg {
@@ -194,11 +214,19 @@
   @apply text-sm text-stone hover:text-charcoal transition-colors dark:hover:text-d-text;
 }
 
+@utility link-sage {
+  @apply text-sage hover:text-sage-light transition-colors;
+}
+
 @utility menu-item {
   @apply flex items-center gap-2.5 px-4 py-2 text-sm text-charcoal hover:bg-cream-dark outline-none data-[highlighted]:bg-cream-dark dark:text-d-text dark:hover:bg-d-surface-raised dark:data-[highlighted]:bg-d-surface-raised;
 }
 
 /* ─── Recipe cards ─── */
+
+@utility recipe-grid {
+  @apply grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6;
+}
 
 .recipe-card {
   @apply card overflow-hidden transition-all duration-300;
