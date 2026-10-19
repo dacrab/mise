@@ -1,5 +1,4 @@
 {
   "$schema": "https://docs.renovatebot.com/renovate-schema.json",
-  "extends": ["github>dacrab/renovate-config"],
-  "schedule": ["before 10am on Sunday"]
+  "extends": ["github>dacrab/renovate-config"]
 }
