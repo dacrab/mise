@@ -4,8 +4,6 @@ import * as Sentry from "@sentry/react";
 import type { QueryClient } from "@tanstack/react-query";
 import type { ErrorComponentProps } from "@tanstack/react-router";
 import { createRootRouteWithContext, HeadContent, Link, Outlet, Scripts } from "@tanstack/react-router";
-import { Analytics } from "@vercel/analytics/react";
-import { SpeedInsights } from "@vercel/speed-insights/react";
 import { APP_DESCRIPTION, APP_NAME } from "@/lib/constants";
 import appCss from "../styles.css?url";
 
@@ -25,8 +23,6 @@ function RootComponent() {
         <Sentry.ErrorBoundary fallback={<ErrorPage title="Something went wrong" />}>
           <Outlet />
         </Sentry.ErrorBoundary>
-        <Analytics />
-        <SpeedInsights />
         <Scripts />
       </body>
     </html>

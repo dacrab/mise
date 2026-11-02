@@ -1,8 +1,6 @@
 import { Link } from "@tanstack/react-router";
 import type { ReactNode } from "react";
 
-const AUTH_IMAGE = "https://images.unsplash.com/photo-1556910103-1c02745a3002?q=80&w=1600&auto=format&fit=crop";
-
 export function AuthLayout({
   children,
   heroHeading,
@@ -32,7 +30,7 @@ export function AuthLayout({
       </div>
 
       <div className="relative hidden overflow-hidden bg-surface-2 lg:block">
-        <img src={AUTH_IMAGE} alt="" className="absolute inset-0 size-full object-cover" loading="eager" />
+        <img src="/kitchen.jpg" alt="" className="absolute inset-0 size-full object-cover" loading="eager" />
         <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/25 to-black/10" />
         <div className="absolute inset-6 rounded-2xl border border-white/10" aria-hidden="true" />
         <div className="absolute inset-x-14 bottom-14 text-white">

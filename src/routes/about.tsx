@@ -23,7 +23,7 @@ function AboutPage() {
         <figure className="mt-12">
           <div className="aspect-[16/9] overflow-hidden rounded-2xl border border-line bg-surface-2">
             <img
-              src="https://images.unsplash.com/photo-1556910103-1c02745a3002?q=80&w=2070&auto=format&fit=crop"
+              src="/kitchen.jpg"
               className="size-full object-cover"
               alt="A home cook preparing a meal"
               loading="lazy"
