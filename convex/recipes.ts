@@ -5,8 +5,8 @@ import type { MutationCtx, QueryCtx } from "./_generated/server";
 import { mutation, query } from "./_generated/server";
 import { getCurrentUser, requireUser } from "./lib/auth";
 import { RECIPE_CATEGORIES } from "./lib/categories";
-import { storageUrl } from "./lib/media";
-import { deleteRecipeCascade } from "./lib/recipes";
+import { assertImageUpload, storageUrl } from "./lib/media";
+import { buildSearchText, deleteRecipeCascade } from "./lib/recipes";
 import { recipeDetail, recipePage, recipeWithCover, slugEntry } from "./lib/validators";
 import { checkRateLimit } from "./rateLimit";
 
@@ -24,34 +24,62 @@ export function generateSlug(title: string, suffix?: string): string {
   return suffix ? `${base}-${suffix}` : base;
 }
 
-async function generateUniqueSlug(ctx: MutationCtx, title: string): Promise<string> {
+async function isSlugTaken(ctx: MutationCtx, slug: string, recipeId?: Id<"recipes">): Promise<boolean> {
+  const recipe = await ctx.db
+    .query("recipes")
+    .withIndex("by_slug", (q) => q.eq("slug", slug))
+    .first();
+  if (recipe && recipe._id !== recipeId) return true;
+
+  const redirect = await ctx.db
+    .query("slugRedirects")
+    .withIndex("by_slug", (q) => q.eq("slug", slug))
+    .first();
+  return !!redirect && redirect.recipeId !== recipeId;
+}
+
+async function generateUniqueSlug(ctx: MutationCtx, title: string, recipeId?: Id<"recipes">): Promise<string> {
   const base = generateSlug(title);
   let counter = 0;
   for (;;) {
     const candidate = counter === 0 ? base : `${base}-${counter.toString(36)}`;
-    const existing = await ctx.db
-      .query("recipes")
-      .withIndex("by_slug", (q) => q.eq("slug", candidate))
-      .first();
-    if (!existing) return candidate;
+    if (!(await isSlugTaken(ctx, candidate, recipeId))) return candidate;
     counter++;
   }
 }
 
-async function withCoverUrl<T extends { coverImage?: Id<"_storage"> | null }>(
+async function recordSlugRedirect(ctx: MutationCtx, slug: string, recipeId: Id<"recipes">): Promise<void> {
+  const existing = await ctx.db
+    .query("slugRedirects")
+    .withIndex("by_slug", (q) => q.eq("slug", slug))
+    .first();
+
+  if (!existing) {
+    await ctx.db.insert("slugRedirects", { slug, recipeId });
+  } else if (existing.recipeId !== recipeId) {
+    await ctx.db.patch(existing._id, { recipeId });
+  }
+}
+
+function omitSearchText<T extends { searchText?: string }>(recipe: T): Omit<T, "searchText"> {
+  const { searchText, ...rest } = recipe;
+  return rest;
+}
+
+async function withCoverUrl<T extends { coverImage?: Id<"_storage"> | null; searchText?: string }>(
   ctx: QueryCtx,
   item: T,
-): Promise<T & { coverImageUrl: string | null }> {
+): Promise<Omit<T, "searchText"> & { coverImageUrl: string | null }> {
   return {
-    ...item,
+    ...omitSearchText(item),
     coverImageUrl: await storageUrl(ctx, item.coverImage),
   };
 }
 
-async function withCoverUrls<T extends { coverImage?: Id<"_storage"> | null }>(
+async function withCoverUrls<T extends { coverImage?: Id<"_storage"> | null; searchText?: string }>(
   ctx: QueryCtx,
   items: T[],
-): Promise<Array<T & { coverImageUrl: string | null }>> {
+): Promise<Array<Omit<T, "searchText"> & { coverImageUrl: string | null }>> {
   return Promise.all(items.map((item) => withCoverUrl(ctx, item)));
 }
 
@@ -59,8 +87,8 @@ function publishedRecipesQuery(ctx: QueryCtx, category?: string) {
   return category
     ? ctx.db
         .query("recipes")
-        .withIndex("by_category_status", (q) => q.eq("category", category).eq("status", "published"))
-    : ctx.db.query("recipes").withIndex("by_status", (q) => q.eq("status", "published"));
+        .withIndex("by_category_status_publishedAt", (q) => q.eq("category", category).eq("status", "published"))
+    : ctx.db.query("recipes").withIndex("by_status_publishedAt", (q) => q.eq("status", "published"));
 }
 
 async function getRecipesByUser(ctx: QueryCtx, userId: Id<"users">, includeDrafts: boolean) {
@@ -83,8 +111,8 @@ export const list = query({
     const results = search
       ? await ctx.db
           .query("recipes")
-          .withSearchIndex("search_title", (q) => {
-            let query = q.search("title", search);
+          .withSearchIndex("search_recipes", (q) => {
+            let query = q.search("searchText", search);
             if (category) query = query.eq("category", category);
             return query.eq("status", "published");
           })
@@ -101,10 +129,10 @@ export const listSlugs = query({
   handler: async (ctx) => {
     const recipes = await ctx.db
       .query("recipes")
-      .withIndex("by_status", (q) => q.eq("status", "published"))
+      .withIndex("by_status_publishedAt", (q) => q.eq("status", "published"))
       .order("desc")
       .take(SITEMAP_SLUG_LIMIT);
-    return recipes.map((r) => ({ slug: r.slug, updatedAt: r.updatedAt ?? r._creationTime }));
+    return recipes.map((r) => ({ slug: r.slug, updatedAt: r.updatedAt ?? r.publishedAt ?? r._creationTime }));
   },
 });
 
@@ -112,11 +140,20 @@ export const getBySlug = query({
   args: { slug: v.string() },
   returns: v.union(recipeDetail, v.null()),
   handler: async (ctx, { slug }) => {
-    const recipe = await ctx.db
+    let recipe = await ctx.db
       .query("recipes")
       .withIndex("by_slug", (q) => q.eq("slug", slug))
       .first();
-    if (!recipe) return null;
+
+    if (!recipe) {
+      const redirect = await ctx.db
+        .query("slugRedirects")
+        .withIndex("by_slug", (q) => q.eq("slug", slug))
+        .first();
+      if (!redirect) return null;
+      recipe = await ctx.db.get(redirect.recipeId);
+      if (!recipe) return null;
+    }
 
     const currentUser = await getCurrentUser(ctx);
     if (recipe.status !== "published" && recipe.userId !== currentUser?._id) return null;
@@ -131,6 +168,7 @@ export const getBySlug = query({
 
     return {
       ...(await withCoverUrl(ctx, recipe)),
+      canonicalSlug: recipe.slug,
       author: author
         ? {
             name: author.name,
@@ -211,6 +249,20 @@ const recipeArgs = {
 
 type RecipeArgs = ObjectType<typeof recipeArgs>;
 
+function assertVideoUrl(videoUrl: string | undefined) {
+  if (videoUrl === undefined || videoUrl.trim() === "") return;
+
+  let parsed: URL;
+  try {
+    parsed = new URL(videoUrl);
+  } catch {
+    throw new ConvexError("Video URL must be a valid link");
+  }
+  if (parsed.protocol !== "https:" && parsed.protocol !== "http:") {
+    throw new ConvexError("Video URL must start with http:// or https://");
+  }
+}
+
 function assertPublishable(args: Pick<RecipeArgs, "status" | "title" | "ingredients" | "steps">) {
   if (args.status !== "published") return;
   const hasText = (items: string[]) => items.some((item) => item.trim() !== "");
@@ -226,8 +278,19 @@ export const create = mutation({
     const user = await requireUser(ctx);
     await checkRateLimit(ctx, user._id, "recipe:create");
     assertPublishable(args);
+    assertVideoUrl(args.videoUrl);
+    if (args.coverImage !== undefined) await assertImageUpload(ctx, args.coverImage);
+
     const slug = await generateUniqueSlug(ctx, args.title);
-    const id = await ctx.db.insert("recipes", { ...args, slug, userId: user._id, updatedAt: Date.now() });
+    const now = Date.now();
+    const id = await ctx.db.insert("recipes", {
+      ...args,
+      slug,
+      userId: user._id,
+      updatedAt: now,
+      searchText: buildSearchText(args),
+      ...(args.status === "published" ? { publishedAt: now } : {}),
+    });
     return { id, slug };
   },
 });
@@ -241,10 +304,22 @@ export const update = mutation({
     const recipe = await ctx.db.get(id);
     if (!recipe || recipe.userId !== user._id) throw new ConvexError("Recipe not found");
     assertPublishable(args);
+    assertVideoUrl(args.videoUrl);
+    if (args.coverImage !== undefined) await assertImageUpload(ctx, args.coverImage);
 
-    const slug = args.title === recipe.title ? recipe.slug : await generateUniqueSlug(ctx, args.title);
+    const slug = args.title === recipe.title ? recipe.slug : await generateUniqueSlug(ctx, args.title, id);
+    const now = Date.now();
+    const publishedAt = args.status === "published" ? (recipe.publishedAt ?? now) : recipe.publishedAt;
 
-    await ctx.db.patch(id, { ...args, slug, updatedAt: Date.now() });
+    await ctx.db.patch(id, {
+      ...args,
+      slug,
+      updatedAt: now,
+      searchText: buildSearchText(args),
+      ...(publishedAt === undefined ? {} : { publishedAt }),
+    });
+
+    if (slug !== recipe.slug) await recordSlugRedirect(ctx, recipe.slug, id);
     if (args.coverImage !== undefined && recipe.coverImage && recipe.coverImage !== args.coverImage) {
       await ctx.storage.delete(recipe.coverImage);
     }

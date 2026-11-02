@@ -44,10 +44,17 @@ The app opens at [http://localhost:3000](http://localhost:3000).
 
 `VITE_CONVEX_URL` is written for you by `convex dev`. `.env.example` lists the rest.
 
-For production, tell Convex your public URL so the sitemap and link previews work:
+For production, set your public URL so canonical links, previews, and the sitemap point at the right domain:
 
 ```bash
 bunx convex env set SITE_URL=https://your-site-url
+VITE_SITE_URL=https://your-site-url
+```
+
+Recipes published before this version need a one-time index backfill:
+
+```bash
+bunx convex run migrations:backfill --prod
 ```
 
 ## Scripts
@@ -71,17 +78,19 @@ src/
   routes/       # pages
   styles.css    # design tokens and shared classes
 convex/
-  schema.ts     # users, recipes, bookmarks, rate limits
+  schema.ts     # users, recipes, bookmarks, slug redirects, rate limits
   recipes.ts    # feed, detail, create/update/delete
+  migrations.ts # one-time index backfill
   users.ts      # profile and account lifecycle
 tests/unit/     # slug, scaling, rate limit, utility tests
 ```
 
 ## Good to know
 
-- **Recipe links** follow the title. Renaming a recipe changes its URL.
+- **Recipe links** follow the title, and old links keep working after a rename.
+- **Search** matches titles, descriptions, ingredients, and steps.
 - **Usernames** are lowercase letters, numbers, and underscores (3–32 characters), and can't be changed once set.
-- **Autosave** kicks in after 30 seconds of editing. Limits are 10 new recipes, 120 edits, and 60 bookmark toggles per hour.
+- **Autosave** kicks in after 30 seconds of editing. Limits are 10 new recipes, 120 edits, 60 bookmark toggles, and 30 uploads per hour.
 - **Images** can be up to 5 MB. Replacing one deletes the old file.
 
 ## License

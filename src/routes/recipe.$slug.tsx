@@ -2,7 +2,7 @@ import { convexQuery } from "@convex-dev/react-query";
 import { PrinterIcon, ShareIcon } from "@heroicons/react/24/outline";
 import { PlayIcon } from "@heroicons/react/24/solid";
 import { useSuspenseQuery } from "@tanstack/react-query";
-import { createFileRoute, Link, notFound } from "@tanstack/react-router";
+import { createFileRoute, Link, notFound, redirect } from "@tanstack/react-router";
 import { api } from "convex/_generated/api";
 import { useMemo, useState } from "react";
 import { PageLayout } from "@/components/layout/PageLayout";
@@ -11,27 +11,43 @@ import { MetaStat } from "@/components/ui/MetaStat";
 import { Avatar, LoadingState } from "@/components/ui/Primitives";
 import { RouteError } from "@/components/ui/RouteError";
 import { useToast } from "@/components/ui/Toast";
-import { APP_TITLE_SUFFIX, MAX_SERVINGS, MIN_SERVINGS } from "@/lib/constants";
+import { APP_TITLE_SUFFIX, MAX_SERVINGS, MIN_SERVINGS, SITE_URL } from "@/lib/constants";
 import { recipeStats } from "@/lib/recipe";
 import { formatDate, scaleIngredient } from "@/lib/utils";
 
 export const Route = createFileRoute("/recipe/$slug")({
-  loader: ({ params, context: { queryClient } }) =>
-    queryClient.ensureQueryData(convexQuery(api.recipes.getBySlug, { slug: params.slug })),
+  loader: async ({ params, context: { queryClient } }) => {
+    const recipe = await queryClient.ensureQueryData(convexQuery(api.recipes.getBySlug, { slug: params.slug }));
+    if (recipe && recipe.canonicalSlug !== params.slug) {
+      throw redirect({
+        to: "/recipe/$slug",
+        params: { slug: recipe.canonicalSlug },
+        statusCode: 301,
+      });
+    }
+    return recipe;
+  },
   component: RecipePage,
   pendingComponent: LoadingState,
   errorComponent: ({ error, reset }) => <RouteError error={error} reset={reset} />,
-  head: ({ loaderData }) => ({
-    meta: [
-      { title: loaderData?.title ? `${loaderData.title}${APP_TITLE_SUFFIX}` : `Recipe${APP_TITLE_SUFFIX}` },
-      { name: "description", content: loaderData?.description ?? "A recipe shared on Mise." },
-      { property: "og:title", content: loaderData?.title ?? "Recipe" },
-      { property: "og:description", content: loaderData?.description ?? "A recipe shared on Mise." },
-      ...(loaderData?.coverImageUrl ? [{ property: "og:image", content: loaderData.coverImageUrl }] : []),
-      { property: "og:type", content: "article" },
-      { name: "twitter:card", content: "summary_large_image" },
-    ],
-  }),
+  head: ({ loaderData }) => {
+    const canonicalSlug = loaderData?.canonicalSlug;
+    const url = canonicalSlug ? `${SITE_URL}/recipe/${canonicalSlug}` : SITE_URL;
+
+    return {
+      meta: [
+        { title: loaderData?.title ? `${loaderData.title}${APP_TITLE_SUFFIX}` : `Recipe${APP_TITLE_SUFFIX}` },
+        { name: "description", content: loaderData?.description ?? "A recipe shared on Mise." },
+        { property: "og:title", content: loaderData?.title ?? "Recipe" },
+        { property: "og:description", content: loaderData?.description ?? "A recipe shared on Mise." },
+        ...(loaderData?.coverImageUrl ? [{ property: "og:image", content: loaderData.coverImageUrl }] : []),
+        { property: "og:type", content: "article" },
+        { property: "og:url", content: url },
+        { name: "twitter:card", content: "summary_large_image" },
+      ],
+      links: canonicalSlug ? [{ rel: "canonical", href: url }] : [],
+    };
+  },
 });
 
 function ShareButton({ title }: { title: string }) {

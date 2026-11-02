@@ -4,9 +4,10 @@ import type { Id } from "./_generated/dataModel";
 import type { QueryCtx } from "./_generated/server";
 import { action, internalMutation, mutation, query } from "./_generated/server";
 import { findUserByClerkId, getCurrentUser, requireUser } from "./lib/auth";
-import { storageUrl } from "./lib/media";
+import { assertImageUpload, storageUrl } from "./lib/media";
 import { deleteRecipeCascade } from "./lib/recipes";
 import { currentUser as currentUserValidator, publicUser } from "./lib/validators";
+import { checkRateLimit } from "./rateLimit";
 
 const USERNAME_PATTERN = /^[a-z0-9_]{3,32}$/;
 
@@ -60,6 +61,7 @@ export const updateProfile = mutation({
   handler: async (ctx, args) => {
     const user = await requireUser(ctx);
     const patch = { ...args };
+    if (args.profileImage !== undefined) await assertImageUpload(ctx, args.profileImage);
 
     if (args.username !== undefined) {
       const username = args.username.toLowerCase();
@@ -92,7 +94,8 @@ export const generateUploadUrl = mutation({
   args: {},
   returns: v.string(),
   handler: async (ctx) => {
-    await requireUser(ctx);
+    const user = await requireUser(ctx);
+    await checkRateLimit(ctx, user._id, "upload:generate");
     return ctx.storage.generateUploadUrl();
   },
 });

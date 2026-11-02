@@ -3,7 +3,7 @@ import { PageLayout } from "@/components/layout/PageLayout";
 import { pageHead } from "@/lib/route";
 
 export const Route = createFileRoute("/privacy")({
-  head: () => pageHead("Privacy Policy", "How Mise handles your personal data."),
+  head: () => pageHead("Privacy Policy", "How Mise handles your personal data.", "/privacy"),
   component: PrivacyPage,
 });
 

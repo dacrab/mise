@@ -3,7 +3,7 @@ import { PageLayout } from "@/components/layout/PageLayout";
 import { pageHead } from "@/lib/route";
 
 export const Route = createFileRoute("/terms")({
-  head: () => pageHead("Terms of Service", "Mise terms of service."),
+  head: () => pageHead("Terms of Service", "Mise terms of service.", "/terms"),
   component: TermsPage,
 });
 

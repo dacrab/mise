@@ -29,12 +29,21 @@ export default defineSchema({
     cookTime: v.optional(v.number()),
     difficulty: v.optional(v.string()),
     updatedAt: v.optional(v.number()),
+    publishedAt: v.optional(v.number()),
+    searchText: v.optional(v.string()),
   })
     .index("by_slug", ["slug"])
-    .index("by_category_status", ["category", "status"])
     .index("by_user", ["userId"])
-    .index("by_status", ["status"])
-    .searchIndex("search_title", { searchField: "title", filterFields: ["status", "category"] }),
+    .index("by_status_publishedAt", ["status", "publishedAt"])
+    .index("by_category_status_publishedAt", ["category", "status", "publishedAt"])
+    .searchIndex("search_recipes", { searchField: "searchText", filterFields: ["status", "category"] }),
+
+  slugRedirects: defineTable({
+    slug: v.string(),
+    recipeId: v.id("recipes"),
+  })
+    .index("by_slug", ["slug"])
+    .index("by_recipe", ["recipeId"]),
 
   bookmarks: defineTable({
     recipeId: v.id("recipes"),

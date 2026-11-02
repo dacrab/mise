@@ -2,7 +2,7 @@ import { ConvexError } from "convex/values";
 import type { Id } from "./_generated/dataModel";
 import type { MutationCtx } from "./_generated/server";
 
-const RATE_LIMIT_ACTIONS = ["recipe:create", "recipe:update", "bookmark:toggle"] as const;
+const RATE_LIMIT_ACTIONS = ["recipe:create", "recipe:update", "bookmark:toggle", "upload:generate"] as const;
 
 type RateLimitAction = (typeof RATE_LIMIT_ACTIONS)[number];
 
@@ -10,6 +10,7 @@ export const LIMITS: Record<RateLimitAction, { max: number; windowMs: number }> 
   "recipe:create": { max: 10, windowMs: 60 * 60 * 1000 }, // 10/hour
   "recipe:update": { max: 120, windowMs: 60 * 60 * 1000 }, // 120/hour (autosave-friendly)
   "bookmark:toggle": { max: 60, windowMs: 60 * 60 * 1000 }, // 60/hour
+  "upload:generate": { max: 30, windowMs: 60 * 60 * 1000 }, // 30/hour
 };
 
 export async function checkRateLimit(ctx: MutationCtx, userId: Id<"users">, action: RateLimitAction) {

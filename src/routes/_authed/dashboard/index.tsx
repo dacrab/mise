@@ -7,6 +7,6 @@ const searchSchema = z.object({ tab: z.enum(["my-recipes", "saved"]).optional().
 
 export const Route = createFileRoute("/_authed/dashboard/")({
   validateSearch: searchSchema,
-  head: () => pageHead("Dashboard", "Manage your recipes, drafts, and saved bookmarks."),
+  head: () => pageHead("Dashboard", "Manage your recipes, drafts, and saved bookmarks.", "/dashboard"),
   component: DashboardView,
 });

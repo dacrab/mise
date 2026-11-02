@@ -8,7 +8,7 @@ import { safeRedirect } from "@/lib/utils";
 
 export const Route = createFileRoute("/(auth)/login")({
   validateSearch: redirectSearchSchema,
-  head: () => pageHead("Sign in", "Sign in to access your kitchen, recipes, and saved collections."),
+  head: () => pageHead("Sign in", "Sign in to access your kitchen, recipes, and saved collections.", "/login"),
   component: LoginPage,
 });
 

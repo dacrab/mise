@@ -3,7 +3,7 @@ import { PageLayout } from "@/components/layout/PageLayout";
 import { pageHead } from "@/lib/route";
 
 export const Route = createFileRoute("/about")({
-  head: () => pageHead("About", "Mise — a quiet recipe journal for home cooks."),
+  head: () => pageHead("About", "Mise — a quiet recipe journal for home cooks.", "/about"),
   component: AboutPage,
 });
 

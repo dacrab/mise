@@ -18,7 +18,8 @@ export const Route = createFileRoute("/_authed/dashboard/edit/$id")({
     const recipe = await queryClient.ensureQueryData(convexQuery(api.recipes.getById, { id: params.id }));
     if (!recipe) throw redirect({ to: "/dashboard", replace: true });
   },
-  head: () => pageHead("Edit Recipe", "Update your recipe details, ingredients, and steps."),
+  head: ({ params }) =>
+    pageHead("Edit Recipe", "Update your recipe details, ingredients, and steps.", `/dashboard/edit/${params.id}`),
   component: EditRecipePage,
 });
 

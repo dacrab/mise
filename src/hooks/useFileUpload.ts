@@ -1,8 +1,8 @@
 import type { Id } from "convex/_generated/dataModel";
+import { MAX_IMAGE_BYTES } from "convex/lib/limits";
 import { useEffect, useRef, useState } from "react";
 import { z } from "zod";
 import { useToast } from "@/components/ui/Toast";
-import { MAX_IMAGE_BYTES } from "@/lib/constants";
 
 const INVALID_TYPE_MESSAGE = "Please select an image file";
 const TOO_LARGE_MESSAGE = `Image must be under ${MAX_IMAGE_BYTES / (1024 * 1024)}MB`;

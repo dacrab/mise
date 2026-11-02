@@ -21,7 +21,7 @@ import { pageHead } from "@/lib/route";
 import { cn, formatDate, getErrorMessage } from "@/lib/utils";
 
 export const Route = createFileRoute("/_authed/settings")({
-  head: () => pageHead("Settings", "Update your profile, appearance, and account."),
+  head: () => pageHead("Settings", "Update your profile, appearance, and account.", "/settings"),
   component: SettingsPage,
 });
 

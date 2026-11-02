@@ -28,6 +28,7 @@ export const Route = createFileRoute("/")({
     pageHead(
       "Recipes made to be shared",
       "Discover and share recipes from home cooks. No ads, no algorithms — just good food.",
+      "/",
     ),
 });
 

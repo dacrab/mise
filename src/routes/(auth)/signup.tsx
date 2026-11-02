@@ -8,7 +8,7 @@ import { safeRedirect } from "@/lib/utils";
 
 export const Route = createFileRoute("/(auth)/signup")({
   validateSearch: redirectSearchSchema,
-  head: () => pageHead("Create account", "Create your Mise account to save, share, and manage recipes."),
+  head: () => pageHead("Create account", "Create your Mise account to save, share, and manage recipes.", "/signup"),
   component: SignupPage,
 });
 

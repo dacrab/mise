@@ -17,6 +17,7 @@ const recipeFields = {
   cookTime: v.optional(v.number()),
   difficulty: v.optional(v.string()),
   updatedAt: v.optional(v.number()),
+  publishedAt: v.optional(v.number()),
 };
 
 const recipeDocFields = {
@@ -35,6 +36,7 @@ export const recipePage = paginationResultValidator(recipeWithCover);
 export const recipeDetail = v.object({
   ...recipeDocFields,
   coverImageUrl: v.union(v.string(), v.null()),
+  canonicalSlug: v.string(),
   author: v.union(
     v.object({
       name: v.optional(v.string()),
