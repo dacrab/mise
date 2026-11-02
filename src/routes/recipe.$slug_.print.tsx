@@ -1,30 +1,34 @@
 import { convexQuery } from "@convex-dev/react-query";
-import { ClockIcon, FireIcon, PrinterIcon, UserGroupIcon } from "@heroicons/react/24/outline";
+import { PrinterIcon } from "@heroicons/react/24/outline";
 import { useSuspenseQuery } from "@tanstack/react-query";
 import { createFileRoute, notFound } from "@tanstack/react-router";
 import { api } from "convex/_generated/api";
 import { MetaStat } from "@/components/ui/MetaStat";
 import { LoadingState } from "@/components/ui/Primitives";
-
-const statBox = "stat-box";
-const statIcon = "w-4 h-4 text-stone";
-const statLabel = "text-xs text-stone uppercase tracking-wide";
-const statValue = "text-sm font-medium text-charcoal";
+import { APP_TITLE_SUFFIX } from "@/lib/constants";
+import { recipeStats } from "@/lib/recipe";
+import { formatDate } from "@/lib/utils";
 
 export const Route = createFileRoute("/recipe/$slug_/print")({
   loader: ({ params, context: { queryClient } }) =>
     queryClient.ensureQueryData(convexQuery(api.recipes.getBySlug, { slug: params.slug })),
   component: PrintRecipe,
-  pendingComponent: () => <LoadingState className="center min-h-screen" />,
+  pendingComponent: LoadingState,
   errorComponent: ({ reset }) => (
-    <div className="max-w-2xl mx-auto p-8 text-center">
-      <h1 className="text-xl font-bold mb-4">Could not load recipe</h1>
-      <p className="text-stone mb-4">Something went wrong while loading this recipe. Please try again.</p>
-      <button type="button" onClick={() => reset()} className="btn-primary">
+    <div className="mx-auto max-w-xl p-10 text-center">
+      <h1 className="text-2xl font-medium">Could not load recipe</h1>
+      <p className="mt-3 text-ink-soft">Something went wrong while loading this recipe.</p>
+      <button type="button" onClick={reset} className="btn-primary mt-6">
         Try again
       </button>
     </div>
   ),
+  head: ({ loaderData }) => ({
+    meta: [
+      { title: loaderData ? `${loaderData.title} — Print${APP_TITLE_SUFFIX}` : `Print${APP_TITLE_SUFFIX}` },
+      { name: "robots", content: "noindex" },
+    ],
+  }),
 });
 
 function PrintRecipe() {
@@ -33,73 +37,57 @@ function PrintRecipe() {
 
   if (!recipe) throw notFound();
 
-  const totalTime = (recipe.prepTime ?? 0) + (recipe.cookTime ?? 0);
-
-  const stats = [
-    recipe.prepTime != null && { icon: ClockIcon, label: "Prep", value: `${recipe.prepTime} min` },
-    recipe.cookTime != null && { icon: FireIcon, label: "Cook", value: `${recipe.cookTime} min` },
-    totalTime > 0 && { icon: ClockIcon, label: "Total", value: `${totalTime} min` },
-    recipe.servings != null && { icon: UserGroupIcon, label: "Serves", value: `${recipe.servings}` },
-    recipe.difficulty && { icon: FireIcon, label: "Difficulty", value: recipe.difficulty },
-  ].flatMap((s) => (s ? [s] : []));
+  const stats = recipeStats(recipe);
 
   return (
-    <div className="max-w-2xl mx-auto p-8 print:p-0 bg-white min-h-screen">
-      <style>{"@media print { body { -webkit-print-color-adjust: exact; } }"}</style>
-
-      <header className="mb-8 pb-6 border-b-2 border-charcoal">
-        <h1 className="text-3xl font-bold mb-2">{recipe.title}</h1>
-        {recipe.description && <p className="text-stone">{recipe.description}</p>}
-        <div className="flex flex-wrap gap-3 mt-4">
-          {stats.map((s) => (
-            <MetaStat
-              key={s.label}
-              icon={s.icon}
-              label={s.label}
-              value={s.value}
-              className={statBox}
-              iconClassName={statIcon}
-              labelClassName={statLabel}
-              valueClassName={statValue}
-            />
-          ))}
-        </div>
+    <div className="mx-auto max-w-2xl bg-white px-6 py-10 text-black print:max-w-none print:p-0">
+      <header className="border-b-2 border-black pb-6">
+        <p className="text-[10px] font-medium uppercase tracking-[0.2em] text-neutral-500">Mise · mise.cooking</p>
+        <h1 className="mt-2 text-3xl font-medium leading-tight">{recipe.title}</h1>
+        {recipe.description && <p className="mt-2 text-sm leading-relaxed text-neutral-600">{recipe.description}</p>}
+        {stats.length > 0 && (
+          <div className="mt-5 flex flex-wrap gap-5">
+            {stats.map((stat) => (
+              <MetaStat key={stat.label} icon={stat.icon} label={stat.label} value={stat.value} compact />
+            ))}
+          </div>
+        )}
       </header>
 
-      <section className="mb-8">
-        <h2 className="text-xl font-semibold mb-4">Ingredients</h2>
-        <ul className="space-y-2">
-          {recipe.ingredients.map((ing, i) => (
-            // biome-ignore lint/suspicious/noArrayIndexKey: ingredients may repeat, so value alone is not a unique key
-            <li key={`${ing}-${i}`} className="flex items-start gap-2">
-              <span className="inline-block w-4 h-4 mt-0.5 border border-charcoal rounded-sm flex-shrink-0" />
-              {ing}
+      <section className="mt-8">
+        <h2 className="text-lg font-semibold">Ingredients</h2>
+        <ul className="mt-4 space-y-2.5">
+          {recipe.ingredients.map((ingredient, index) => (
+            // biome-ignore lint/suspicious/noArrayIndexKey: ingredients may repeat, so the value alone is not unique
+            <li key={`${ingredient}-${index}`} className="flex items-start gap-3 text-sm">
+              <span className="mt-0.5 inline-block size-4 shrink-0 rounded-sm border border-neutral-400" />
+              <span>{ingredient}</span>
             </li>
           ))}
         </ul>
       </section>
 
-      <section>
-        <h2 className="text-xl font-semibold mb-4">Instructions</h2>
-        <ol className="space-y-4">
-          {recipe.steps.map((step, i) => (
-            // biome-ignore lint/suspicious/noArrayIndexKey: steps may repeat, so value alone is not a unique key
-            <li key={`${step}-${i}`} className="flex gap-4">
-              <span className="font-bold text-sage">{i + 1}.</span>
-              <span>{step}</span>
+      <section className="mt-8">
+        <h2 className="text-lg font-semibold">Instructions</h2>
+        <ol className="mt-4 space-y-4">
+          {recipe.steps.map((step, index) => (
+            // biome-ignore lint/suspicious/noArrayIndexKey: steps may repeat, so the value alone is not unique
+            <li key={`${step}-${index}`} className="flex gap-4 text-sm">
+              <span className="font-semibold text-neutral-500">{index + 1}.</span>
+              <span className="leading-relaxed">{step}</span>
             </li>
           ))}
         </ol>
       </section>
 
-      <footer className="mt-12 pt-4 border-t text-sm text-stone text-center print:mt-8">
-        Recipe from Mise • mise.cooking
+      <footer className="mt-10 border-t border-neutral-300 pt-4 text-center text-xs text-neutral-500">
+        Shared on Mise · {formatDate(recipe._creationTime)}
       </footer>
 
       <div className="mt-8 print:hidden">
-        <button type="button" onClick={() => window.print()} className="btn-primary flex items-center gap-2">
-          <PrinterIcon className="w-4 h-4" />
-          Print Recipe
+        <button type="button" onClick={() => window.print()} className="btn-primary">
+          <PrinterIcon className="size-4" />
+          Print recipe
         </button>
       </div>
     </div>

@@ -1,5 +1,4 @@
 {
   "buildCommand": "bun run build",
-  "installCommand": "bun install",
-  "ignoreCommand": "case \"$VERCEL_GIT_COMMIT_REF\" in dependabot/*) exit 0;; *) exit 1;; esac"
+  "installCommand": "bun install"
 }

@@ -1,3 +1,4 @@
+import { ConvexError } from "convex/values";
 import type { Doc } from "../_generated/dataModel";
 import type { MutationCtx, QueryCtx } from "../_generated/server";
 
@@ -16,7 +17,7 @@ export async function getCurrentUser(ctx: QueryCtx): Promise<Doc<"users"> | null
 
 export async function requireUser(ctx: MutationCtx): Promise<Doc<"users">> {
   const identity = await ctx.auth.getUserIdentity();
-  if (!identity) throw new Error("Unauthorized");
+  if (!identity) throw new ConvexError("Sign in to continue");
 
   const existing = await findUserByClerkId(ctx, identity.subject);
   if (existing) return existing;
@@ -27,6 +28,6 @@ export async function requireUser(ctx: MutationCtx): Promise<Doc<"users">> {
     name: identity.name,
   });
   const created = await ctx.db.get(id);
-  if (!created) throw new Error("Unauthorized");
+  if (!created) throw new ConvexError("Could not create your account. Please try again.");
   return created;
 }

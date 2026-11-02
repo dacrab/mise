@@ -34,17 +34,14 @@ function createAppRouter() {
   const router = createRouter({
     routeTree,
     defaultPreload: "intent",
+    defaultViewTransition: true,
     context: { queryClient },
     scrollRestoration: true,
-    // InnerWrap (not Wrap) is required: ClerkProvider calls the router hooks
-    // useLocation/useNavigate via useAwaitableNavigate, and only InnerWrap is
-    // rendered with the router context available.
     // biome-ignore lint/correctness/noComponentHookFactories: InnerWrap closes over this router's clients and is created once per router.
     InnerWrap: ({ children }) => (
       <ClerkProvider publishableKey={env("VITE_CLERK_PUBLISHABLE_KEY")}>
         <ConvexProviderWithClerk client={convexQueryClient.convexClient} useAuth={useAuth}>
           <ToastProvider>
-            {/* Anonymous visitors skip the myBookmarks subscription entirely */}
             <Authenticated>
               <BookmarksProvider>{children}</BookmarksProvider>
             </Authenticated>

@@ -9,13 +9,11 @@ type BookmarkedRecipes = FunctionReturnType<typeof api.recipes.myBookmarks>;
 type BookmarksContextValue = {
   bookmarks: BookmarkedRecipes | undefined;
   bookmarkedIds: Set<Id<"recipes">>;
-  toggle: (recipeId: Id<"recipes">) => Promise<unknown>;
+  toggle: (recipeId: Id<"recipes">) => Promise<FunctionReturnType<typeof api.bookmarks.toggleBookmark>>;
 };
 
 const BookmarksContext = createContext<BookmarksContextValue | null>(null);
 
-// Fallback for anonymous visitors, who are rendered outside BookmarksProvider.
-// `toggle` rejects so callers can still surface a "sign in to save" prompt.
 const NO_PROVIDER: BookmarksContextValue = {
   bookmarks: undefined,
   bookmarkedIds: new Set(),
@@ -24,7 +22,7 @@ const NO_PROVIDER: BookmarksContextValue = {
 
 export function BookmarksProvider({ children }: { children: React.ReactNode }) {
   const bookmarks = useQuery(api.recipes.myBookmarks);
-  const toggleBookmarkMutation = useMutation(api.social.toggleBookmark);
+  const toggleBookmarkMutation = useMutation(api.bookmarks.toggleBookmark);
 
   const value = useMemo<BookmarksContextValue>(
     () => ({

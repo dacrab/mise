@@ -6,6 +6,7 @@ import { action, internalMutation, mutation, query } from "./_generated/server";
 import { findUserByClerkId, getCurrentUser, requireUser } from "./lib/auth";
 import { storageUrl } from "./lib/media";
 import { deleteRecipeCascade } from "./lib/recipes";
+import { currentUser as currentUserValidator, publicUser } from "./lib/validators";
 
 const USERNAME_PATTERN = /^[a-z0-9_]{3,32}$/;
 
@@ -21,6 +22,7 @@ async function withProfileImageUrl<T extends { profileImage?: Id<"_storage"> | n
 
 export const currentUser = query({
   args: {},
+  returns: v.union(currentUserValidator, v.null()),
   handler: async (ctx) => {
     const user = await getCurrentUser(ctx);
     if (!user) return null;
@@ -30,22 +32,20 @@ export const currentUser = query({
 
 export const getByUsername = query({
   args: { username: v.string() },
+  returns: v.union(publicUser, v.null()),
   handler: async (ctx, { username }) => {
     const user = await ctx.db
       .query("users")
       .withIndex("by_username", (q) => q.eq("username", username))
       .first();
     if (!user) return null;
-    // Public profile: return display fields only. The raw document also carries
-    // `clerkId` and `email`, which every visitor must not be able to read.
-    return withProfileImageUrl(ctx, {
+    return {
       _id: user._id,
       name: user.name,
       username: user.username,
       bio: user.bio,
-      image: user.image,
-      profileImage: user.profileImage,
-    });
+      profileImageUrl: await storageUrl(ctx, user.profileImage),
+    };
   },
 });
 
@@ -56,6 +56,7 @@ export const updateProfile = mutation({
     bio: v.optional(v.string()),
     profileImage: v.optional(v.id("_storage")),
   },
+  returns: v.null(),
   handler: async (ctx, args) => {
     const user = await requireUser(ctx);
     const patch = { ...args };
@@ -65,8 +66,6 @@ export const updateProfile = mutation({
       if (user.username && username !== user.username) {
         throw new ConvexError("Username cannot be changed");
       }
-      // No unique index in Convex: this check-then-patch is safe because a racing
-      // duplicate write conflicts and Convex retries the mutation.
       if (!USERNAME_PATTERN.test(username)) {
         throw new ConvexError("Username must be 3-32 characters: lowercase letters, numbers, underscores");
       }
@@ -85,27 +84,22 @@ export const updateProfile = mutation({
     if (user.profileImage && args.profileImage !== undefined && args.profileImage !== user.profileImage) {
       await ctx.storage.delete(user.profileImage);
     }
+    return null;
   },
 });
 
 export const generateUploadUrl = mutation({
   args: {},
+  returns: v.string(),
   handler: async (ctx) => {
     await requireUser(ctx);
     return ctx.storage.generateUploadUrl();
   },
 });
 
-/**
- * Permanently deletes the signed-in user's account.
- *
- * The Clerk user is removed first with the Clerk Backend API so the account can
- * no longer sign in. Only after that succeeds do we cascade-delete the app data
- * (recipes, bookmarks, rate limits, uploaded images). If the data deletion were
- * to fail, the user is already locked out and the orphaned rows are unreachable.
- */
 export const deleteAccount = action({
   args: {},
+  returns: v.null(),
   handler: async (ctx) => {
     const identity = await ctx.auth.getUserIdentity();
     if (!identity) throw new ConvexError("Not authenticated");
@@ -117,29 +111,28 @@ export const deleteAccount = action({
       method: "DELETE",
       headers: { Authorization: `Bearer ${secretKey}` },
     });
-    // 404 means the Clerk user is already gone, which is the desired end state.
     if (!response.ok && response.status !== 404) {
       throw new ConvexError("Could not delete your account. Please try again.");
     }
 
     await ctx.runMutation(internal.users.deleteAccountData, { clerkId: identity.subject });
+    return null;
   },
 });
 
 export const deleteAccountData = internalMutation({
   args: { clerkId: v.string() },
+  returns: v.null(),
   handler: async (ctx, { clerkId }) => {
     const user = await findUserByClerkId(ctx, clerkId);
-    if (!user) return;
+    if (!user) return null;
 
-    // Recipes the user authored, plus bookmarks other users left on them.
     const recipes = await ctx.db
       .query("recipes")
       .withIndex("by_user", (q) => q.eq("userId", user._id))
       .collect();
     for (const recipe of recipes) await deleteRecipeCascade(ctx, recipe);
 
-    // Bookmarks the user saved on other people's recipes.
     const savedBookmarks = await ctx.db
       .query("bookmarks")
       .withIndex("by_user", (q) => q.eq("userId", user._id))
@@ -154,5 +147,6 @@ export const deleteAccountData = internalMutation({
 
     if (user.profileImage) await ctx.storage.delete(user.profileImage);
     await ctx.db.delete(user._id);
+    return null;
   },
 });

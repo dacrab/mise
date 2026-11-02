@@ -22,69 +22,89 @@ import {
   MIN_PREP_MINUTES,
   MIN_SERVINGS,
 } from "@/lib/constants";
-import { getErrorMessage } from "@/lib/utils";
+import { cn, getErrorMessage } from "@/lib/utils";
 
 const AUTOSAVE_DELAY_MS = 30_000;
 
-const numericStr = (min: number, max: number, minMsg: string, maxMsg: string) =>
+const numericString = (min: number, max: number, minMessage: string, maxMessage: string) =>
   z
     .string()
-    .refine((val) => !val || (!Number.isNaN(Number(val)) && Number(val) >= min), { message: minMsg })
-    .refine((val) => !val || Number(val) <= max, { message: maxMsg });
+    .refine((value) => !value || (!Number.isNaN(Number(value)) && Number(value) >= min), { message: minMessage })
+    .refine((value) => !value || Number(value) <= max, { message: maxMessage });
 
 const recipeSchema = z.object({
-  title: z.string().min(1, "Please add a title").max(200, "Title must be under 200 characters"),
+  title: z.string().trim().min(1, "Please add a title").max(200, "Title must be under 200 characters"),
   description: z.string(),
   category: z.enum(CATEGORIES),
   difficulty: z.string(),
-  prepTime: numericStr(
+  prepTime: numericString(
     MIN_PREP_MINUTES,
     MAX_PREP_MINUTES,
     "Prep time cannot be negative",
     `Prep time must be under ${MAX_PREP_MINUTES} minutes`,
   ),
-  cookTime: numericStr(
+  cookTime: numericString(
     MIN_COOK_MINUTES,
     MAX_COOK_MINUTES,
     "Cook time cannot be negative",
     `Cook time must be under ${MAX_COOK_MINUTES} minutes`,
   ),
-  servings: numericStr(
+  servings: numericString(
     MIN_SERVINGS,
     MAX_SERVINGS,
     "Servings must be at least 1",
     `Servings must be at most ${MAX_SERVINGS}`,
   ),
-  videoUrl: z
-    .string()
-    .refine((val) => !val || /^https?:\/\/.+/.test(val), { message: "Video URL must be a valid URL" }),
+  videoUrl: z.string().refine((value) => !value || /^https?:\/\/.+/.test(value), {
+    message: "Video URL must be a valid URL",
+  }),
   ingredients: z.array(z.object({ value: z.string() })),
   steps: z.array(z.object({ value: z.string() })),
 });
 
 type RecipeFormData = z.infer<typeof recipeSchema>;
+type RecipeStatus = "draft" | "published";
 
-const unwrap = (arr?: Array<{ value?: string }>) => (arr ?? []).map((x) => x.value ?? "");
+const values = (items?: Array<{ value?: string }>) => (items ?? []).map((item) => item.value ?? "");
 
-function buildPayload(
-  data: RecipeFormData,
-  coverImage: Id<"_storage"> | null,
-  validIngredients: string[],
-  validSteps: string[],
-) {
+function buildPayload(data: RecipeFormData, coverImage: Id<"_storage"> | null, ingredients: string[], steps: string[]) {
   return {
-    title: data.title.trim() || "Untitled",
+    title: data.title.trim(),
     description: data.description.trim() || undefined,
     category: data.category,
     prepTime: data.prepTime ? Number(data.prepTime) : undefined,
     cookTime: data.cookTime ? Number(data.cookTime) : undefined,
     servings: data.servings ? Number(data.servings) : undefined,
     difficulty: data.difficulty || undefined,
-    ingredients: validIngredients,
-    steps: validSteps,
+    ingredients,
+    steps,
     coverImage: coverImage ?? undefined,
     videoUrl: data.videoUrl.trim() || undefined,
   };
+}
+
+function NumberField({
+  id,
+  label,
+  error,
+  ...props
+}: React.ComponentPropsWithRef<"input"> & { id: string; label: string; error?: string }) {
+  return (
+    <div>
+      <label htmlFor={id} className="label text-xs">
+        {label}
+      </label>
+      <input
+        id={id}
+        type="number"
+        className="input py-2.5 text-sm"
+        aria-invalid={error ? true : undefined}
+        aria-describedby={error ? `${id}-error` : undefined}
+        {...props}
+      />
+      <FieldError id={`${id}-error`} error={error ? { message: error } : undefined} />
+    </div>
+  );
 }
 
 function EditorSidebar() {
@@ -96,12 +116,12 @@ function EditorSidebar() {
 
   return (
     <aside className="lg:self-start">
-      <div className="sticky top-[7.5rem] space-y-6">
-        <div className="card p-6 space-y-5">
-          <h3 className="font-serif text-base font-medium">Details</h3>
-          <div className="space-y-4">
+      <div className="sticky top-36 space-y-5">
+        <section className="card p-5">
+          <h2 className="text-base font-medium">Details</h2>
+          <div className="mt-4 space-y-4">
             <div>
-              <label htmlFor="recipe-category" className="label">
+              <label htmlFor="recipe-category" className="label text-xs">
                 Category
               </label>
               <Controller
@@ -112,14 +132,13 @@ function EditorSidebar() {
                     id="recipe-category"
                     value={field.value}
                     onChange={field.onChange}
-                    options={CATEGORIES.map((c) => ({ label: c, value: c }))}
-                    className="w-full"
+                    options={CATEGORIES.map((category) => ({ label: category, value: category }))}
                   />
                 )}
               />
             </div>
             <div>
-              <label htmlFor="recipe-difficulty" className="label">
+              <label htmlFor="recipe-difficulty" className="label text-xs">
                 Difficulty
               </label>
               <Controller
@@ -130,90 +149,70 @@ function EditorSidebar() {
                     id="recipe-difficulty"
                     value={field.value}
                     onChange={field.onChange}
-                    options={[{ label: "Select…", value: "" }, ...DIFFICULTIES.map((d) => ({ label: d, value: d }))]}
-                    className="w-full"
+                    options={[
+                      { label: "Not specified", value: "" },
+                      ...DIFFICULTIES.map((difficulty) => ({ label: difficulty, value: difficulty })),
+                    ]}
                   />
                 )}
               />
             </div>
           </div>
-        </div>
+        </section>
 
-        <div className="card p-6 space-y-5">
-          <h3 className="font-serif text-base font-medium">Timing & Servings</h3>
-          <div className="grid grid-cols-2 gap-3">
-            <div>
-              <label htmlFor="recipe-prep-time" className="label text-xs">
-                Prep (min)
-              </label>
-              <input
-                id="recipe-prep-time"
-                type="number"
-                min={MIN_PREP_MINUTES}
-                max={MAX_PREP_MINUTES}
-                className="input-field text-sm py-2.5"
-                placeholder="15"
-                aria-invalid={!!errors.prepTime}
-                aria-describedby={errors.prepTime ? "recipe-prep-time-error" : undefined}
-                {...register("prepTime")}
-              />
-              <FieldError id="recipe-prep-time-error" error={errors.prepTime} />
-            </div>
-            <div>
-              <label htmlFor="recipe-cook-time" className="label text-xs">
-                Cook (min)
-              </label>
-              <input
-                id="recipe-cook-time"
-                type="number"
-                min={MIN_COOK_MINUTES}
-                max={MAX_COOK_MINUTES}
-                className="input-field text-sm py-2.5"
-                placeholder="30"
-                aria-invalid={!!errors.cookTime}
-                aria-describedby={errors.cookTime ? "recipe-cook-time-error" : undefined}
-                {...register("cookTime")}
-              />
-              <FieldError id="recipe-cook-time-error" error={errors.cookTime} />
-            </div>
+        <section className="card p-5">
+          <h2 className="text-base font-medium">Time & servings</h2>
+          <div className="mt-4 grid grid-cols-2 gap-3">
+            <NumberField
+              id="recipe-prep-time"
+              label="Prep (min)"
+              placeholder="15"
+              min={MIN_PREP_MINUTES}
+              max={MAX_PREP_MINUTES}
+              error={errors.prepTime?.message}
+              {...register("prepTime")}
+            />
+            <NumberField
+              id="recipe-cook-time"
+              label="Cook (min)"
+              placeholder="30"
+              min={MIN_COOK_MINUTES}
+              max={MAX_COOK_MINUTES}
+              error={errors.cookTime?.message}
+              {...register("cookTime")}
+            />
           </div>
-          <div>
-            <label htmlFor="recipe-servings" className="label text-xs">
-              Servings
-            </label>
-            <input
+          <div className="mt-3">
+            <NumberField
               id="recipe-servings"
-              type="number"
+              label="Servings"
+              placeholder="4"
               min={MIN_SERVINGS}
               max={MAX_SERVINGS}
-              className="input-field text-sm py-2.5"
-              placeholder="4"
-              aria-invalid={!!errors.servings}
-              aria-describedby={errors.servings ? "recipe-servings-error" : undefined}
+              error={errors.servings?.message}
               {...register("servings")}
             />
-            <FieldError id="recipe-servings-error" error={errors.servings} />
           </div>
-        </div>
+        </section>
 
-        <div className="card p-6 space-y-4">
-          <h3 className="font-serif text-base font-medium">Video</h3>
-          <div>
-            <label htmlFor="recipe-video" className="label">
+        <section className="card p-5">
+          <h2 className="text-base font-medium">Video</h2>
+          <div className="mt-4">
+            <label htmlFor="recipe-video" className="label text-xs">
               Video URL
             </label>
             <input
               id="recipe-video"
               type="url"
               placeholder="YouTube or TikTok URL"
-              className="input-field"
-              aria-invalid={!!errors.videoUrl}
+              className="input"
+              aria-invalid={errors.videoUrl ? true : undefined}
               aria-describedby={errors.videoUrl ? "recipe-video-error" : undefined}
               {...register("videoUrl")}
             />
             <FieldError id="recipe-video-error" error={errors.videoUrl} />
           </div>
-        </div>
+        </section>
       </div>
     </aside>
   );
@@ -228,22 +227,21 @@ function CoverUploader({
   coverImageUrl: string;
   uploading: boolean;
   uploadProgress: number;
-  onInputChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
+  onInputChange: (event: React.ChangeEvent<HTMLInputElement>) => void;
 }) {
   return (
     <div>
       <div
-        className={`relative w-full rounded-xl overflow-hidden border-2 border-dashed transition-colors ${
-          coverImageUrl
-            ? "border-transparent aspect-[21/9]"
-            : "border-stone-light hover:border-sage bg-cream-dark dark:bg-d-surface-muted dark:border-d-border-strong dark:hover:border-sage aspect-[21/9]"
-        }`}
+        className={cn(
+          "relative aspect-[21/9] overflow-hidden rounded-2xl border-2 border-dashed transition-colors",
+          coverImageUrl ? "border-transparent" : "border-line-strong bg-surface-2 hover:border-accent",
+        )}
       >
         {coverImageUrl ? (
           <>
-            <img src={coverImageUrl} className="w-full h-full object-cover" alt="Recipe cover preview" />
-            <div className="absolute inset-0 bg-gradient-to-t from-charcoal/60 via-transparent to-transparent" />
-            <label className="absolute bottom-4 right-4 btn-secondary text-xs px-3 py-1.5 cursor-pointer bg-warm-white/90 backdrop-blur-sm">
+            <img src={coverImageUrl} alt="Recipe cover preview" className="size-full object-cover" />
+            <div className="absolute inset-0 bg-gradient-to-t from-black/45 via-transparent to-transparent" />
+            <label className="btn-secondary btn-sm absolute bottom-4 right-4 cursor-pointer border-transparent bg-surface/90 backdrop-blur-sm">
               Change image
               <input
                 type="file"
@@ -255,10 +253,10 @@ function CoverUploader({
             </label>
           </>
         ) : (
-          <label className="absolute inset-0 flex flex-col items-center justify-center cursor-pointer text-stone hover:text-sage transition-colors gap-2">
-            <PhotoIcon className="w-10 h-10" />
+          <label className="absolute inset-0 flex cursor-pointer flex-col items-center justify-center gap-2 text-muted transition-colors hover:text-accent">
+            <PhotoIcon className="size-9" />
             <span className="text-sm font-medium">Add a cover photo</span>
-            <span className="text-xs text-stone">Recommended: 1200×600px or wider</span>
+            <span className="text-xs">1200 × 600 or wider</span>
             <input
               type="file"
               accept="image/*"
@@ -269,16 +267,12 @@ function CoverUploader({
           </label>
         )}
       </div>
-      {uploading && <ProgressBar value={uploadProgress} label="Uploading" />}
+      {uploading && <ProgressBar value={uploadProgress} label="Uploading" className="mt-3" />}
     </div>
   );
 }
 
-function missingForPublish(
-  status: "draft" | "published" | null,
-  ingredients: string[],
-  steps: string[],
-): string | null {
+function missingForPublish(status: RecipeStatus | null, ingredients: string[], steps: string[]): string | null {
   if (status !== "published") return null;
   if (ingredients.length === 0) return "Add at least one ingredient";
   if (steps.length === 0) return "Add at least one step";
@@ -299,34 +293,24 @@ function EditorHeader({
   onPublish: () => void;
 }) {
   return (
-    <div className="sticky top-16 z-30 glass border-b border-cream-dark dark:border-d-border">
-      <div className="wrapper-wide flex items-center justify-between h-14">
-        <div className="flex items-center gap-4">
-          <Link to="/dashboard" className="link-muted cursor-pointer" aria-label="Back to dashboard">
-            <ArrowLeftIcon className="w-5 h-5" />
+    <div className="sticky top-16 z-30 border-b border-line bg-canvas/85 backdrop-blur-md">
+      <div className="container-wide flex h-14 items-center justify-between gap-4">
+        <div className="flex min-w-0 items-center gap-3">
+          <Link to="/dashboard" className="icon-btn shrink-0" aria-label="Back to dashboard">
+            <ArrowLeftIcon className="size-5" />
           </Link>
-          <h1 className="font-serif text-lg font-medium">{isEditing ? "Edit recipe" : "New recipe"}</h1>
+          <h1 className="truncate font-display text-lg font-medium">{isEditing ? "Edit recipe" : "New recipe"}</h1>
           {lastSaved && (
-            <span className="text-xs text-stone hidden sm:inline">
+            <span className="hidden text-xs text-muted sm:inline">
               Saved {lastSaved.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
             </span>
           )}
         </div>
-        <div className="flex items-center gap-2">
-          <button
-            type="button"
-            onClick={onSaveDraft}
-            disabled={loading}
-            className="btn-secondary text-sm px-4 py-2 cursor-pointer"
-          >
-            {loading ? "Saving…" : "Save draft"}
+        <div className="flex shrink-0 items-center gap-2">
+          <button type="button" onClick={onSaveDraft} disabled={loading} className="btn-secondary btn-sm">
+            Save draft
           </button>
-          <button
-            type="button"
-            onClick={onPublish}
-            disabled={loading}
-            className="btn-primary text-sm px-4 py-2 cursor-pointer"
-          >
+          <button type="button" onClick={onPublish} disabled={loading} className="btn-primary btn-sm">
             {loading ? "Saving…" : isEditing ? "Update" : "Publish"}
           </button>
         </div>
@@ -335,9 +319,10 @@ function EditorHeader({
   );
 }
 
+// biome-ignore lint/complexity/noExcessiveCognitiveComplexity: the editor keeps form state, uploads, and autosave in one lifecycle
 export function RecipeEditor({
   initialData,
-  isEditing,
+  isEditing = false,
 }: {
   initialData?: {
     id?: Id<"recipes">;
@@ -349,7 +334,7 @@ export function RecipeEditor({
     steps: string[];
     category?: string | null;
     videoUrl?: string | null;
-    status?: "draft" | "published";
+    status?: RecipeStatus;
     prepTime?: number | null;
     cookTime?: number | null;
     servings?: number | null;
@@ -366,8 +351,7 @@ export function RecipeEditor({
   const [coverImage, setCoverImage] = useState<Id<"_storage"> | null>(initialData?.coverImage ?? null);
   const [coverImageUrl, setCoverImageUrl] = useState(initialData?.coverImageUrl ?? "");
 
-  // Ref carries the clicked action into the submit, which runs asynchronously after validation
-  const pendingStatusRef = useRef<"draft" | "published" | null>(null);
+  const pendingStatusRef = useRef<RecipeStatus | null>(null);
   const lastSavedPayloadRef = useRef<string | null>(null);
 
   const form = useForm<RecipeFormData>({
@@ -375,14 +359,14 @@ export function RecipeEditor({
     defaultValues: {
       title: initialData?.title ?? "",
       description: initialData?.description ?? "",
-      category: CATEGORIES.find((c) => c === initialData?.category) ?? "General",
+      category: CATEGORIES.find((category) => category === initialData?.category) ?? "General",
       difficulty: initialData?.difficulty ?? "",
       prepTime: initialData?.prepTime != null ? String(initialData.prepTime) : "",
       cookTime: initialData?.cookTime != null ? String(initialData.cookTime) : "",
       servings: initialData?.servings != null ? String(initialData.servings) : "",
       videoUrl: initialData?.videoUrl ?? "",
-      ingredients: (initialData?.ingredients ?? [""]).map((v) => ({ value: v })),
-      steps: (initialData?.steps ?? [""]).map((v) => ({ value: v })),
+      ingredients: (initialData?.ingredients?.length ? initialData.ingredients : [""]).map((value) => ({ value })),
+      steps: (initialData?.steps?.length ? initialData.steps : [""]).map((value) => ({ value })),
     },
   });
 
@@ -400,14 +384,13 @@ export function RecipeEditor({
     append: appendIngredient,
     remove: removeIngredient,
   } = useFieldArray({ control, name: "ingredients" });
-
   const { fields: stepFields, append: appendStep, remove: removeStep } = useFieldArray({ control, name: "steps" });
 
   const watchedValues = useWatch<RecipeFormData>({ control });
 
   useEffect(() => {
-    const handler = (e: BeforeUnloadEvent) => {
-      if (isDirty) e.preventDefault();
+    const handler = (event: BeforeUnloadEvent) => {
+      if (isDirty) event.preventDefault();
     };
     window.addEventListener("beforeunload", handler);
     return () => window.removeEventListener("beforeunload", handler);
@@ -423,7 +406,7 @@ export function RecipeEditor({
     progress: uploadProgress,
   } = useFileUpload(() => generateUploadUrl(), {
     onSuccess: (storageId, previewUrl) => {
-      if (coverImageUrl?.startsWith("blob:")) URL.revokeObjectURL(coverImageUrl);
+      if (coverImageUrl.startsWith("blob:")) URL.revokeObjectURL(coverImageUrl);
       setCoverImage(storageId);
       setCoverImageUrl(previewUrl);
       toast("Image uploaded", "success");
@@ -431,18 +414,16 @@ export function RecipeEditor({
     onError: () => toast("Could not upload image", "error"),
   });
 
-  // watchedValues re-arms the autosave timer on every form change (debounce
-  // signal); the values themselves are read fresh via getValues() at fire time.
-  // biome-ignore lint/correctness/useExhaustiveDependencies: watchedValues is the timer re-arm signal, not a direct body dependency
+  // biome-ignore lint/correctness/useExhaustiveDependencies: watchedValues is the timer re-arm signal
   useEffect(() => {
     if (!(isEditing && initialData?.id && isDirty)) return;
     const recipeId = initialData.id;
-    const recipeStatus = initialData.status ?? "draft";
+    const status = initialData.status ?? "draft";
     const timer = setTimeout(async () => {
-      const vals = getValues();
+      const formValues = getValues();
       const payload = {
-        ...buildPayload(vals, coverImage, unwrap(vals.ingredients), unwrap(vals.steps)),
-        status: recipeStatus,
+        ...buildPayload(formValues, coverImage, values(formValues.ingredients), values(formValues.steps)),
+        status,
       };
       const fingerprint = JSON.stringify(payload);
       if (fingerprint === lastSavedPayloadRef.current) return;
@@ -450,7 +431,7 @@ export function RecipeEditor({
         await updateRecipe({ id: recipeId, ...payload });
         lastSavedPayloadRef.current = fingerprint;
         setLastSaved(new Date());
-        reset({ ...vals });
+        reset({ ...formValues });
       } catch {
         toast("Autosave failed", "error");
       }
@@ -471,22 +452,19 @@ export function RecipeEditor({
 
   useEffect(
     () => () => {
-      if (coverImageUrl?.startsWith("blob:")) URL.revokeObjectURL(coverImageUrl);
+      if (coverImageUrl.startsWith("blob:")) URL.revokeObjectURL(coverImageUrl);
     },
     [coverImageUrl],
   );
 
-  if (isAuthLoading) {
-    return <LoadingState />;
-  }
+  if (isAuthLoading) return <LoadingState />;
 
   const handleSubmit = async (data: RecipeFormData) => {
     const status = pendingStatusRef.current;
     if (!status) return;
 
-    const validIngredients = unwrap(data.ingredients).filter(Boolean);
-    const validSteps = unwrap(data.steps).filter(Boolean);
-
+    const validIngredients = values(data.ingredients).filter(Boolean);
+    const validSteps = values(data.steps).filter(Boolean);
     const missing = missingForPublish(status, validIngredients, validSteps);
     if (missing) {
       toast(missing, "error");
@@ -498,39 +476,39 @@ export function RecipeEditor({
       const payload = { ...buildPayload(data, coverImage, validIngredients, validSteps), status };
       if (isEditing && initialData?.id) {
         await updateRecipe({ id: initialData.id, ...payload });
-        toast("Recipe updated!", "success");
+        toast("Recipe updated", "success");
       } else {
         await createRecipe(payload);
-        toast("Recipe saved!", "success");
+        toast("Recipe saved", "success");
       }
       void navigate({ to: "/dashboard" });
-    } catch (err) {
-      toast(getErrorMessage(err), "error");
+    } catch (error) {
+      toast(getErrorMessage(error), "error");
     } finally {
       setLoading(false);
       pendingStatusRef.current = null;
     }
   };
 
-  const triggerSubmit = (status: "draft" | "published") => {
+  const triggerSubmit = (status: RecipeStatus) => {
     pendingStatusRef.current = status;
     void rhfHandleSubmit(handleSubmit)();
   };
 
   return (
     <FormProvider {...form}>
-      <div className="min-h-[calc(100vh-4rem)]">
+      <div className="min-h-[calc(100svh-4rem)]">
         <EditorHeader
-          isEditing={!!isEditing}
+          isEditing={isEditing}
           loading={loading}
           lastSaved={lastSaved}
           onSaveDraft={() => triggerSubmit("draft")}
           onPublish={() => triggerSubmit("published")}
         />
 
-        <div className="wrapper-wide py-8">
-          <div className="grid lg:grid-cols-[1fr_380px] gap-8">
-            <div className="space-y-6">
+        <div className="container-wide py-8 md:py-10">
+          <div className="grid gap-8 lg:grid-cols-[minmax(0,1fr)_340px]">
+            <div className="min-w-0 space-y-6">
               <CoverUploader
                 coverImageUrl={coverImageUrl}
                 uploading={uploading}
@@ -542,11 +520,11 @@ export function RecipeEditor({
                 <input
                   id="recipe-title"
                   type="text"
-                  className="w-full text-2xl sm:text-3xl font-serif font-medium bg-transparent border-none outline-none placeholder:text-stone-light focus:ring-0 py-2 dark:text-d-text-heading"
+                  className="w-full border-0 bg-transparent py-2 font-display text-3xl font-medium outline-none placeholder:text-muted/60 focus:ring-0 sm:text-4xl"
                   placeholder="Recipe title"
                   maxLength={200}
                   aria-label="Recipe title"
-                  aria-invalid={!!errors.title}
+                  aria-invalid={errors.title ? true : undefined}
                   aria-describedby={errors.title ? "recipe-title-error" : undefined}
                   {...register("title")}
                 />
@@ -554,84 +532,89 @@ export function RecipeEditor({
               </div>
 
               <div>
+                <label htmlFor="recipe-description" className="sr-only">
+                  Description
+                </label>
                 <textarea
                   id="recipe-description"
-                  className="w-full bg-transparent border-none outline-none placeholder:text-stone text-secondary resize-none focus:ring-0 text-base leading-relaxed"
-                  placeholder="Write a short intro — what inspired this dish, what makes it special…"
+                  className="w-full resize-none border-0 bg-transparent p-0 text-base leading-relaxed text-ink-soft outline-none placeholder:text-muted/70 focus:ring-0"
+                  placeholder="A short intro — what inspired this dish, what makes it special…"
                   rows={3}
-                  aria-label="Description"
-                  aria-invalid={!!errors.description}
+                  aria-invalid={errors.description ? true : undefined}
                   aria-describedby={errors.description ? "recipe-description-error" : undefined}
                   {...register("description")}
                 />
                 <FieldError id="recipe-description-error" error={errors.description} />
               </div>
 
-              <section className="card p-6 space-y-4">
+              <section className="card p-5 sm:p-6">
                 <div className="flex items-center justify-between">
-                  <h2 className="section-title">Ingredients</h2>
-                  <span className="text-xs text-stone">
-                    {ingredientFields.filter((_, i) => watchedValues.ingredients?.[i]?.value).length} items
+                  <h2 className="text-xl font-medium">Ingredients</h2>
+                  <span className="text-xs text-muted">
+                    {ingredientFields.filter((_, index) => watchedValues.ingredients?.[index]?.value).length} items
                   </span>
                 </div>
-                <div className="space-y-2">
-                  {ingredientFields.map((field, i) => (
+                <div className="mt-4 space-y-1">
+                  {ingredientFields.map((field, index) => (
                     <div key={field.id} className="group flex items-center gap-2">
-                      <span className="w-1.5 h-1.5 rounded-full bg-sage shrink-0" />
+                      <span className="size-1.5 shrink-0 rounded-full bg-accent" />
                       <input
                         type="text"
-                        className="flex-1 px-3 py-2.5 bg-transparent border-b border-transparent hover:border-stone-light focus:border-sage focus:outline-none text-sm transition-colors dark:hover:border-d-border-strong dark:focus:border-sage"
-                        placeholder={i === 0 ? "e.g. 2 cups all-purpose flour" : "Add ingredient…"}
-                        {...register(`ingredients.${i}.value`)}
-                        aria-label={`Ingredient ${i + 1}`}
+                        className="min-w-0 flex-1 rounded-md border-b border-transparent px-2 py-2.5 text-sm outline-none transition-colors hover:border-line focus:border-accent"
+                        placeholder={index === 0 ? "e.g. 2 cups all-purpose flour" : "Add ingredient…"}
+                        aria-label={`Ingredient ${index + 1}`}
+                        {...register(`ingredients.${index}.value`)}
                       />
                       <button
-                        onClick={() => removeIngredient(i)}
-                        className="opacity-0 group-hover:opacity-100 text-stone hover:text-terracotta transition-opacity p-1"
-                        aria-label={`Remove ingredient ${i + 1}`}
                         type="button"
+                        onClick={() => removeIngredient(index)}
+                        className="rounded-md p-1 text-muted opacity-0 transition hover:text-clay focus:opacity-100 group-hover:opacity-100"
+                        aria-label={`Remove ingredient ${index + 1}`}
                       >
-                        <XMarkIcon className="w-4 h-4" />
+                        <XMarkIcon className="size-4" />
                       </button>
                     </div>
                   ))}
                 </div>
                 <button
-                  onClick={() => appendIngredient({ value: "" })}
-                  className="flex items-center gap-2 text-sm font-medium link-sage pt-2"
                   type="button"
+                  onClick={() => appendIngredient({ value: "" })}
+                  className="link mt-4 inline-flex items-center gap-2 text-sm font-medium"
                 >
-                  <PlusIcon className="w-4 h-4" />
+                  <PlusIcon className="size-4" />
                   Add ingredient
                 </button>
               </section>
 
-              <section className="card p-6 space-y-4">
+              <section className="card p-5 sm:p-6">
                 <div className="flex items-center justify-between">
-                  <h2 className="section-title">Instructions</h2>
-                  <span className="text-xs text-stone">
-                    {stepFields.filter((_, i) => watchedValues.steps?.[i]?.value).length} steps
+                  <h2 className="text-xl font-medium">Instructions</h2>
+                  <span className="text-xs text-muted">
+                    {stepFields.filter((_, index) => watchedValues.steps?.[index]?.value).length} steps
                   </span>
                 </div>
-                <div className="space-y-4">
-                  {stepFields.map((field, i) => (
-                    <div key={field.id} className="group flex gap-4">
+                <div className="mt-5 space-y-4">
+                  {stepFields.map((field, index) => (
+                    <div key={field.id} className="group flex gap-3 sm:gap-4">
                       <div className="flex flex-col items-center">
-                        <span className="w-8 h-8 step-number text-sm">{i + 1}</span>
-                        {i < stepFields.length - 1 && <div className="step-line mt-2" />}
+                        <span className="step-number text-sm">{index + 1}</span>
+                        {index < stepFields.length - 1 && <div className="step-line mt-2" />}
                       </div>
-                      <div className="flex-1 pb-4">
+                      <div className="flex-1 pb-3">
+                        <label htmlFor={`step-${field.id}`} className="sr-only">
+                          Step {index + 1}
+                        </label>
                         <textarea
-                          className="w-full px-3 py-2.5 surface-muted rounded-lg border border-transparent hover:border-stone-light focus:border-sage focus:outline-none focus:ring-1 focus:ring-sage/20 text-sm resize-none transition-all min-h-[80px]"
+                          id={`step-${field.id}`}
+                          className="textarea min-h-20 text-sm"
                           placeholder="Describe this step…"
-                          {...register(`steps.${i}.value`)}
-                          aria-label={`Step ${i + 1}`}
+                          {...register(`steps.${index}.value`)}
                         />
                         <button
-                          onClick={() => removeStep(i)}
-                          className="opacity-0 group-hover:opacity-100 text-xs text-stone hover:text-terracotta mt-1.5 transition-opacity"
-                          aria-label={`Remove step ${i + 1}`}
                           type="button"
+                          onClick={() => removeStep(index)}
+                          className="mt-1 text-xs text-muted opacity-0 transition hover:text-clay focus:opacity-100 group-hover:opacity-100"
+                          aria-label={`Remove step ${index + 1}`}
                         >
                           Remove step
                         </button>
@@ -640,11 +623,11 @@ export function RecipeEditor({
                   ))}
                 </div>
                 <button
-                  onClick={() => appendStep({ value: "" })}
-                  className="flex items-center gap-2 text-sm font-medium link-sage"
                   type="button"
+                  onClick={() => appendStep({ value: "" })}
+                  className="link mt-4 inline-flex items-center gap-2 text-sm font-medium"
                 >
-                  <PlusIcon className="w-4 h-4" />
+                  <PlusIcon className="size-4" />
                   Add step
                 </button>
               </section>

@@ -1,21 +1,22 @@
 import { Toast } from "@base-ui/react/toast";
 import { CheckCircleIcon, ExclamationCircleIcon, InformationCircleIcon, XMarkIcon } from "@heroicons/react/24/outline";
 import { createContext, useCallback, useContext } from "react";
+import { cn } from "@/lib/utils";
 
 type ToastType = "success" | "error" | "info";
 
 const ToastContext = createContext<((message: string, type?: ToastType) => void) | undefined>(undefined);
 
-const ICONS: Record<ToastType, React.ElementType> = {
+const ICONS = {
   success: CheckCircleIcon,
   error: ExclamationCircleIcon,
   info: InformationCircleIcon,
-};
+} satisfies Record<ToastType, typeof CheckCircleIcon>;
 
-const STYLES: Record<ToastType, string> = {
-  success: "bg-sage/10 border-sage/20 text-sage-dark",
-  error: "bg-terracotta/10 border-terracotta/20 text-terracotta",
-  info: "bg-honey/10 border-honey/20 text-primary",
+const ICON_STYLES: Record<ToastType, string> = {
+  success: "text-accent",
+  error: "text-clay",
+  info: "text-ink-soft",
 };
 
 const DURATIONS: Record<ToastType, number> = {
@@ -26,25 +27,22 @@ const DURATIONS: Record<ToastType, number> = {
 
 function ToastViewport() {
   const { toasts } = Toast.useToastManager();
+
   return (
-    <Toast.Viewport className="fixed bottom-4 right-4 z-[100] flex flex-col-reverse gap-2 items-end pointer-events-none">
-      {toasts.map((t) => {
-        // The manager types `type` loosely; validate instead of casting.
-        const type: ToastType = t.type === "success" || t.type === "error" ? t.type : "info";
+    <Toast.Viewport className="pointer-events-none fixed inset-x-4 bottom-4 z-[100] flex flex-col-reverse items-end gap-2 sm:left-auto sm:w-full sm:max-w-sm">
+      {toasts.map((toast) => {
+        const type: ToastType = toast.type === "success" || toast.type === "error" ? toast.type : "info";
         const Icon = ICONS[type];
         return (
           <Toast.Root
-            key={t.id}
-            toast={t}
-            className={`flex items-start gap-3 px-4 py-3 rounded-xl border shadow-lg text-sm max-w-sm w-full pointer-events-auto ${STYLES[type]}`}
+            key={toast.id}
+            toast={toast}
+            className="pointer-events-auto flex w-full items-start gap-3 rounded-xl border border-line bg-surface p-4 text-sm shadow-lift"
           >
-            <Icon className="w-4 h-4 shrink-0 mt-0.5" aria-hidden="true" />
-            <Toast.Title className="flex-1 leading-relaxed" />
-            <Toast.Close
-              className="shrink-0 opacity-50 hover:opacity-100 transition-opacity -mr-1"
-              aria-label="Dismiss notification"
-            >
-              <XMarkIcon className="w-4 h-4" />
+            <Icon className={cn("mt-0.5 size-4 shrink-0", ICON_STYLES[type])} aria-hidden="true" />
+            <Toast.Title className="flex-1 leading-relaxed text-ink" />
+            <Toast.Close className="shrink-0 text-muted transition-colors hover:text-ink" aria-label="Dismiss">
+              <XMarkIcon className="size-4" />
             </Toast.Close>
           </Toast.Root>
         );
@@ -80,6 +78,6 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
 
 export function useToast() {
   const toast = useContext(ToastContext);
-  if (toast === undefined) throw new Error("useToast must be used within a ToastProvider");
+  if (!toast) throw new Error("useToast must be used within a ToastProvider");
   return { toast };
 }

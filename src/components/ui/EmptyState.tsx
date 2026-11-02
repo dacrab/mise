@@ -1,6 +1,5 @@
 import type { ComponentType, ReactNode } from "react";
 
-/** Card used for empty lists (dashboard, chef profiles, …). */
 export function EmptyState({
   icon: Icon,
   title,
@@ -13,13 +12,13 @@ export function EmptyState({
   children?: ReactNode;
 }) {
   return (
-    <div className="card p-16 text-center">
-      <div className="w-20 h-20 rounded-full bg-sage/10 flex items-center justify-center mx-auto mb-6">
-        <Icon className="w-9 h-9 text-sage" />
+    <div className="card px-6 py-16 text-center sm:px-12">
+      <div className="mx-auto mb-5 flex size-14 items-center justify-center rounded-full bg-accent-soft">
+        <Icon className="size-6 text-accent" />
       </div>
-      <h2 className="font-serif text-2xl font-medium mb-2">{title}</h2>
-      <p className="text-stone max-w-sm mx-auto">{description}</p>
-      {children && <div className="mt-8">{children}</div>}
+      <h2 className="text-2xl font-medium">{title}</h2>
+      <p className="mx-auto mt-2 max-w-sm text-sm leading-relaxed text-ink-soft">{description}</p>
+      {children && <div className="mt-7">{children}</div>}
     </div>
   );
 }

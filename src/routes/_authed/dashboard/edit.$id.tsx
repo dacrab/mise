@@ -6,12 +6,6 @@ import type { Id } from "convex/_generated/dataModel";
 import { RecipeEditor } from "@/components/recipe/RecipeEditor";
 import { pageHead } from "@/lib/route";
 
-/**
- * Convex document IDs are url-safe base64 strings (22 chars today). The
- * server's `v.id("recipes")` validator remains the authority — this guard
- * only fails fast on obviously malformed URL params so users land back on
- * the dashboard instead of an error boundary.
- */
 const RECIPE_ID_PATTERN = /^[A-Za-z0-9_-]{22,32}$/;
 
 function isRecipeId(id: string): id is Id<"recipes"> {

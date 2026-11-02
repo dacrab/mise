@@ -1,6 +1,6 @@
 import { convexQuery } from "@convex-dev/react-query";
-import { ClockIcon, FireIcon, PrinterIcon, ShareIcon, UserGroupIcon } from "@heroicons/react/24/outline";
-import { PlayIcon as PlayIconSolid } from "@heroicons/react/24/solid";
+import { PrinterIcon, ShareIcon } from "@heroicons/react/24/outline";
+import { PlayIcon } from "@heroicons/react/24/solid";
 import { useSuspenseQuery } from "@tanstack/react-query";
 import { createFileRoute, Link, notFound } from "@tanstack/react-router";
 import { api } from "convex/_generated/api";
@@ -12,7 +12,8 @@ import { Avatar, LoadingState } from "@/components/ui/Primitives";
 import { RouteError } from "@/components/ui/RouteError";
 import { useToast } from "@/components/ui/Toast";
 import { APP_TITLE_SUFFIX, MAX_SERVINGS, MIN_SERVINGS } from "@/lib/constants";
-import { avatarSource, scaleIngredient } from "@/lib/utils";
+import { recipeStats } from "@/lib/recipe";
+import { formatDate, scaleIngredient } from "@/lib/utils";
 
 export const Route = createFileRoute("/recipe/$slug")({
   loader: ({ params, context: { queryClient } }) =>
@@ -23,9 +24,9 @@ export const Route = createFileRoute("/recipe/$slug")({
   head: ({ loaderData }) => ({
     meta: [
       { title: loaderData?.title ? `${loaderData.title}${APP_TITLE_SUFFIX}` : `Recipe${APP_TITLE_SUFFIX}` },
-      { name: "description", content: loaderData?.description ?? "A delicious recipe on Mise" },
+      { name: "description", content: loaderData?.description ?? "A recipe shared on Mise." },
       { property: "og:title", content: loaderData?.title ?? "Recipe" },
-      { property: "og:description", content: loaderData?.description ?? "A delicious recipe on Mise" },
+      { property: "og:description", content: loaderData?.description ?? "A recipe shared on Mise." },
       ...(loaderData?.coverImageUrl ? [{ property: "og:image", content: loaderData.coverImageUrl }] : []),
       { property: "og:type", content: "article" },
       { name: "twitter:card", content: "summary_large_image" },
@@ -35,6 +36,7 @@ export const Route = createFileRoute("/recipe/$slug")({
 
 function ShareButton({ title }: { title: string }) {
   const { toast } = useToast();
+
   const handleShare = async () => {
     const url = window.location.href;
     try {
@@ -42,81 +44,77 @@ function ShareButton({ title }: { title: string }) {
         await navigator.share({ title, url });
       } else {
         await navigator.clipboard.writeText(url);
-        toast("Link copied!", "success");
+        toast("Link copied", "success");
       }
-    } catch (err) {
-      if (err instanceof Error && err.name !== "AbortError") toast("Could not share", "error");
+    } catch (error) {
+      if (error instanceof Error && error.name !== "AbortError") toast("Could not share", "error");
     }
   };
+
   return (
-    <button
-      type="button"
-      onClick={() => void handleShare()}
-      className="flex items-center gap-1.5 text-sm text-stone hover:text-sage transition-colors"
-      aria-label="Share"
-    >
-      <ShareIcon className="w-4 h-4" />
+    <button type="button" onClick={() => void handleShare()} className="btn-secondary btn-sm" aria-label="Share">
+      <ShareIcon className="size-4" />
       Share
     </button>
   );
 }
 
-function IngredientScaler({ ingredients, defaultServings = 4 }: { ingredients: string[]; defaultServings?: number }) {
-  const [servings, setServings] = useState(defaultServings);
-  const scale = servings / defaultServings;
-  const scaled = useMemo(() => ingredients.map((ing) => scaleIngredient(ing, scale)), [ingredients, scale]);
+function IngredientScaler({ ingredients, defaultServings }: { ingredients: string[]; defaultServings: number }) {
+  const baseServings = Math.max(MIN_SERVINGS, defaultServings);
+  const [servings, setServings] = useState(baseServings);
+  const scale = servings / baseServings;
+  const scaled = useMemo(
+    () => ingredients.map((ingredient) => scaleIngredient(ingredient, scale)),
+    [ingredients, scale],
+  );
 
   return (
     <div>
-      <div className="flex items-center gap-3 mb-4">
-        <label htmlFor="servings-input" className="text-sm font-medium text-secondary">
-          Servings:
-        </label>
+      <div className="flex flex-wrap items-center gap-2">
+        <span className="text-sm text-ink-soft">Servings</span>
         <button
           type="button"
           onClick={() => setServings(Math.max(MIN_SERVINGS, servings - 1))}
-          className="w-8 h-8 rounded-lg surface-raised hover:bg-stone-light/50 dark:hover:bg-d-border flex items-center justify-center text-primary transition-colors"
+          className="icon-btn size-8 border border-line"
           aria-label="Decrease servings"
         >
           −
         </button>
         <input
-          id="servings-input"
           type="number"
           min={MIN_SERVINGS}
           max={MAX_SERVINGS}
           value={servings}
-          onChange={(e) => {
-            const v = parseInt(e.target.value, 10);
-            if (!Number.isNaN(v) && v >= MIN_SERVINGS && v <= MAX_SERVINGS) setServings(v);
+          onChange={(event) => {
+            const next = Number.parseInt(event.target.value, 10);
+            if (!Number.isNaN(next) && next >= MIN_SERVINGS && next <= MAX_SERVINGS) setServings(next);
           }}
-          className="w-12 text-center font-medium text-primary bg-transparent border-b border-stone-light dark:border-d-border-strong focus:outline-none focus:border-sage"
+          className="w-12 border-b border-line bg-transparent py-1 text-center text-sm font-medium text-ink outline-none focus:border-accent"
           aria-label="Number of servings"
         />
         <button
           type="button"
           onClick={() => setServings(Math.min(MAX_SERVINGS, servings + 1))}
-          className="w-8 h-8 rounded-lg surface-raised hover:bg-stone-light/50 dark:hover:bg-d-border flex items-center justify-center text-primary transition-colors"
+          className="icon-btn size-8 border border-line"
           aria-label="Increase servings"
         >
           +
         </button>
-        {servings !== defaultServings && (
-          <button
-            type="button"
-            onClick={() => setServings(defaultServings)}
-            className="text-xs text-sage hover:text-sage-light"
-          >
+        {servings !== baseServings && (
+          <button type="button" onClick={() => setServings(baseServings)} className="link text-xs">
             Reset
           </button>
         )}
       </div>
-      <ul className="space-y-2">
-        {scaled.map((ing, i) => (
-          // biome-ignore lint/suspicious/noArrayIndexKey: ingredients may repeat, so value alone is not a unique key
-          <li key={`${ing}-${i}`} className="text-sm text-secondary flex gap-2">
-            <span className="text-stone mt-0.5">·</span>
-            <span>{ing}</span>
+
+      <ul className="mt-6 space-y-3">
+        {scaled.map((ingredient, index) => (
+          // biome-ignore lint/suspicious/noArrayIndexKey: ingredients may repeat, so the value alone is not unique
+          <li key={`${ingredient}-${index}`} className="flex gap-2.5 border-b border-line pb-3 text-sm last:border-0">
+            <span className="mt-0.5 text-accent" aria-hidden="true">
+              ·
+            </span>
+            <span className="leading-relaxed text-ink-soft">{ingredient}</span>
           </li>
         ))}
       </ul>
@@ -131,30 +129,19 @@ function RecipeAuthor({
   author?: {
     name?: string | null;
     username?: string | null;
-    image?: string | null;
     profileImageUrl?: string | null;
   } | null;
   createdAt: number;
 }) {
-  const nameClass = author?.username
-    ? "block text-sm font-medium text-primary group-hover:text-sage transition-colors"
-    : "block text-sm font-medium text-primary";
   const content = (
     <>
-      <Avatar
-        src={avatarSource(author)}
-        name={author?.name ?? "Chef"}
-        size="md"
-        className="ring-2 ring-cream-dark dark:ring-d-border"
-      />
+      <Avatar src={author?.profileImageUrl} name={author?.name ?? "Chef"} size="md" />
       <div>
-        <span className={nameClass}>{author?.name ?? "Chef"}</span>
-        <time className="block text-xs text-stone">
-          {new Date(createdAt).toLocaleDateString("en-US", {
-            month: "long",
-            day: "numeric",
-            year: "numeric",
-          })}
+        <span className="block text-sm font-medium text-ink transition-colors group-hover:text-accent">
+          {author?.name ?? "Chef"}
+        </span>
+        <time className="block text-xs text-muted" dateTime={new Date(createdAt).toISOString()}>
+          {formatDate(createdAt)}
         </time>
       </div>
     </>
@@ -162,28 +149,31 @@ function RecipeAuthor({
 
   if (author?.username) {
     return (
-      <Link to="/chef/$username" params={{ username: author.username }} className="flex items-center gap-3 group">
+      <Link to="/chef/$username" params={{ username: author.username }} className="group flex items-center gap-3">
         {content}
       </Link>
     );
   }
+
   return <div className="flex items-center gap-3">{content}</div>;
 }
 
 function MetaStatsBar({
   recipe,
-  totalTime,
 }: {
   recipe: { prepTime?: number | null; cookTime?: number | null; servings?: number | null; difficulty?: string | null };
-  totalTime: number;
 }) {
+  const stats = recipeStats(recipe);
+
+  if (stats.length === 0) return null;
+
   return (
-    <div className="flex flex-wrap justify-between gap-6 py-5 px-8 rounded-xl surface-muted">
-      {recipe.prepTime != null && <MetaStat icon={ClockIcon} label="Prep" value={`${recipe.prepTime}m`} />}
-      {recipe.cookTime != null && <MetaStat icon={FireIcon} label="Cook" value={`${recipe.cookTime}m`} />}
-      {totalTime > 0 && <MetaStat icon={ClockIcon} label="Total" value={`${totalTime}m`} />}
-      {recipe.servings != null && <MetaStat icon={UserGroupIcon} label="Serves" value={`${recipe.servings}`} />}
-      {recipe.difficulty && <MetaStat icon={FireIcon} label="Level" value={recipe.difficulty} />}
+    <div className="grid grid-cols-2 gap-px overflow-hidden rounded-2xl border border-line bg-line sm:grid-cols-4">
+      {stats.map((stat) => (
+        <div key={stat.label} className="bg-surface px-4 py-5">
+          <MetaStat icon={stat.icon} label={stat.label} value={stat.value} />
+        </div>
+      ))}
     </div>
   );
 }
@@ -194,99 +184,88 @@ function RecipePage() {
 
   if (!recipe) throw notFound();
 
-  const totalTime = (recipe.prepTime ?? 0) + (recipe.cookTime ?? 0);
-
   return (
     <PageLayout>
       <article>
         {recipe.coverImageUrl ? (
-          <div className="relative w-full h-[40vh] sm:h-[50vh] lg:h-[60vh] bg-charcoal overflow-hidden">
-            <img src={recipe.coverImageUrl} alt={recipe.title} className="w-full h-full object-cover opacity-90" />
-            <div className="absolute inset-0 bg-gradient-to-t from-charcoal/80 via-charcoal/20 to-transparent" />
+          <div className="relative min-h-[380px] w-full overflow-hidden bg-black sm:h-[52vh]">
+            <img src={recipe.coverImageUrl} alt={recipe.title} className="absolute inset-0 size-full object-cover" />
+            <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/25 to-black/10" />
             {recipe.videoUrl && (
               <a
                 href={recipe.videoUrl}
                 target="_blank"
-                rel="noopener noreferrer"
-                className="absolute top-6 right-6 flex items-center gap-2 px-4 py-2 bg-white/90 backdrop-blur-sm rounded-full text-sm font-medium text-charcoal hover:bg-white transition-colors"
+                rel="noreferrer"
+                className="absolute right-5 top-5 inline-flex items-center gap-2 rounded-full bg-white/90 px-4 py-2 text-sm font-medium text-black backdrop-blur-sm transition-colors hover:bg-white"
               >
-                <PlayIconSolid className="w-4 h-4 text-terracotta" />
+                <PlayIcon className="size-4 text-clay" />
                 Watch video
               </a>
             )}
-            <div className="absolute bottom-0 left-0 right-0 p-6 sm:p-10 lg:p-12">
-              <div className="max-w-5xl mx-auto">
-                <span className="inline-block px-3 py-1 rounded-full bg-white/20 backdrop-blur-sm text-white text-xs font-medium mb-4">
+            <div className="absolute inset-x-0 bottom-0">
+              <div className="container-page pb-10">
+                <span className="inline-flex rounded-full bg-white/15 px-3 py-1 text-[11px] font-medium uppercase tracking-[0.14em] text-white backdrop-blur-sm">
                   {recipe.category}
                 </span>
-                <h1 className="font-serif text-3xl sm:text-4xl lg:text-5xl font-medium text-white leading-tight max-w-3xl">
+                <h1 className="mt-4 max-w-3xl text-4xl font-medium leading-[1.02] text-white text-balance sm:text-5xl lg:text-6xl">
                   {recipe.title}
                 </h1>
               </div>
             </div>
           </div>
         ) : (
-          <div className="pt-12 pb-6 wrapper-narrow">
-            <span className="inline-block px-3 py-1 rounded-full bg-sage/10 text-sage text-xs font-medium mb-4">
-              {recipe.category}
-            </span>
-            <h1 className="font-serif text-3xl sm:text-4xl lg:text-5xl font-medium leading-tight max-w-3xl">
+          <div className="container-page pt-14 pb-8">
+            <span className="badge badge-accent">{recipe.category}</span>
+            <h1 className="mt-4 max-w-3xl text-4xl font-medium leading-[1.02] text-balance sm:text-5xl lg:text-6xl">
               {recipe.title}
             </h1>
+            {recipe.description && (
+              <p className="mt-5 max-w-2xl text-lg leading-relaxed text-ink-soft">{recipe.description}</p>
+            )}
           </div>
         )}
 
-        <div className="wrapper-narrow">
-          <div className="flex flex-wrap items-center justify-between gap-4 py-6 border-b border-subtle">
+        <div className="container-page">
+          <div className="flex flex-wrap items-center justify-between gap-4 border-b border-line py-5">
             <RecipeAuthor author={recipe.author} createdAt={recipe._creationTime} />
-
-            <div className="flex items-center gap-2">
+            <div className="flex flex-wrap items-center gap-2">
               <BookmarkButton recipeId={recipe._id} />
               <ShareButton title={recipe.title} />
-              <Link
-                to="/recipe/$slug/print"
-                params={{ slug }}
-                className="flex items-center gap-2 px-4 py-2 rounded-lg text-sm text-stone hover:text-primary hover:bg-cream-dark dark:hover:bg-d-surface-raised transition-all"
-              >
-                <PrinterIcon className="w-4 h-4" />
+              <Link to="/recipe/$slug/print" params={{ slug }} className="btn-secondary btn-sm">
+                <PrinterIcon className="size-4" />
                 Print
               </Link>
             </div>
           </div>
 
-          <div className="py-8 space-y-6">
-            {recipe.description && (
-              <p className="text-lg text-secondary leading-relaxed max-w-2xl">{recipe.description}</p>
+          <div className="py-8">
+            {recipe.coverImageUrl && recipe.description && (
+              <p className="mb-7 max-w-2xl text-lg leading-relaxed text-ink-soft">{recipe.description}</p>
             )}
-
-            {(recipe.prepTime != null || recipe.cookTime != null || recipe.servings != null || recipe.difficulty) && (
-              <MetaStatsBar recipe={recipe} totalTime={totalTime} />
-            )}
+            <MetaStatsBar recipe={recipe} />
           </div>
 
-          <div className="grid lg:grid-cols-[340px_1fr] gap-10 lg:gap-14 pb-16">
+          <div className="grid gap-10 pb-20 lg:grid-cols-[320px_minmax(0,1fr)] lg:gap-14">
             <aside className="lg:self-start">
-              <div className="sticky top-24">
-                <div className="card p-6">
-                  <h2 className="section-title mb-5">Ingredients</h2>
+              <div className="card sticky top-24 p-6">
+                <h2 className="text-xl font-medium">Ingredients</h2>
+                <div className="mt-5">
                   <IngredientScaler ingredients={recipe.ingredients} defaultServings={recipe.servings ?? 4} />
                 </div>
               </div>
             </aside>
 
             <section>
-              <h2 className="section-title mb-8">Instructions</h2>
-              <ol className="space-y-6">
-                {recipe.steps.map((step, i) => (
-                  // biome-ignore lint/suspicious/noArrayIndexKey: steps may repeat, so value alone is not a unique key
-                  <li key={`${step}-${i}`} className="flex gap-4">
+              <h2 className="text-xl font-medium">Instructions</h2>
+              <ol className="mt-6 space-y-6">
+                {recipe.steps.map((step, index) => (
+                  // biome-ignore lint/suspicious/noArrayIndexKey: steps may repeat, so the value alone is not unique
+                  <li key={`${step}-${index}`} className="flex gap-4">
                     <div className="flex flex-col items-center">
-                      <span className="w-8 h-8 step-number text-sm">{i + 1}</span>
-                      {i < recipe.steps.length - 1 && <div className="step-line mt-2" />}
+                      <span className="step-number">{index + 1}</span>
+                      {index < recipe.steps.length - 1 && <div className="step-line mt-2" />}
                     </div>
-                    <div className="pt-1 pb-2">
-                      <p className="text-secondary leading-relaxed">{step}</p>
-                    </div>
+                    <p className="pt-1.5 pb-2 leading-relaxed text-ink-soft">{step}</p>
                   </li>
                 ))}
               </ol>

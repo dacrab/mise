@@ -9,21 +9,20 @@ import { Avatar } from "@/components/ui/Primitives";
 import { RecipeCard, RecipeGridSkeleton } from "@/components/ui/RecipeCard";
 import { RouteError } from "@/components/ui/RouteError";
 import { APP_TITLE_SUFFIX } from "@/lib/constants";
-import { avatarSource } from "@/lib/utils";
 
 function ChefSkeleton() {
   return (
     <PageLayout>
-      <div className="hero-banner py-16 px-5 animate-pulse">
-        <div className="wrapper flex flex-col sm:flex-row items-center sm:items-end gap-6">
-          <div className="w-28 h-28 rounded-full bg-white/10 shrink-0" />
-          <div className="space-y-3">
-            <div className="h-8 w-48 bg-white/10 rounded" />
-            <div className="h-4 w-24 bg-white/10 rounded" />
+      <div className="border-b border-line bg-surface">
+        <div className="container-page flex animate-pulse flex-col items-center gap-6 py-12 sm:flex-row sm:items-end">
+          <div className="skeleton size-24 rounded-full" />
+          <div className="space-y-3 text-center sm:text-left">
+            <div className="skeleton h-9 w-48" />
+            <div className="skeleton h-4 w-28" />
           </div>
         </div>
       </div>
-      <div className="wrapper py-10">
+      <div className="container-page py-12">
         <RecipeGridSkeleton />
       </div>
     </PageLayout>
@@ -33,15 +32,15 @@ function ChefSkeleton() {
 export const Route = createFileRoute("/chef/$username")({
   loader: ({ params, context: { queryClient } }) =>
     queryClient.ensureQueryData(convexQuery(api.users.getByUsername, { username: params.username })),
-  pendingComponent: ChefSkeleton,
   component: ChefPage,
+  pendingComponent: ChefSkeleton,
   errorComponent: ({ error, reset }) => <RouteError error={error} reset={reset} />,
   head: ({ loaderData }) => ({
     meta: [
       { title: loaderData?.name ? `${loaderData.name}'s Kitchen${APP_TITLE_SUFFIX}` : `Chef${APP_TITLE_SUFFIX}` },
       {
         name: "description",
-        content: loaderData?.bio ?? (loaderData?.name ? `Recipes by ${loaderData.name} on Mise` : "Chef on Mise"),
+        content: loaderData?.bio ?? (loaderData?.name ? `Recipes by ${loaderData.name} on Mise.` : "Chef on Mise."),
       },
       { property: "og:title", content: loaderData?.name ? `${loaderData.name}'s Kitchen` : "Chef" },
       { property: "og:description", content: loaderData?.bio ?? "Recipes shared on Mise." },
@@ -55,55 +54,48 @@ export const Route = createFileRoute("/chef/$username")({
 function ChefPage() {
   const { username } = Route.useParams();
   const { data: chef } = useSuspenseQuery(convexQuery(api.users.getByUsername, { username }));
+
   if (!chef) throw notFound();
 
   const { data: chefRecipes } = useSuspenseQuery(convexQuery(api.recipes.getByUser, { userId: chef._id }));
-  const recipes = chefRecipes.filter((r) => r.status === "published");
+  const recipes = chefRecipes.filter((recipe) => recipe.status === "published");
 
   return (
     <PageLayout>
-      <div className="hero-banner py-14 md:py-20 px-5">
-        <div className="wrapper flex flex-col sm:flex-row items-center sm:items-end gap-6">
-          <Avatar
-            src={avatarSource(chef)}
-            name={chef.name}
-            size="lg"
-            className="!w-28 !h-28 text-3xl ring-4 ring-white/20"
-          />
-          <div className="text-center sm:text-left">
-            <h1 className="font-serif text-3xl md:text-4xl font-medium text-cream mb-1">{chef.name}</h1>
-            {chef.username && <p className="text-sage-light text-sm mb-3">@{chef.username}</p>}
-            {chef.bio && <p className="text-cream/70 max-w-md mb-4">{chef.bio}</p>}
-            <div className="inline-flex items-center gap-2 bg-white/10 rounded-full px-4 py-1.5">
-              <span className="font-serif text-lg font-medium text-cream">{recipes.length}</span>
-              <span className="text-sm text-cream/70">{recipes.length === 1 ? "recipe" : "recipes"}</span>
+      <header className="border-b border-line bg-surface">
+        <div className="container-page py-12 md:py-16">
+          <div className="flex flex-col items-center gap-6 text-center sm:flex-row sm:items-end sm:text-left">
+            <Avatar src={chef.profileImageUrl} name={chef.name} size="xl" className="ring-4 ring-canvas" />
+            <div className="min-w-0 flex-1">
+              <p className="eyebrow">Chef</p>
+              <h1 className="mt-2 text-4xl font-medium sm:text-5xl">{chef.name ?? "Chef"}</h1>
+              {chef.username && <p className="mt-1 text-sm text-muted">@{chef.username}</p>}
+              {chef.bio && <p className="mt-4 max-w-xl text-pretty leading-relaxed text-ink-soft">{chef.bio}</p>}
+            </div>
+            <div className="shrink-0 rounded-2xl border border-line bg-canvas px-5 py-3 text-center">
+              <p className="font-display text-2xl font-medium">{recipes.length}</p>
+              <p className="text-xs text-muted">{recipes.length === 1 ? "recipe" : "recipes"}</p>
             </div>
           </div>
         </div>
-      </div>
+      </header>
 
-      <div className="wrapper py-10 md:py-14">
-        <h2 className="section-title mb-6">Recipes</h2>
+      <div className="container-page py-12 md:py-16">
+        <h2 className="text-2xl font-medium">Recipes</h2>
         {recipes.length > 0 ? (
-          <div className="recipe-grid">
-            {recipes.map((r) => (
-              <RecipeCard
-                key={r._id}
-                recipeId={r._id}
-                slug={r.slug}
-                title={r.title}
-                description={r.description}
-                category={r.category}
-                coverImageUrl={r.coverImageUrl}
-              />
+          <div className="recipe-grid mt-8">
+            {recipes.map((recipe, index) => (
+              <RecipeCard key={recipe._id} recipe={recipe} priority={index < 3} />
             ))}
           </div>
         ) : (
-          <EmptyState
-            icon={BookOpenIcon}
-            title="No recipes yet"
-            description="This chef hasn't published any recipes yet. Check back soon!"
-          />
+          <div className="mt-8">
+            <EmptyState
+              icon={BookOpenIcon}
+              title="No recipes yet"
+              description="This chef hasn't published a recipe yet. Check back soon."
+            />
+          </div>
         )}
       </div>
     </PageLayout>

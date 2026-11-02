@@ -6,14 +6,13 @@ import { MAX_IMAGE_BYTES } from "@/lib/constants";
 
 const INVALID_TYPE_MESSAGE = "Please select an image file";
 const TOO_LARGE_MESSAGE = `Image must be under ${MAX_IMAGE_BYTES / (1024 * 1024)}MB`;
-
 const uploadResponseSchema = z.object({ storageId: z.string().min(1) });
 
-export function useFileUpload<TStorageId extends string = Id<"_storage">>(
+export function useFileUpload(
   getUploadUrl: () => Promise<string>,
   options: {
-    onSuccess?: (storageId: TStorageId, previewUrl: string) => void;
-    onError?: (err: Error) => void;
+    onSuccess?: (storageId: Id<"_storage">, previewUrl: string) => void;
+    onError?: (error: Error) => void;
   } = {},
 ) {
   const { toast } = useToast();
@@ -21,14 +20,9 @@ export function useFileUpload<TStorageId extends string = Id<"_storage">>(
   const [progress, setProgress] = useState(0);
   const abortRef = useRef<AbortController | null>(null);
 
-  useEffect(
-    () => () => {
-      abortRef.current?.abort();
-    },
-    [],
-  );
+  useEffect(() => () => abortRef.current?.abort(), []);
 
-  const upload = async (file: File): Promise<{ storageId: TStorageId; previewUrl: string } | null> => {
+  const upload = async (file: File): Promise<{ storageId: Id<"_storage">; previewUrl: string } | null> => {
     if (!file.type.startsWith("image/")) {
       toast(INVALID_TYPE_MESSAGE, "error");
       return null;
@@ -38,7 +32,6 @@ export function useFileUpload<TStorageId extends string = Id<"_storage">>(
       return null;
     }
 
-    // Cancel any in-flight upload so two concurrent uploads can't race.
     abortRef.current?.abort();
     const controller = new AbortController();
     abortRef.current = controller;
@@ -47,29 +40,28 @@ export function useFileUpload<TStorageId extends string = Id<"_storage">>(
 
     try {
       const url = await getUploadUrl();
-      const storageId = await new Promise<TStorageId>((resolve, reject) => {
+      const storageId = await new Promise<Id<"_storage">>((resolve, reject) => {
         const xhr = new XMLHttpRequest();
         xhr.open("POST", url);
         xhr.setRequestHeader("Content-Type", file.type);
-        xhr.upload.onprogress = (e) => {
-          if (e.lengthComputable) setProgress(Math.round((e.loaded / e.total) * 100));
+        xhr.upload.onprogress = (event) => {
+          if (event.lengthComputable) setProgress(Math.round((event.loaded / event.total) * 100));
         };
         xhr.onload = () => {
-          if (xhr.status >= 200 && xhr.status < 300) {
-            try {
-              const parsed = uploadResponseSchema.parse(JSON.parse(xhr.responseText));
-              // Zod validates the wire value but can't carry the generic TStorageId brand.
-              resolve(parsed.storageId as TStorageId);
-            } catch {
-              reject(new Error("Invalid upload response"));
-            }
-          } else {
+          if (xhr.status < 200 || xhr.status >= 300) {
             reject(new Error(`Upload failed: ${xhr.status}`));
+            return;
+          }
+          try {
+            const parsed = uploadResponseSchema.parse(JSON.parse(xhr.responseText));
+            resolve(parsed.storageId as Id<"_storage">);
+          } catch {
+            reject(new Error("Invalid upload response"));
           }
         };
         xhr.onerror = () => reject(new Error("Upload failed"));
         xhr.onabort = () => reject(new DOMException("Upload aborted", "AbortError"));
-        controller.signal.addEventListener("abort", () => xhr.abort());
+        controller.signal.addEventListener("abort", () => xhr.abort(), { once: true });
         xhr.send(file);
       });
 
@@ -77,21 +69,20 @@ export function useFileUpload<TStorageId extends string = Id<"_storage">>(
       const previewUrl = URL.createObjectURL(file);
       options.onSuccess?.(storageId, previewUrl);
       return { storageId, previewUrl };
-    } catch (err) {
-      if (err instanceof Error && err.name === "AbortError") return null;
+    } catch (error) {
+      if (error instanceof Error && error.name === "AbortError") return null;
       setProgress(0);
-      options.onError?.(err instanceof Error ? err : new Error(String(err)));
+      options.onError?.(error instanceof Error ? error : new Error(String(error)));
       return null;
     } finally {
       setUploading(false);
     }
   };
 
-  const handleInputChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    e.target.value = "";
-    if (!file) return;
-    await upload(file);
+  const handleInputChange = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    event.target.value = "";
+    if (file) await upload(file);
   };
 
   return { upload, handleInputChange, uploading, progress };

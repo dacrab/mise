@@ -17,32 +17,22 @@ function SignupPage() {
   const { redirect } = Route.useSearch();
   const safeTarget = safeRedirect(redirect);
 
-  if (!isLoaded) {
-    return <PageLoader />;
-  }
-
-  if (isSignedIn) {
-    return <Navigate to={safeTarget ?? "/dashboard"} replace />;
-  }
+  if (!isLoaded) return <PageLoader />;
+  if (isSignedIn) return <Navigate to={safeTarget ?? "/dashboard"} replace />;
 
   return (
     <AuthLayout
-      heroBg="bg-sage"
-      heroHeading="join the kitchen"
-      heroDescription="Share your favorite recipes with home cooks who care."
-      heroFooterClass="text-cream/60"
-      form={
-        <>
-          <h1 className="font-serif text-3xl font-medium mb-2">Create account</h1>
-          <p className="text-stone mb-8">
-            Already have an account?{" "}
-            <Link to="/login" search={{ redirect }} className="text-sage hover:underline">
-              Sign in
-            </Link>
-          </p>
-          <SignupForm />
-        </>
-      }
-    />
+      heroHeading="Join the kitchen."
+      heroDescription="Share your favourite recipes with home cooks who care."
+    >
+      <h1 className="text-3xl font-medium tracking-[-0.02em]">Create account</h1>
+      <p className="mt-2 mb-8 text-ink-soft">
+        Already have an account?{" "}
+        <Link to="/login" search={{ redirect }} className="link">
+          Sign in
+        </Link>
+      </p>
+      <SignupForm />
+    </AuthLayout>
   );
 }

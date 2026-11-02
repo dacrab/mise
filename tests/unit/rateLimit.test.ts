@@ -64,7 +64,6 @@ describe("checkRateLimit", () => {
     const { ctx, insert } = makeCtx(
       Array.from({ length: LIMITS["recipe:create"].max }, (_, i) => ({
         _id: `recent-${i}`,
-        // _creationTime is compared against Date.now() - windowMs; now-ish values count as recent
         _creationTime: Date.now(),
       })),
     );

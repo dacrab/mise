@@ -12,43 +12,34 @@ import type { Id } from "convex/_generated/dataModel";
 import { useAction, useMutation, useQuery } from "convex/react";
 import { useEffect, useRef, useState } from "react";
 import { LoadingState, ProgressBar } from "@/components/ui/Primitives";
-import { TextArea } from "@/components/ui/TextArea";
-import { TextField } from "@/components/ui/TextField";
 import { useToast } from "@/components/ui/Toast";
 import { useFileUpload } from "@/hooks/useFileUpload";
 import { useSignOut } from "@/hooks/useSignOut";
 import { THEME_OPTIONS, type ThemePreference, useTheme } from "@/hooks/useTheme";
+import { useBookmarks } from "@/lib/bookmarks";
 import { pageHead } from "@/lib/route";
-import { avatarSource, getErrorMessage } from "@/lib/utils";
+import { cn, formatDate, getErrorMessage } from "@/lib/utils";
 
 export const Route = createFileRoute("/_authed/settings")({
-  head: () => pageHead("Settings", "Update your profile, username, bio, and profile image."),
-  component: Settings,
+  head: () => pageHead("Settings", "Update your profile, appearance, and account."),
+  component: SettingsPage,
 });
 
-function Settings() {
+// biome-ignore lint/complexity/noExcessiveCognitiveComplexity: this page coordinates profile editing, uploads, and account lifecycle together
+function SettingsPage() {
   const user = useQuery(api.users.currentUser);
   const updateProfile = useMutation(api.users.updateProfile);
   const generateUploadUrl = useMutation(api.users.generateUploadUrl);
   const deleteAccount = useAction(api.users.deleteAccount);
+  const myRecipes = useQuery(api.recipes.myRecipes);
+  const { bookmarks } = useBookmarks();
   const { toast } = useToast();
   const signOut = useSignOut();
   const { preference, setTheme } = useTheme();
-  const {
-    handleInputChange,
-    uploading,
-    progress: uploadProgress,
-  } = useFileUpload(() => generateUploadUrl(), {
-    onSuccess: (storageId, preview) => {
-      setNewProfileImage(storageId);
-      if (previewUrlRef.current) URL.revokeObjectURL(previewUrlRef.current);
-      previewUrlRef.current = preview;
-      setPreviewUrl(preview);
-      toast("Photo uploaded!", "success");
-    },
-    onError: () => toast("Could not upload image", "error"),
-  });
+
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const previewUrlRef = useRef<string | null>(null);
+  const initializedUserIdRef = useRef<string | undefined>(undefined);
 
   const [name, setName] = useState("");
   const [username, setUsername] = useState("");
@@ -58,43 +49,60 @@ function Settings() {
   const [saving, setSaving] = useState(false);
   const [deleteOpen, setDeleteOpen] = useState(false);
   const [deleting, setDeleting] = useState(false);
-  const previewUrlRef = useRef<string | null>(null);
 
-  const userIdRef = useRef<string | undefined>(undefined);
-  // Populate the form once per user so query refetches don't clobber in-progress edits
+  const {
+    handleInputChange,
+    uploading,
+    progress: uploadProgress,
+  } = useFileUpload(() => generateUploadUrl(), {
+    onSuccess: (storageId, preview) => {
+      if (previewUrlRef.current) URL.revokeObjectURL(previewUrlRef.current);
+      previewUrlRef.current = preview;
+      setPreviewUrl(preview);
+      setNewProfileImage(storageId);
+      toast("Photo uploaded", "success");
+    },
+    onError: () => toast("Could not upload image", "error"),
+  });
+
   useEffect(() => {
-    if (user && user._id !== userIdRef.current) {
-      userIdRef.current = user._id;
+    if (user && user._id !== initializedUserIdRef.current) {
+      initializedUserIdRef.current = user._id;
       setName(user.name ?? "");
       setUsername(user.username ?? "");
       setBio(user.bio ?? "");
     }
   }, [user]);
 
-  useEffect(() => {
-    return () => {
+  useEffect(
+    () => () => {
       if (previewUrlRef.current) URL.revokeObjectURL(previewUrlRef.current);
-    };
-  }, []);
+    },
+    [],
+  );
+
+  if (!user) return <LoadingState />;
 
   const hasChanges =
-    !!user &&
-    (name !== (user.name ?? "") ||
-      username !== (user.username ?? "") ||
-      bio !== (user.bio ?? "") ||
-      newProfileImage !== null);
+    name !== (user.name ?? "") ||
+    username !== (user.username ?? "") ||
+    bio !== (user.bio ?? "") ||
+    newProfileImage !== null;
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
+  // biome-ignore lint/complexity/noExcessiveCognitiveComplexity: validation branches are clearer inline than split across helpers
+  const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
     if (!hasChanges || saving) return;
+
     if (!name.trim()) {
       toast("Name cannot be empty", "error");
       return;
     }
     if (username.trim() && !/^[a-z0-9_]{3,32}$/.test(username.trim())) {
-      toast("Username must be 3-32 characters: letters, numbers, and underscores", "error");
+      toast("Username must be 3–32 characters: lowercase letters, numbers, underscores", "error");
       return;
     }
+
     setSaving(true);
     try {
       await updateProfile({
@@ -104,217 +112,204 @@ function Settings() {
         profileImage: newProfileImage ?? undefined,
       });
       setNewProfileImage(null);
+      if (previewUrlRef.current) URL.revokeObjectURL(previewUrlRef.current);
+      previewUrlRef.current = null;
+      setPreviewUrl(null);
       toast("Profile saved", "success");
-    } catch {
-      toast("Could not save profile", "error");
+    } catch (error) {
+      toast(getErrorMessage(error), "error");
     } finally {
       setSaving(false);
     }
   };
 
-  if (!user) {
-    return <LoadingState />;
-  }
-
   const handleDeleteAccount = async () => {
     setDeleting(true);
     try {
       await deleteAccount();
-    } catch (err) {
-      toast(getErrorMessage(err), "error");
+    } catch (error) {
+      toast(getErrorMessage(error), "error");
       setDeleting(false);
       return;
     }
     toast("Your account has been deleted", "success");
     await signOut("/");
-    // signOut navigates on success; if the session was already invalidated by
-    // the deletion, force a hard redirect so the user is not left signed in.
     window.location.replace("/");
   };
 
-  const avatar = previewUrl ?? avatarSource(user);
+  const avatar = previewUrl ?? user?.profileImageUrl;
 
   return (
-    <div className="min-h-[calc(100vh-4rem)]">
-      <ProfileHero
-        avatar={avatar}
-        name={name}
-        username={username}
-        uploading={uploading}
-        uploadProgress={uploadProgress}
-        fileInputRef={fileInputRef}
-        onInputChange={handleInputChange}
-      />
+    <div className="container-page py-10 md:py-14">
+      <header className="flex flex-col gap-5 sm:flex-row sm:items-end sm:justify-between">
+        <div>
+          <p className="eyebrow">Account</p>
+          <h1 className="mt-2 text-4xl font-medium sm:text-5xl">Settings</h1>
+        </div>
+        <button type="submit" form="settings-form" disabled={saving || !hasChanges} className="btn-primary shrink-0">
+          {saving ? "Saving…" : "Save changes"}
+        </button>
+      </header>
 
-      <div className="wrapper-narrow py-8">
-        <form onSubmit={handleSubmit}>
-          <div className="grid lg:grid-cols-[1fr_320px] gap-8">
-            <div className="space-y-10">
-              <section className="space-y-6">
-                <h2 className="section-title">Profile</h2>
-                <TextField
+      <div className="mt-10 grid gap-8 lg:grid-cols-[minmax(0,1fr)_320px]">
+        <form id="settings-form" onSubmit={handleSubmit} className="space-y-8">
+          <section className="card p-6">
+            <div className="flex flex-wrap items-center gap-5">
+              <div className="relative size-20 shrink-0 overflow-hidden rounded-full bg-surface-2">
+                {avatar ? (
+                  <img src={avatar} alt="" className="size-full object-cover" />
+                ) : (
+                  <div className="flex size-full items-center justify-center text-2xl font-medium text-accent">
+                    {(name || "?")[0]}
+                  </div>
+                )}
+                {uploading && (
+                  <div className="absolute inset-0 flex items-center justify-center bg-black/65 text-xs font-semibold text-white">
+                    {uploadProgress}%
+                  </div>
+                )}
+                <label className="absolute inset-0 flex cursor-pointer items-center justify-center bg-black/45 text-white opacity-0 transition-opacity hover:opacity-100 focus-within:opacity-100">
+                  <CameraIcon className="size-5" />
+                  <input
+                    ref={fileInputRef}
+                    type="file"
+                    accept="image/*"
+                    onChange={handleInputChange}
+                    className="hidden"
+                    aria-label="Upload profile photo"
+                  />
+                </label>
+              </div>
+              <div>
+                <h2 className="text-lg font-medium">Profile photo</h2>
+                <p className="mt-1 text-sm text-muted">A square image works best. Up to 5 MB.</p>
+                <button
+                  type="button"
+                  onClick={() => fileInputRef.current?.click()}
+                  disabled={uploading}
+                  className="link mt-2 text-sm font-medium"
+                >
+                  {uploading ? "Uploading…" : "Change photo"}
+                </button>
+                {uploading && <ProgressBar value={uploadProgress} className="mt-2 w-44" />}
+              </div>
+            </div>
+
+            <div className="mt-8 grid gap-5">
+              <div>
+                <label htmlFor="name" className="label">
+                  Display name
+                </label>
+                <input
                   id="name"
-                  label="Display name"
+                  type="text"
+                  className="input"
                   value={name}
-                  onChange={(e) => setName(e.target.value)}
+                  maxLength={80}
                   placeholder="Your name"
+                  onChange={(event) => setName(event.target.value)}
                 />
-                <TextField
-                  id="username"
-                  label="Username"
-                  prefix="@"
-                  value={username}
-                  onChange={(e) => setUsername(e.target.value.toLowerCase().replace(/[^a-z0-9_]/g, ""))}
-                  placeholder="username"
-                  disabled={!!user.username}
-                  hint={
-                    user.username
-                      ? "Usernames are permanent and cannot be changed."
-                      : "Letters, numbers, and underscores only. This is your public profile URL."
-                  }
-                />
-                <TextArea
+              </div>
+
+              <div>
+                <label htmlFor="username" className="label">
+                  Username
+                </label>
+                <div className="relative">
+                  <span className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-sm text-muted">
+                    @
+                  </span>
+                  <input
+                    id="username"
+                    type="text"
+                    className="input pl-8"
+                    value={username}
+                    placeholder="username"
+                    disabled={Boolean(user.username)}
+                    onChange={(event) => setUsername(event.target.value.toLowerCase().replace(/[^a-z0-9_]/g, ""))}
+                  />
+                </div>
+                <p className="hint">
+                  {user.username
+                    ? "Usernames are permanent."
+                    : "3–32 characters: lowercase letters, numbers, underscores. This becomes your public profile URL."}
+                </p>
+              </div>
+
+              <div>
+                <label htmlFor="bio" className="label">
+                  Bio
+                </label>
+                <textarea
                   id="bio"
-                  label="Bio"
+                  className="textarea"
                   value={bio}
-                  onChange={(e) => setBio(e.target.value)}
                   placeholder="A few words about yourself…"
                   maxLength={160}
-                  rows={4}
+                  rows={3}
+                  onChange={(event) => setBio(event.target.value)}
                 />
-              </section>
-
-              <AppearanceSection preference={preference} setTheme={setTheme} />
-
-              <DangerZone onSignOut={() => void signOut()} onDeleteAccount={() => setDeleteOpen(true)} />
-
-              <DeleteAccountDialog
-                open={deleteOpen}
-                onOpenChange={setDeleteOpen}
-                deleting={deleting}
-                onConfirm={() => void handleDeleteAccount()}
-              />
-
-              {/* Save — mobile */}
-              <div className="lg:hidden flex justify-end pt-4">
-                <button type="submit" disabled={saving || !hasChanges} className="btn-primary disabled:opacity-50">
-                  {saving ? "Saving…" : "Save changes"}
-                </button>
+                <p className="hint text-right tabular-nums">{bio.length}/160</p>
               </div>
             </div>
+          </section>
 
-            <aside className="lg:self-start">
-              <div className="sticky top-24 space-y-6">
-                <SidebarSection title="Account">
-                  <dl className="space-y-4 text-sm">
-                    <div>
-                      <dt className="text-xs text-stone mb-1 flex items-center gap-1.5">
-                        <EnvelopeIcon className="w-3.5 h-3.5" /> Email
-                      </dt>
-                      <dd className="text-primary font-medium truncate">{user.email}</dd>
-                    </div>
-                    <div>
-                      <dt className="text-xs text-stone mb-1 flex items-center gap-1.5">
-                        <CalendarIcon className="w-3.5 h-3.5" /> Joined
-                      </dt>
-                      <dd className="text-primary">
-                        {new Date(user._creationTime).toLocaleDateString("en-US", { month: "long", year: "numeric" })}
-                      </dd>
-                    </div>
-                  </dl>
-                </SidebarSection>
+          <AppearanceSection preference={preference} setTheme={setTheme} />
 
-                <SidebarSection title="Your kitchen">
-                  <QuickStats />
-                </SidebarSection>
-
-                {/* Save — desktop */}
-                <div className="hidden lg:block">
-                  <button
-                    type="submit"
-                    disabled={saving || !hasChanges}
-                    className="btn-primary w-full disabled:opacity-50"
-                  >
-                    {saving ? "Saving…" : "Save changes"}
-                  </button>
-                  {hasChanges && <p className="text-xs text-sage text-center mt-2">You have unsaved changes</p>}
-                </div>
-              </div>
-            </aside>
-          </div>
+          <DangerZone onSignOut={() => void signOut()} onDeleteAccount={() => setDeleteOpen(true)} />
         </form>
+
+        <aside className="space-y-5 lg:sticky lg:top-24 lg:self-start">
+          <section className="card p-6">
+            <h2 className="eyebrow">Account</h2>
+            <dl className="mt-4 space-y-4 text-sm">
+              <div>
+                <dt className="mb-1 flex items-center gap-1.5 text-xs text-muted">
+                  <EnvelopeIcon className="size-3.5" /> Email
+                </dt>
+                <dd className="truncate font-medium text-ink">{user.email ?? "Not set"}</dd>
+              </div>
+              <div>
+                <dt className="mb-1 flex items-center gap-1.5 text-xs text-muted">
+                  <CalendarIcon className="size-3.5" /> Joined
+                </dt>
+                <dd className="font-medium text-ink">{formatDate(user._creationTime)}</dd>
+              </div>
+            </dl>
+          </section>
+
+          <section className="card p-6">
+            <h2 className="eyebrow">Your kitchen</h2>
+            <KitchenStats recipeCount={myRecipes?.length ?? 0} savedCount={bookmarks?.length ?? 0} />
+          </section>
+        </aside>
       </div>
+
+      <DeleteAccountDialog
+        open={deleteOpen}
+        onOpenChange={setDeleteOpen}
+        deleting={deleting}
+        onConfirm={() => void handleDeleteAccount()}
+      />
     </div>
   );
 }
 
-function SidebarSection({ title, children }: { title: string; children: React.ReactNode }) {
-  return (
-    <section className="rounded-xl surface-muted p-6 space-y-4">
-      <h3 className="text-xs font-semibold uppercase tracking-wider text-stone">{title}</h3>
-      {children}
-    </section>
-  );
-}
+function KitchenStats({ recipeCount, savedCount }: { recipeCount: number; savedCount: number }) {
+  const stats = [
+    { label: "Recipes", value: recipeCount },
+    { label: "Saved", value: savedCount },
+  ];
 
-function ProfileHero({
-  avatar,
-  name,
-  username,
-  uploading,
-  uploadProgress,
-  fileInputRef,
-  onInputChange,
-}: {
-  avatar: string | null | undefined;
-  name: string;
-  username: string;
-  uploading: boolean;
-  uploadProgress: number;
-  fileInputRef: React.RefObject<HTMLInputElement | null>;
-  onInputChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
-}) {
   return (
-    <div className="hero-banner py-12 px-5 sm:px-8">
-      <div className="wrapper-narrow flex items-center gap-6">
-        <div className="relative w-24 h-24 sm:w-28 sm:h-28 rounded-full overflow-hidden surface-raised shrink-0 ring-4 ring-cream/20">
-          {avatar ? (
-            <img src={avatar} alt="Profile" className="w-full h-full object-cover" />
-          ) : (
-            <div className="center w-full h-full text-3xl font-medium text-sage surface-raised">{(name || "?")[0]}</div>
-          )}
-          {uploading && (
-            <div className="absolute inset-0 bg-charcoal/70 flex items-center justify-center">
-              <span className="text-white text-xs font-bold">{uploadProgress}%</span>
-            </div>
-          )}
-          <label className="absolute inset-0 bg-charcoal/50 opacity-0 hover:opacity-100 transition-opacity flex items-center justify-center">
-            <CameraIcon className="w-6 h-6 text-white" />
-            <input
-              ref={fileInputRef}
-              type="file"
-              accept="image/*"
-              onChange={onInputChange}
-              className="hidden"
-              aria-label="Upload profile photo"
-            />
-          </label>
+    <dl className="mt-4 grid grid-cols-2 gap-4">
+      {stats.map((stat) => (
+        <div key={stat.label}>
+          <dd className="font-display text-2xl font-medium text-ink">{stat.value}</dd>
+          <dt className="text-xs text-muted">{stat.label}</dt>
         </div>
-        <div>
-          <h1 className="font-serif text-2xl sm:text-3xl font-medium text-cream">{name || "Chef"}</h1>
-          {username && <p className="text-sage-light text-sm mt-1">@{username}</p>}
-          <button
-            type="button"
-            onClick={() => fileInputRef.current?.click()}
-            disabled={uploading}
-            className="text-sm text-cream/70 hover:text-cream transition-colors mt-2"
-          >
-            {uploading ? "Uploading…" : "Change photo"}
-          </button>
-          {uploading && <ProgressBar value={uploadProgress} className="mt-2" />}
-        </div>
-      </div>
-    </div>
+      ))}
+    </dl>
   );
 }
 
@@ -323,22 +318,33 @@ function AppearanceSection({
   setTheme,
 }: {
   preference: ThemePreference;
-  setTheme: (pref: ThemePreference) => void;
+  setTheme: (preference: ThemePreference) => void;
 }) {
   return (
-    <section className="space-y-4">
-      <h2 className="section-title">Appearance</h2>
-      <p className="text-sm text-stone">Choose how Mise looks to you.</p>
-      <div className="grid grid-cols-3 gap-3">
-        {THEME_OPTIONS.map(({ value, label, icon }) => (
-          <ThemeOption
-            key={value}
-            icon={icon}
-            label={label}
-            active={preference === value}
-            onClick={() => setTheme(value)}
-          />
-        ))}
+    <section className="card p-6">
+      <h2 className="text-lg font-medium">Appearance</h2>
+      <p className="mt-1 text-sm text-muted">Choose how Mise looks to you.</p>
+      <div className="mt-5 grid grid-cols-3 gap-3">
+        {THEME_OPTIONS.map(({ value, label, icon: Icon }) => {
+          const active = preference === value;
+          return (
+            <button
+              key={value}
+              type="button"
+              onClick={() => setTheme(value)}
+              aria-pressed={active}
+              className={cn(
+                "flex flex-col items-center gap-2 rounded-xl border p-4 text-xs font-medium transition-colors",
+                active
+                  ? "border-accent bg-accent-soft text-accent"
+                  : "border-line text-muted hover:border-line-strong hover:text-ink",
+              )}
+            >
+              <Icon className="size-5" />
+              {label}
+            </button>
+          );
+        })}
       </div>
     </section>
   );
@@ -346,44 +352,24 @@ function AppearanceSection({
 
 function DangerZone({ onSignOut, onDeleteAccount }: { onSignOut: () => void; onDeleteAccount: () => void }) {
   return (
-    <section className="space-y-4 pt-6 border-t border-subtle">
-      <h2 className="section-title text-terracotta">Danger zone</h2>
-      <div className="flex flex-col sm:flex-row gap-3">
-        <DangerButton icon={ArrowRightOnRectangleIcon} onClick={onSignOut}>
+    <section className="card border-clay/25 p-6">
+      <h2 className="text-lg font-medium text-clay">Danger zone</h2>
+      <p className="mt-1 text-sm text-muted">Sign out of this device or permanently delete your account.</p>
+      <div className="mt-5 flex flex-col gap-3 sm:flex-row">
+        <button type="button" onClick={onSignOut} className="btn-secondary btn-sm justify-center">
+          <ArrowRightOnRectangleIcon className="size-4" />
           Sign out
-        </DangerButton>
-        <DangerButton icon={TrashIcon} onClick={onDeleteAccount} danger>
+        </button>
+        <button
+          type="button"
+          onClick={onDeleteAccount}
+          className="btn btn-sm justify-center border border-clay/30 text-clay hover:bg-clay-soft"
+        >
+          <TrashIcon className="size-4" />
           Delete account
-        </DangerButton>
+        </button>
       </div>
     </section>
-  );
-}
-
-function DangerButton({
-  icon: Icon,
-  children,
-  onClick,
-  danger = false,
-}: {
-  icon: React.ComponentType<{ className?: string }>;
-  children: React.ReactNode;
-  onClick: () => void;
-  danger?: boolean;
-}) {
-  return (
-    <button
-      type="button"
-      onClick={onClick}
-      className={`flex items-center justify-center gap-2 rounded-lg border px-4 py-2.5 text-sm transition-colors ${
-        danger
-          ? "border-terracotta/30 text-terracotta hover:bg-terracotta/5"
-          : "border-field text-secondary hover:bg-cream-dark dark:hover:bg-d-surface-raised"
-      }`}
-    >
-      <Icon className="w-4 h-4" />
-      {children}
-    </button>
   );
 }
 
@@ -411,97 +397,34 @@ function DeleteAccountDialog({
       }}
     >
       <Dialog.Portal>
-        <Dialog.Backdrop className="fixed inset-0 z-[90] bg-charcoal/40 backdrop-blur-sm transition-opacity duration-200 data-[starting-style]:opacity-0 data-[ending-style]:opacity-0" />
-        <Dialog.Popup className="fixed left-1/2 top-1/2 z-[100] w-[calc(100vw-2rem)] max-w-md -translate-x-1/2 -translate-y-1/2 rounded-2xl border border-cream-dark bg-warm-white p-6 shadow-hover outline-none transition-opacity duration-200 dark:border-d-border dark:bg-d-surface data-[starting-style]:opacity-0 data-[ending-style]:opacity-0">
-          <Dialog.Title className="section-title text-primary">Delete account</Dialog.Title>
-          <Dialog.Description className="mt-2 text-sm text-stone">
-            This permanently deletes your account and cannot be undone. It removes:
+        <Dialog.Backdrop className="fixed inset-0 z-[90] bg-black/40 backdrop-blur-sm transition-opacity duration-200 data-[ending-style]:opacity-0 data-[starting-style]:opacity-0" />
+        <Dialog.Popup className="fixed left-1/2 top-1/2 z-[100] w-[calc(100vw-2rem)] max-w-md -translate-x-1/2 -translate-y-1/2 rounded-2xl border border-line bg-surface p-6 shadow-lift outline-none transition-opacity duration-200 data-[ending-style]:opacity-0 data-[starting-style]:opacity-0">
+          <Dialog.Title className="text-2xl font-medium text-ink">Delete account</Dialog.Title>
+          <Dialog.Description className="mt-2 text-sm leading-relaxed text-ink-soft">
+            This permanently deletes your profile, recipes, and saved bookmarks. It cannot be undone.
           </Dialog.Description>
-          <ul className="mt-3 list-disc space-y-1 pl-5 text-sm text-secondary">
-            <li>Your profile and sign-in</li>
-            <li>All recipes you've published or drafted</li>
-            <li>Your saved bookmarks</li>
-          </ul>
           <label htmlFor="delete-confirm" className="label mt-6">
-            Type <span className="font-mono font-semibold text-terracotta">DELETE</span> to confirm
+            Type <span className="font-mono font-semibold text-clay">DELETE</span> to confirm
           </label>
           <input
             id="delete-confirm"
             type="text"
             autoComplete="off"
             value={confirmation}
-            onChange={(e) => setConfirmation(e.target.value)}
+            onChange={(event) => setConfirmation(event.target.value)}
             disabled={deleting}
-            className="input-field"
+            className="input"
           />
           <div className="mt-6 flex justify-end gap-3">
-            <Dialog.Close disabled={deleting} className="btn-secondary">
+            <Dialog.Close disabled={deleting} className="btn-secondary btn-sm">
               Cancel
             </Dialog.Close>
-            <button
-              type="button"
-              onClick={onConfirm}
-              disabled={!confirmed || deleting}
-              className="btn rounded-lg bg-terracotta px-5 py-2.5 text-white hover:bg-terracotta/90"
-            >
+            <button type="button" onClick={onConfirm} disabled={!confirmed || deleting} className="btn-danger btn-sm">
               {deleting ? "Deleting…" : "Delete account"}
             </button>
           </div>
         </Dialog.Popup>
       </Dialog.Portal>
     </Dialog.Root>
-  );
-}
-
-function ThemeOption({
-  icon: Icon,
-  label,
-  active,
-  onClick,
-}: {
-  icon: React.ComponentType<{ className?: string }>;
-  label: string;
-  active: boolean;
-  onClick: () => void;
-}) {
-  return (
-    <button
-      type="button"
-      onClick={onClick}
-      className={`flex flex-col items-center gap-2 p-4 rounded-xl border-2 transition-all ${
-        active
-          ? "border-sage bg-sage/5 dark:bg-sage/10"
-          : "border-stone-light/40 hover:border-stone-light dark:border-d-border-strong dark:hover:border-d-border-hover"
-      }`}
-    >
-      <Icon className={`w-5 h-5 ${active ? "text-sage" : "text-stone"}`} />
-      <span className={`text-xs font-medium ${active ? "text-sage" : "text-stone"}`}>{label}</span>
-    </button>
-  );
-}
-
-function QuickStats() {
-  const recipes = useQuery(api.recipes.myRecipes);
-  const bookmarks = useQuery(api.recipes.myBookmarks);
-
-  const published = recipes?.filter((r) => r.status === "published").length ?? 0;
-  const drafts = recipes?.filter((r) => r.status === "draft").length ?? 0;
-  const saved = bookmarks?.length ?? 0;
-
-  return (
-    <div className="grid grid-cols-3 gap-2 text-center">
-      <div>
-        <p className="text-lg font-semibold text-primary">{published}</p>
-        <p className="text-[11px] text-stone">Published</p>
-      </div>
-      <div>
-        <p className="text-lg font-semibold text-primary">{drafts}</p>
-        <p className="text-[11px] text-stone">Drafts</p>
-      </div>
-      <div>
-        <p className="text-lg font-semibold text-primary">{saved}</p>
-        <p className="text-[11px] text-stone">Saved</p>
-      </div>
-    </div>
   );
 }

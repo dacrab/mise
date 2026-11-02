@@ -4,7 +4,6 @@ import { useCallback, useEffect, useSyncExternalStore } from "react";
 export type ThemePreference = "light" | "dark" | "system";
 type ResolvedTheme = "light" | "dark";
 
-/** Selectable themes, in cycle order. Shared by the header toggle and settings. */
 export const THEME_OPTIONS = [
   { value: "light", label: "Light", ariaLabel: "Light mode", icon: SunIcon },
   { value: "dark", label: "Dark", ariaLabel: "Dark mode", icon: MoonIcon },
@@ -22,7 +21,6 @@ export function nextTheme(preference: ThemePreference): ThemePreference {
 
 const THEME_KEY = "theme";
 const MEDIA_QUERY = "(prefers-color-scheme: dark)";
-
 const listeners = new Set<() => void>();
 
 function getSystemTheme(): ResolvedTheme {
@@ -41,7 +39,6 @@ function parsePreference(raw: string | null): ThemePreference {
   return raw === "light" || raw === "dark" || raw === "system" ? raw : "system";
 }
 
-// Module-level store syncs every useTheme() instance; "storage" covers cross-tab changes.
 function subscribe(listener: () => void) {
   listeners.add(listener);
   window.addEventListener("storage", listener);
@@ -55,49 +52,38 @@ function readPreference(): ThemePreference {
   try {
     return parsePreference(localStorage.getItem(THEME_KEY));
   } catch {
-    // Storage can throw when cookies/site data are blocked (e.g. private mode).
     return "system";
   }
 }
 
-function writePreference(pref: ThemePreference) {
+function writePreference(preference: ThemePreference) {
   try {
-    if (pref === "system") localStorage.removeItem(THEME_KEY);
-    else localStorage.setItem(THEME_KEY, pref);
+    if (preference === "system") localStorage.removeItem(THEME_KEY);
+    else localStorage.setItem(THEME_KEY, preference);
   } catch {
-    // Ignore: the in-memory store still updates for this session.
+    return;
   }
 }
 
-function getSnapshot(): ThemePreference {
-  return readPreference();
-}
-
-function getServerSnapshot(): ThemePreference {
-  return "system";
-}
-
 export function useTheme() {
-  const preference = useSyncExternalStore(subscribe, getSnapshot, getServerSnapshot);
+  const preference = useSyncExternalStore(subscribe, readPreference, (): ThemePreference => "system");
 
   useEffect(() => {
     applyTheme(resolveTheme(preference));
   }, [preference]);
 
   useEffect(() => {
-    const mq = window.matchMedia(MEDIA_QUERY);
-    const handler = () => {
-      if (readPreference() === "system") {
-        applyTheme(getSystemTheme());
-      }
+    const media = window.matchMedia(MEDIA_QUERY);
+    const handleChange = () => {
+      if (readPreference() === "system") applyTheme(getSystemTheme());
     };
-    mq.addEventListener("change", handler);
-    return () => mq.removeEventListener("change", handler);
+    media.addEventListener("change", handleChange);
+    return () => media.removeEventListener("change", handleChange);
   }, []);
 
-  const setTheme = useCallback((pref: ThemePreference) => {
-    writePreference(pref);
-    applyTheme(resolveTheme(pref));
+  const setTheme = useCallback((next: ThemePreference) => {
+    writePreference(next);
+    applyTheme(resolveTheme(next));
     for (const listener of listeners) listener();
   }, []);
 

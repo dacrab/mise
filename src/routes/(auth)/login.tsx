@@ -17,30 +17,19 @@ function LoginPage() {
   const { redirect } = Route.useSearch();
   const safeTarget = safeRedirect(redirect);
 
-  if (!isLoaded) {
-    return <PageLoader />;
-  }
-
-  if (isSignedIn) {
-    return <Navigate to={safeTarget ?? "/dashboard"} replace />;
-  }
+  if (!isLoaded) return <PageLoader />;
+  if (isSignedIn) return <Navigate to={safeTarget ?? "/dashboard"} replace />;
 
   return (
-    <AuthLayout
-      heroHeading="welcome back, chef"
-      heroDescription="Your kitchen awaits."
-      form={
-        <>
-          <h1 className="font-serif text-3xl font-medium mb-2">Sign in</h1>
-          <p className="text-stone mb-8">
-            Don't have an account?{" "}
-            <Link to="/signup" search={{ redirect }} className="text-sage hover:underline">
-              Create one
-            </Link>
-          </p>
-          <LoginForm />
-        </>
-      }
-    />
+    <AuthLayout heroHeading="Welcome back to your kitchen." heroDescription="Pick up where you left off.">
+      <h1 className="text-3xl font-medium tracking-[-0.02em]">Sign in</h1>
+      <p className="mt-2 mb-8 text-ink-soft">
+        Don't have an account?{" "}
+        <Link to="/signup" search={{ redirect }} className="link">
+          Create one
+        </Link>
+      </p>
+      <LoginForm />
+    </AuthLayout>
   );
 }

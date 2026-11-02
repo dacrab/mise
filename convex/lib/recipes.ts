@@ -1,10 +1,6 @@
 import type { Doc } from "../_generated/dataModel";
 import type { MutationCtx } from "../_generated/server";
 
-/**
- * Deletes a recipe together with the bookmarks pointing at it and its stored
- * cover image. Shared by single-recipe removal and account deletion.
- */
 export async function deleteRecipeCascade(ctx: MutationCtx, recipe: Doc<"recipes">): Promise<void> {
   const bookmarks = await ctx.db
     .query("bookmarks")

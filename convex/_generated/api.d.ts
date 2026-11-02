@@ -8,12 +8,15 @@
  * @module
  */
 
+import type * as bookmarks from "../bookmarks.js";
 import type * as http from "../http.js";
 import type * as lib_auth from "../lib/auth.js";
 import type * as lib_categories from "../lib/categories.js";
+import type * as lib_media from "../lib/media.js";
+import type * as lib_recipes from "../lib/recipes.js";
+import type * as lib_validators from "../lib/validators.js";
 import type * as rateLimit from "../rateLimit.js";
 import type * as recipes from "../recipes.js";
-import type * as social from "../social.js";
 import type * as users from "../users.js";
 
 import type {
@@ -23,12 +26,15 @@ import type {
 } from "convex/server";
 
 declare const fullApi: ApiFromModules<{
+  bookmarks: typeof bookmarks;
   http: typeof http;
   "lib/auth": typeof lib_auth;
   "lib/categories": typeof lib_categories;
+  "lib/media": typeof lib_media;
+  "lib/recipes": typeof lib_recipes;
+  "lib/validators": typeof lib_validators;
   rateLimit: typeof rateLimit;
   recipes: typeof recipes;
-  social: typeof social;
   users: typeof users;
 }>;
 

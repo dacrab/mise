@@ -7,13 +7,17 @@ const FRACTIONS: [number, string][] = [
   [0.75, "¾"],
 ];
 
+export function cn(...classes: Array<string | false | null | undefined>): string {
+  return classes.filter(Boolean).join(" ");
+}
+
 export function formatNumber(n: number): string {
   if (n === 0) return "0";
-  if (n === Math.floor(n)) return n.toString();
+  if (Number.isInteger(n)) return n.toString();
   const whole = Math.floor(n);
   const decimal = n - whole;
-  for (const [val, symbol] of FRACTIONS) {
-    if (Math.abs(decimal - val) < 0.03) {
+  for (const [value, symbol] of FRACTIONS) {
+    if (Math.abs(decimal - value) < 0.03) {
       return whole > 0 ? `${whole}${symbol}` : symbol;
     }
   }
@@ -23,20 +27,31 @@ export function formatNumber(n: number): string {
 export function scaleIngredient(ingredient: string, scale: number): string {
   return ingredient.replace(/(\d+\/\d+|\d+\.?\d*)/g, (match) => {
     if (match.includes("/")) {
-      const [numStr = "0", denStr = "1"] = match.split("/");
-      const num = parseFloat(numStr);
-      const den = parseFloat(denStr);
-      return formatNumber((num / den) * scale);
+      const [numerator = "0", denominator = "1"] = match.split("/");
+      return formatNumber((Number.parseFloat(numerator) / Number.parseFloat(denominator)) * scale);
     }
-    return formatNumber(parseFloat(match) * scale);
+    return formatNumber(Number.parseFloat(match) * scale);
   });
 }
 
-/** Prefer the uploaded profile image, falling back to the Clerk avatar URL. */
-export function avatarSource(
-  user?: { image?: string | null; profileImageUrl?: string | null } | null,
-): string | undefined {
-  return user?.profileImageUrl ?? user?.image ?? undefined;
+const dateFormatter = new Intl.DateTimeFormat("en-US", {
+  month: "long",
+  day: "numeric",
+  year: "numeric",
+});
+
+const shortDateFormatter = new Intl.DateTimeFormat("en-US", {
+  month: "short",
+  day: "numeric",
+  year: "numeric",
+});
+
+export function formatDate(timestamp: number): string {
+  return dateFormatter.format(new Date(timestamp));
+}
+
+export function formatShortDate(timestamp: number): string {
+  return shortDateFormatter.format(new Date(timestamp));
 }
 
 export function getErrorMessage(err: unknown): string {
@@ -45,15 +60,7 @@ export function getErrorMessage(err: unknown): string {
   return "Something went wrong";
 }
 
-/** Narrow an unknown value to a plain object; null for arrays and primitives. */
-export function asRecord(value: unknown): Record<string, unknown> | null {
-  if (typeof value !== "object" || value === null || Array.isArray(value)) return null;
-  return value as Record<string, unknown>;
-}
-
 export function safeRedirect(value?: string): string | undefined {
   if (!value?.startsWith("/") || value.startsWith("//")) return undefined;
-  // Browsers normalize backslashes to slashes and strip whitespace, so a value
-  // like "/\evil.com" would resolve cross-origin. Only accept clean local paths.
   return /[\\\s]/.test(value) ? undefined : value;
 }

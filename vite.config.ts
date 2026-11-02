@@ -17,7 +17,6 @@ export default defineConfig(({ command }) => {
       alias: {
         "@/": `${resolve(import.meta.dirname, "src")}/`,
         "convex/_generated/": `${resolve(import.meta.dirname, "convex/_generated")}/`,
-        // Shared constants under convex/ must beat the npm `convex` package
         "convex/lib/": `${resolve(import.meta.dirname, "convex/lib")}/`,
       },
     },

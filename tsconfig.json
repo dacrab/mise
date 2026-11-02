@@ -6,16 +6,10 @@
     "lib": ["ES2022", "DOM"],
     "jsx": "react-jsx",
 
-    // Strict type safety
     "strict": true,
-    // exactOptionalPropertyTypes is intentionally omitted — @convex-dev/auth and
-    // Convex's generated types use T | undefined in optional positions which is
-    // incompatible with this flag. noUncheckedIndexedAccess provides the safety
-    // benefit without breaking third-party types.
     "noUncheckedIndexedAccess": true,
     "noPropertyAccessFromIndexSignature": true,
 
-    // Dead code & correctness
     "noUnusedLocals": true,
     "noUnusedParameters": true,
     "noImplicitReturns": true,

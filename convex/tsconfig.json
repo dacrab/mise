@@ -1,6 +1,5 @@
 {
   "compilerOptions": {
-    /* Required by Convex */
     "target": "ESNext",
     "module": "ESNext",
     "moduleResolution": "Bundler",
@@ -9,7 +8,6 @@
     "isolatedModules": true,
     "noEmit": true,
 
-    /* Strict correctness */
     "strict": true,
     "noUnusedLocals": true,
     "noUnusedParameters": true,

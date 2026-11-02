@@ -1,4 +1,4 @@
-import { v } from "convex/values";
+import { ConvexError, v } from "convex/values";
 import type { Id } from "./_generated/dataModel";
 import type { MutationCtx } from "./_generated/server";
 import { mutation } from "./_generated/server";
@@ -7,12 +7,13 @@ import { checkRateLimit } from "./rateLimit";
 
 async function requirePublishedRecipe(ctx: MutationCtx, recipeId: Id<"recipes">) {
   const recipe = await ctx.db.get(recipeId);
-  if (recipe?.status !== "published") throw new Error("Recipe not found");
+  if (recipe?.status !== "published") throw new ConvexError("Recipe not found");
   return recipe;
 }
 
 export const toggleBookmark = mutation({
   args: { recipeId: v.id("recipes") },
+  returns: v.object({ bookmarked: v.boolean() }),
   handler: async (ctx, { recipeId }) => {
     const user = await requireUser(ctx);
     await checkRateLimit(ctx, user._id, "bookmark:toggle");

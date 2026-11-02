@@ -1,12 +1,18 @@
 import { z } from "zod";
-import { APP_TITLE_SUFFIX } from "@/lib/constants";
+import { APP_NAME, APP_TITLE_SUFFIX } from "@/lib/constants";
 
-/** Standard `<title>` + meta description for a page. */
 export function pageHead(title: string, description: string) {
   return {
-    meta: [{ title: `${title}${APP_TITLE_SUFFIX}` }, { name: "description", content: description }],
+    meta: [
+      { title: `${title}${APP_TITLE_SUFFIX}` },
+      { name: "description", content: description },
+      { property: "og:title", content: `${title}${APP_TITLE_SUFFIX}` },
+      { property: "og:description", content: description },
+      { property: "og:site_name", content: APP_NAME },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary" },
+    ],
   };
 }
 
-/** Shared `?redirect=` search param for the auth routes. */
 export const redirectSearchSchema = z.object({ redirect: z.string().optional() });

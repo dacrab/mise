@@ -1,4 +1,4 @@
-import { BookmarkIcon, BookOpenIcon, PhotoIcon, PlusIcon } from "@heroicons/react/24/outline";
+import { BookmarkIcon, BookOpenIcon, PencilSquareIcon, PhotoIcon, PlusIcon } from "@heroicons/react/24/outline";
 import { Link, useSearch } from "@tanstack/react-router";
 import { api } from "convex/_generated/api";
 import type { Id } from "convex/_generated/dataModel";
@@ -7,89 +7,108 @@ import { useEffect, useRef, useState } from "react";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { useToast } from "@/components/ui/Toast";
 import { useBookmarks } from "@/lib/bookmarks";
+import { formatShortDate } from "@/lib/utils";
 
-function RecipeListRow({
+type DashboardRecipe = {
+  _id: Id<"recipes">;
+  slug: string;
+  title: string;
+  coverImageUrl?: string | null;
+  status?: "draft" | "published";
+  updatedAt?: number | null;
+};
+
+function RecipeRow({
   recipe,
-  showActions = false,
+  showActions,
   pendingDeleteId,
   onDelete,
 }: {
-  recipe: {
-    _id: Id<"recipes">;
-    slug: string;
-    title: string;
-    coverImageUrl?: string | null;
-    status?: "draft" | "published";
-  };
-  showActions?: boolean;
-  pendingDeleteId?: Id<"recipes"> | null;
-  onDelete?: (id: Id<"recipes">) => void;
+  recipe: DashboardRecipe;
+  showActions: boolean;
+  pendingDeleteId: Id<"recipes"> | null;
+  onDelete: (id: Id<"recipes">) => void;
 }) {
+  const isPending = pendingDeleteId === recipe._id;
+
   return (
-    <div className="card-hover flex items-center gap-4 p-4 group">
-      <div className="w-16 h-16 md:w-20 md:h-20 rounded-lg overflow-hidden surface-raised shrink-0">
+    <article className="card flex items-center gap-4 p-3 sm:p-4">
+      <div className="size-16 shrink-0 overflow-hidden rounded-xl bg-surface-2 sm:size-20">
         {recipe.coverImageUrl ? (
-          <img src={recipe.coverImageUrl} className="w-full h-full object-cover" alt="" />
+          <img src={recipe.coverImageUrl} alt="" className="size-full object-cover" loading="lazy" />
         ) : (
-          <div className="w-full h-full flex items-center justify-center">
-            <PhotoIcon className="w-6 h-6 text-stone-light" />
+          <div className="flex size-full items-center justify-center">
+            <PhotoIcon className="size-6 text-line-strong" />
           </div>
         )}
       </div>
-      <div className="flex-1 min-w-0">
-        <div className="flex items-center gap-2 mb-1">
-          <h3 className="font-serif text-lg font-medium truncate group-hover:text-sage">{recipe.title}</h3>
-          {recipe.status === "draft" && <span className="tag text-[10px] bg-honey/20 text-honey">Draft</span>}
+
+      <div className="min-w-0 flex-1">
+        <div className="flex flex-wrap items-center gap-2">
+          <h2 className="truncate font-display text-lg font-medium">
+            <Link to="/recipe/$slug" params={{ slug: recipe.slug }} className="hover:text-accent">
+              {recipe.title}
+            </Link>
+          </h2>
+          {recipe.status === "draft" && <span className="badge badge-clay">Draft</span>}
         </div>
-        <Link to="/recipe/$slug" params={{ slug: recipe.slug }} className="text-xs text-stone hover:text-sage">
-          View →
-        </Link>
+        <p className="mt-1 text-xs text-muted">
+          {recipe.updatedAt ? `Updated ${formatShortDate(recipe.updatedAt)}` : "Not updated yet"}
+        </p>
       </div>
-      {showActions && onDelete && (
-        <div className="flex gap-2">
-          <Link to="/dashboard/edit/$id" params={{ id: recipe._id }} className="btn-ghost text-xs py-1.5 px-3">
-            Edit
+
+      {showActions && (
+        <div className="flex shrink-0 items-center gap-1.5">
+          <Link
+            to="/dashboard/edit/$id"
+            params={{ id: recipe._id }}
+            className="icon-btn"
+            aria-label={`Edit ${recipe.title}`}
+          >
+            <PencilSquareIcon className="size-4" />
           </Link>
           <button
             type="button"
             onClick={() => onDelete(recipe._id)}
-            className={`btn-ghost text-xs py-1.5 px-3 text-terracotta ${pendingDeleteId === recipe._id ? "font-semibold" : ""}`}
+            className={`btn-sm btn rounded-lg border transition-colors ${
+              isPending
+                ? "border-clay bg-clay text-canvas"
+                : "border-line text-clay hover:border-clay/40 hover:bg-clay-soft"
+            }`}
           >
-            {pendingDeleteId === recipe._id ? "Confirm?" : "Delete"}
+            {isPending ? "Confirm delete" : "Delete"}
           </button>
         </div>
       )}
-    </div>
+    </article>
   );
 }
 
 const TABS = [
-  { id: "my-recipes", label: "My Recipes", icon: BookOpenIcon },
+  { id: "my-recipes", label: "My recipes", icon: BookOpenIcon },
   { id: "saved", label: "Saved", icon: BookmarkIcon },
 ] as const;
 
 function DashboardSkeleton() {
   return (
-    <div className="wrapper py-8 animate-pulse">
-      <div className="py-8 md:py-12 mb-8">
-        <div className="h-5 w-24 surface-muted rounded mb-3" />
-        <div className="h-9 w-64 surface-muted rounded mb-8" />
-        <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
-          {[1, 2, 3].map((i) => (
-            <div key={i} className="card p-5 space-y-2">
-              <div className="h-8 w-12 surface-muted rounded" />
-              <div className="h-3 w-16 surface-muted rounded" />
-            </div>
-          ))}
-        </div>
+    <div className="container-page animate-pulse py-10 md:py-14">
+      <div className="skeleton h-4 w-24" />
+      <div className="skeleton mt-3 h-10 w-72" />
+      <div className="mt-10 grid gap-4 sm:grid-cols-3">
+        {[0, 1, 2].map((item) => (
+          <div key={item} className="card p-5">
+            <div className="skeleton h-9 w-14" />
+            <div className="skeleton mt-3 h-3 w-24" />
+          </div>
+        ))}
       </div>
-      <div className="space-y-3">
-        {[1, 2, 3, 4].map((i) => (
-          <div key={i} className="card flex items-center gap-4 p-4">
-            <div className="w-16 h-16 rounded-lg surface-muted shrink-0" />
+      <div className="mt-10 space-y-3">
+        {[0, 1, 2, 3].map((item) => (
+          <div key={item} className="card flex items-center gap-4 p-4">
+            <div className="skeleton size-16 shrink-0 rounded-xl sm:size-20" />
             <div className="flex-1 space-y-2">
-              <div className="h-4 w-2/3 surface-muted rounded" />
-              <div className="h-3 w-1/4 surface-muted rounded" />
+              <div className="skeleton h-5 w-2/3" />
+              <div className="skeleton h-3 w-1/4" />
             </div>
           </div>
         ))}
@@ -101,26 +120,29 @@ function DashboardSkeleton() {
 export function DashboardView() {
   const user = useQuery(api.users.currentUser);
   const myRecipes = useQuery(api.recipes.myRecipes);
-  const { bookmarks: myBookmarks } = useBookmarks();
+  const { bookmarks } = useBookmarks();
   const deleteRecipe = useMutation(api.recipes.remove);
   const { toast } = useToast();
   const [pendingDelete, setPendingDelete] = useState<Id<"recipes"> | null>(null);
   const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const { tab = "my-recipes" } = useSearch({ from: "/_authed/dashboard/" });
 
-  useEffect(() => {
-    return () => {
+  useEffect(
+    () => () => {
       if (timer.current) clearTimeout(timer.current);
-    };
-  }, []);
+    },
+    [],
+  );
 
   const handleDelete = async (id: Id<"recipes">) => {
     if (pendingDelete !== id) {
       setPendingDelete(id);
-      toast("Tap delete again to confirm", "info");
+      toast("Press delete again to confirm", "info");
       if (timer.current) clearTimeout(timer.current);
       timer.current = setTimeout(() => setPendingDelete(null), 3000);
       return;
     }
+
     if (timer.current) clearTimeout(timer.current);
     setPendingDelete(null);
     try {
@@ -131,110 +153,94 @@ export function DashboardView() {
     }
   };
 
-  const { tab = "my-recipes" } = useSearch({ from: "/_authed/dashboard/" });
-
-  if (user === undefined || myRecipes === undefined || myBookmarks === undefined) {
+  if (user === undefined || myRecipes === undefined || bookmarks === undefined) {
     return <DashboardSkeleton />;
   }
 
   const isSavedTab = tab === "saved";
-  const recipes = isSavedTab ? myBookmarks : myRecipes;
-  const publishedCount = myRecipes.filter((r) => r.status === "published").length;
+  const recipes = isSavedTab ? bookmarks : myRecipes;
+  const publishedCount = myRecipes.filter((recipe) => recipe.status === "published").length;
 
   const stats = [
-    { label: "Total Recipes", value: myRecipes.length, accent: false, wide: false },
-    { label: "Published", value: publishedCount, accent: true, wide: false },
-    { label: "Bookmarked", value: myBookmarks.length, accent: false, wide: true },
+    { label: "Recipes", value: myRecipes.length },
+    { label: "Published", value: publishedCount },
+    { label: "Saved", value: bookmarks.length },
   ];
 
   return (
-    <div className="wrapper py-8">
-      <div className="py-8 md:py-12 mb-8">
-        <div className="flex flex-col md:flex-row md:items-start justify-between gap-6 mb-8">
-          <div>
-            <p className="font-hand text-xl text-sage mb-1">your kitchen</p>
-            <h1 className="font-serif text-3xl md:text-4xl font-medium">
-              Welcome back, {user?.name?.split(" ")[0] ?? "Chef"}
-            </h1>
-          </div>
-          <Link to="/dashboard/create" className="btn-primary flex items-center gap-2 text-sm shrink-0">
-            <PlusIcon className="w-4 h-4" />
-            New Recipe
-          </Link>
+    <div className="container-page py-10 md:py-14">
+      <header className="flex flex-col gap-5 sm:flex-row sm:items-end sm:justify-between">
+        <div>
+          <p className="eyebrow">Your kitchen</p>
+          <h1 className="mt-2 text-4xl font-medium sm:text-5xl">
+            Welcome back, {user?.name?.split(" ")[0] ?? user?.username ?? "Chef"}
+          </h1>
         </div>
+        <Link to="/dashboard/create" className="btn-primary shrink-0">
+          <PlusIcon className="size-4" />
+          New recipe
+        </Link>
+      </header>
 
-        <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
-          {stats.map((stat) => (
-            <div key={stat.label} className={`card p-5${stat.wide ? " col-span-2 sm:col-span-1" : ""}`}>
-              <p className={`font-serif text-3xl font-medium ${stat.accent ? "text-sage" : "text-primary"}`}>
-                {stat.value}
-              </p>
-              <p className="text-sm text-stone mt-1">{stat.label}</p>
-            </div>
-          ))}
-        </div>
+      <div className="mt-10 grid gap-4 sm:grid-cols-3">
+        {stats.map((stat) => (
+          <div key={stat.label} className="card p-5">
+            <p className="font-display text-4xl font-medium text-ink">{stat.value}</p>
+            <p className="mt-1 text-sm text-muted">{stat.label}</p>
+          </div>
+        ))}
       </div>
 
-      <nav className="flex gap-1 mb-8 border-b border-subtle" aria-label="Dashboard sections">
-        {TABS.map((tabItem) => {
-          const Icon = tabItem.icon;
-          const active = tab === tabItem.id;
+      <nav className="mt-12 flex gap-7 border-b border-line" aria-label="Dashboard sections">
+        {TABS.map(({ id, label, icon: Icon }) => {
+          const active = tab === id;
           return (
             <Link
-              key={tabItem.id}
+              key={id}
               to="/dashboard"
-              search={{ tab: tabItem.id }}
+              search={{ tab: id }}
               aria-current={active ? "page" : undefined}
-              className={`flex items-center gap-2 px-4 py-3 text-sm font-medium border-b-2 -mb-px transition-colors ${
-                active
-                  ? "border-sage text-sage"
-                  : "border-transparent text-stone hover:text-charcoal dark:hover:text-d-text"
+              className={`-mb-px flex items-center gap-2 border-b-2 px-1 pb-3 text-sm font-medium transition-colors ${
+                active ? "border-ink text-ink" : "border-transparent text-muted hover:text-ink"
               }`}
             >
-              <Icon className="w-4 h-4" />
-              {tabItem.label}
-              <span className="text-xs surface-muted px-2 py-0.5 rounded-full">
-                {(tabItem.id === "saved" ? myBookmarks : myRecipes).length}
-              </span>
+              <Icon className="size-4" />
+              {label}
+              <span className="badge">{id === "saved" ? bookmarks.length : myRecipes.length}</span>
             </Link>
           );
         })}
       </nav>
 
-      {recipes.length === 0 ? (
-        <EmptyState
-          icon={isSavedTab ? BookmarkIcon : BookOpenIcon}
-          title={isSavedTab ? "Your bookshelf is empty" : "Start your recipe collection"}
-          description={
-            isSavedTab
-              ? "When you find recipes you love, bookmark them and they'll be waiting here."
-              : "Every great chef starts with one recipe. Share yours with the world."
-          }
-        >
-          {isSavedTab ? (
-            <Link to="/" className="btn-secondary inline-flex items-center gap-2 text-sm">
-              Browse recipes
+      <div className="mt-8">
+        {recipes.length === 0 ? (
+          <EmptyState
+            icon={isSavedTab ? BookmarkIcon : BookOpenIcon}
+            title={isSavedTab ? "Nothing saved yet" : "Start your recipe collection"}
+            description={
+              isSavedTab
+                ? "Bookmark recipes you love and they'll be waiting for you here."
+                : "Every great cook starts with one recipe. Share yours with the community."
+            }
+          >
+            <Link to={isSavedTab ? "/" : "/dashboard/create"} className="btn-primary">
+              {isSavedTab ? "Browse recipes" : "Create your first recipe"}
             </Link>
-          ) : (
-            <Link to="/dashboard/create" className="btn-primary inline-flex items-center gap-2">
-              <PlusIcon className="w-4 h-4" />
-              Create your first recipe
-            </Link>
-          )}
-        </EmptyState>
-      ) : (
-        <div className="space-y-3">
-          {recipes.map((recipe) => (
-            <RecipeListRow
-              key={recipe._id}
-              recipe={recipe}
-              showActions={tab === "my-recipes"}
-              pendingDeleteId={pendingDelete}
-              onDelete={(id) => void handleDelete(id)}
-            />
-          ))}
-        </div>
-      )}
+          </EmptyState>
+        ) : (
+          <div className="space-y-3">
+            {recipes.map((recipe) => (
+              <RecipeRow
+                key={recipe._id}
+                recipe={recipe}
+                showActions={!isSavedTab}
+                pendingDeleteId={pendingDelete}
+                onDelete={(id) => void handleDelete(id)}
+              />
+            ))}
+          </div>
+        )}
+      </div>
     </div>
   );
 }

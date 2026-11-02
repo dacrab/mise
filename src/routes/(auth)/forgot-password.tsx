@@ -10,10 +10,8 @@ export const Route = createFileRoute("/(auth)/forgot-password")({
 
 function ForgotPasswordPage() {
   return (
-    <AuthLayout
-      heroHeading="no worries"
-      heroDescription="We'll help you get back into your kitchen."
-      form={<ForgotPasswordForm />}
-    />
+    <AuthLayout heroHeading="No worries. We'll get you back in." heroDescription="A reset code is all you need.">
+      <ForgotPasswordForm />
+    </AuthLayout>
   );
 }

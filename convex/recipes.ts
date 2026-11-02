@@ -1,5 +1,5 @@
 import { paginationOptsValidator } from "convex/server";
-import { type ObjectType, v } from "convex/values";
+import { ConvexError, type ObjectType, v } from "convex/values";
 import type { Id } from "./_generated/dataModel";
 import type { MutationCtx, QueryCtx } from "./_generated/server";
 import { mutation, query } from "./_generated/server";
@@ -7,16 +7,13 @@ import { getCurrentUser, requireUser } from "./lib/auth";
 import { RECIPE_CATEGORIES } from "./lib/categories";
 import { storageUrl } from "./lib/media";
 import { deleteRecipeCascade } from "./lib/recipes";
+import { recipeDetail, recipePage, recipeWithCover, slugEntry } from "./lib/validators";
 import { checkRateLimit } from "./rateLimit";
 
 const MAX_RECIPES_PER_QUERY = 100;
 const MAX_BOOKMARKS_PER_QUERY = 100;
 const SITEMAP_SLUG_LIMIT = 1000;
 
-/**
- * Builds a deterministic URL slug from a recipe title. Pass an optional
- * suffix (e.g. a collision counter) to disambiguate duplicates.
- */
 export function generateSlug(title: string, suffix?: string): string {
   const base =
     title
@@ -27,11 +24,6 @@ export function generateSlug(title: string, suffix?: string): string {
   return suffix ? `${base}-${suffix}` : base;
 }
 
-/**
- * Returns a slug guaranteed to be unique against existing recipes by
- * appending a counter suffix. Runs inside the calling mutation, so the
- * check-and-insert cannot race (Convex retries the mutation on conflicts).
- */
 async function generateUniqueSlug(ctx: MutationCtx, title: string): Promise<string> {
   const base = generateSlug(title);
   let counter = 0;
@@ -78,21 +70,17 @@ async function getRecipesByUser(ctx: QueryCtx, userId: Id<"users">, includeDraft
   return withCoverUrls(ctx, recipes);
 }
 
-export const listPaginated = query({
-  args: { paginationOpts: paginationOptsValidator, category: v.optional(v.string()) },
-  handler: async (ctx, { paginationOpts, category }) => {
-    const opts = { ...paginationOpts, numItems: Math.min(paginationOpts.numItems, MAX_RECIPES_PER_QUERY) };
-    const results = await publishedRecipesQuery(ctx, category).order("desc").paginate(opts);
-    return { ...results, page: await withCoverUrls(ctx, results.page) };
-  },
-});
-
 export const list = query({
-  args: { search: v.optional(v.string()), category: v.optional(v.string()), limit: v.optional(v.number()) },
-  handler: async (ctx, { search, category, limit = 50 }) => {
-    const safeLimit = Math.max(0, Math.min(limit, MAX_RECIPES_PER_QUERY));
+  args: {
+    paginationOpts: paginationOptsValidator,
+    search: v.optional(v.string()),
+    category: v.optional(v.string()),
+  },
+  returns: recipePage,
+  handler: async (ctx, { paginationOpts, search, category }) => {
+    const opts = { ...paginationOpts, numItems: Math.min(paginationOpts.numItems, MAX_RECIPES_PER_QUERY) };
 
-    const rows = search
+    const results = search
       ? await ctx.db
           .query("recipes")
           .withSearchIndex("search_title", (q) => {
@@ -100,28 +88,29 @@ export const list = query({
             if (category) query = query.eq("category", category);
             return query.eq("status", "published");
           })
-          .take(safeLimit)
-      : await publishedRecipesQuery(ctx, category).order("desc").take(safeLimit);
+          .paginate(opts)
+      : await publishedRecipesQuery(ctx, category).order("desc").paginate(opts);
 
-    return withCoverUrls(ctx, rows);
+    return { ...results, page: await withCoverUrls(ctx, results.page) };
   },
 });
 
 export const listSlugs = query({
   args: {},
+  returns: v.array(slugEntry),
   handler: async (ctx) => {
     const recipes = await ctx.db
       .query("recipes")
       .withIndex("by_status", (q) => q.eq("status", "published"))
       .order("desc")
       .take(SITEMAP_SLUG_LIMIT);
-    // Never-edited recipes have no updatedAt; creation time is a valid lastmod.
     return recipes.map((r) => ({ slug: r.slug, updatedAt: r.updatedAt ?? r._creationTime }));
   },
 });
 
 export const getBySlug = query({
   args: { slug: v.string() },
+  returns: v.union(recipeDetail, v.null()),
   handler: async (ctx, { slug }) => {
     const recipe = await ctx.db
       .query("recipes")
@@ -146,7 +135,6 @@ export const getBySlug = query({
         ? {
             name: author.name,
             username: author.username,
-            image: author.image,
             profileImageUrl: await storageUrl(ctx, author.profileImage),
           }
         : null,
@@ -157,6 +145,7 @@ export const getBySlug = query({
 
 export const getByUser = query({
   args: { userId: v.id("users") },
+  returns: v.array(recipeWithCover),
   handler: async (ctx, { userId }) => {
     const currentUser = await getCurrentUser(ctx);
     return getRecipesByUser(ctx, userId, currentUser?._id === userId);
@@ -165,6 +154,7 @@ export const getByUser = query({
 
 export const myRecipes = query({
   args: {},
+  returns: v.array(recipeWithCover),
   handler: async (ctx) => {
     const user = await getCurrentUser(ctx);
     if (!user) return [];
@@ -174,6 +164,7 @@ export const myRecipes = query({
 
 export const myBookmarks = query({
   args: {},
+  returns: v.array(recipeWithCover),
   handler: async (ctx) => {
     const user = await getCurrentUser(ctx);
     if (!user) return [];
@@ -191,6 +182,7 @@ export const myBookmarks = query({
 
 export const getById = query({
   args: { id: v.id("recipes") },
+  returns: v.union(recipeWithCover, v.null()),
   handler: async (ctx, { id }) => {
     const recipe = await ctx.db.get(id);
     if (!recipe) return null;
@@ -223,12 +215,13 @@ function assertPublishable(args: Pick<RecipeArgs, "status" | "title" | "ingredie
   if (args.status !== "published") return;
   const hasText = (items: string[]) => items.some((item) => item.trim() !== "");
   if (!(args.title.trim() && hasText(args.ingredients) && hasText(args.steps))) {
-    throw new Error("Published recipes need a title, at least one ingredient, and one step");
+    throw new ConvexError("Published recipes need a title, at least one ingredient, and one step");
   }
 }
 
 export const create = mutation({
   args: recipeArgs,
+  returns: v.object({ id: v.id("recipes"), slug: v.string() }),
   handler: async (ctx, args) => {
     const user = await requireUser(ctx);
     await checkRateLimit(ctx, user._id, "recipe:create");
@@ -241,30 +234,32 @@ export const create = mutation({
 
 export const update = mutation({
   args: { id: v.id("recipes"), ...recipeArgs },
+  returns: v.null(),
   handler: async (ctx, { id, ...args }) => {
     const user = await requireUser(ctx);
     await checkRateLimit(ctx, user._id, "recipe:update");
     const recipe = await ctx.db.get(id);
-    if (!recipe || recipe.userId !== user._id) throw new Error("Not found");
+    if (!recipe || recipe.userId !== user._id) throw new ConvexError("Recipe not found");
     assertPublishable(args);
 
-    // Slugs follow the title: any title change (draft or published) regenerates
-    // the slug. Old URLs break — there is no redirect infrastructure.
     const slug = args.title === recipe.title ? recipe.slug : await generateUniqueSlug(ctx, args.title);
 
     await ctx.db.patch(id, { ...args, slug, updatedAt: Date.now() });
     if (args.coverImage !== undefined && recipe.coverImage && recipe.coverImage !== args.coverImage) {
       await ctx.storage.delete(recipe.coverImage);
     }
+    return null;
   },
 });
 
 export const remove = mutation({
   args: { id: v.id("recipes") },
+  returns: v.null(),
   handler: async (ctx, { id }) => {
     const user = await requireUser(ctx);
     const recipe = await ctx.db.get(id);
-    if (!recipe || recipe.userId !== user._id) throw new Error("Not found");
+    if (!recipe || recipe.userId !== user._id) throw new ConvexError("Recipe not found");
     await deleteRecipeCascade(ctx, recipe);
+    return null;
   },
 });

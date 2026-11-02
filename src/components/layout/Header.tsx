@@ -16,119 +16,16 @@ import { Avatar } from "@/components/ui/Primitives";
 import { useSignOut } from "@/hooks/useSignOut";
 import { nextTheme, themeOption, useTheme } from "@/hooks/useTheme";
 import { FOOTER_LINKS } from "@/lib/constants";
-import { avatarSource } from "@/lib/utils";
 
-const USER_MENU_LINKS = [
+const NAV_LINKS = [
+  { to: "/", label: "Recipes", exact: true },
+  { to: "/about", label: "About", exact: true },
+] as const;
+
+const USER_LINKS = [
   { to: "/dashboard", label: "Dashboard", icon: HomeIcon },
   { to: "/settings", label: "Settings", icon: Cog6ToothIcon },
 ] as const;
-
-function UserMenu({ onClose }: { onClose?: () => void }) {
-  const user = useQuery(api.users.currentUser);
-  const signOut = useSignOut();
-
-  const handleSignOut = async () => {
-    onClose?.();
-    await signOut();
-  };
-
-  return (
-    <>
-      <div className="hidden sm:flex items-center gap-2">
-        <Menu.Root>
-          <Menu.Trigger className="btn-ghost text-sm flex items-center gap-2">
-            <Avatar src={avatarSource(user)} name={user?.name} size="sm" />
-            <span className="hidden sm:inline max-w-[120px] truncate">
-              {user?.name?.split(" ")[0] ?? user?.email?.split("@")[0] ?? "Chef"}
-            </span>
-            <ChevronDownIcon className="w-4 h-4 shrink-0" />
-          </Menu.Trigger>
-          <Menu.Portal>
-            <Menu.Positioner className="z-50" sideOffset={8} align="end">
-              <Menu.Popup className="min-w-[200px] bg-warm-white dark:bg-d-surface rounded-xl shadow-card border border-cream-dark dark:border-d-border py-1.5 animate-scale-in">
-                <div className="flex items-center gap-3 px-4 py-2.5 border-b border-cream-dark mb-1">
-                  <Avatar src={avatarSource(user)} name={user?.name} size="sm" />
-                  <div className="min-w-0">
-                    <p className="text-sm font-medium text-primary truncate">{user?.name ?? "Chef"}</p>
-                    {user?.username && <p className="text-xs text-stone truncate">@{user.username}</p>}
-                  </div>
-                </div>
-                {USER_MENU_LINKS.map(({ to, label, icon: Icon }) => (
-                  <Menu.Item key={to} className="menu-item cursor-pointer" render={<Link to={to} />}>
-                    <Icon className="w-4 h-4 text-stone" /> {label}
-                  </Menu.Item>
-                ))}
-                <Menu.Separator className="h-px bg-cream-dark dark:bg-d-border my-1" />
-                <Menu.Item
-                  onClick={handleSignOut}
-                  className="flex items-center gap-2.5 px-4 py-2 text-sm text-terracotta hover:bg-terracotta/5 outline-none cursor-pointer data-[highlighted]:bg-terracotta/5 transition-colors"
-                >
-                  <ArrowRightOnRectangleIcon className="w-4 h-4" /> Sign out
-                </Menu.Item>
-              </Menu.Popup>
-            </Menu.Positioner>
-          </Menu.Portal>
-        </Menu.Root>
-      </div>
-
-      <div className="sm:hidden">
-        <div className="flex items-center gap-3 p-3 mb-4 surface-raised rounded-xl">
-          <Avatar src={avatarSource(user)} name={user?.name} size="md" />
-          <div className="min-w-0">
-            <p className="font-medium text-primary truncate">{user?.name ?? "Chef"}</p>
-            {user?.username ? (
-              <p className="text-xs text-stone truncate">@{user.username}</p>
-            ) : (
-              user?.email && <p className="text-xs text-stone truncate">{user.email}</p>
-            )}
-          </div>
-        </div>
-        {USER_MENU_LINKS.map(({ to, label, icon: Icon }) => (
-          <Link
-            key={to}
-            to={to}
-            onClick={onClose}
-            className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-primary hover:bg-cream-dark dark:hover:bg-d-surface-raised transition-colors"
-          >
-            <Icon className="w-5 h-5 text-stone" /> {label}
-          </Link>
-        ))}
-        <div className="pt-3 mt-3 border-t border-cream-dark">
-          <button
-            type="button"
-            onClick={handleSignOut}
-            className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-terracotta hover:bg-terracotta/5 transition-colors w-full text-left"
-          >
-            <ArrowRightOnRectangleIcon className="w-5 h-5" /> Sign out
-          </button>
-        </div>
-      </div>
-    </>
-  );
-}
-
-function GuestNav({ onClose }: { onClose?: () => void }) {
-  return (
-    <>
-      <div className="hidden sm:flex items-center gap-2">
-        <Link to="/login" className="btn-ghost text-sm">
-          Sign in
-        </Link>
-        <Link to="/signup" className="btn-primary text-sm">
-          Get started
-        </Link>
-      </div>
-      <div className="sm:hidden space-y-2">
-        <Link to="/login" onClick={onClose} className="btn-primary w-full justify-center">
-          Sign in
-        </Link>
-        <Link to="/signup" onClick={onClose} className="btn-secondary w-full justify-center">
-          Create account
-        </Link>
-      </div>
-    </>
-  );
-}
 
 function ThemeToggle() {
   const { preference, setTheme } = useTheme();
@@ -138,12 +35,125 @@ function ThemeToggle() {
     <button
       type="button"
       onClick={() => setTheme(nextTheme(preference))}
-      className="btn-ghost p-2"
+      className="icon-btn"
       aria-label={ariaLabel}
       title={ariaLabel}
     >
-      <Icon className="w-5 h-5" />
+      <Icon className="size-5" />
     </button>
+  );
+}
+
+function DesktopUserMenu() {
+  const user = useQuery(api.users.currentUser);
+  const signOut = useSignOut();
+
+  return (
+    <Menu.Root>
+      <Menu.Trigger className="btn-ghost gap-2 pl-1.5">
+        <Avatar src={user?.profileImageUrl} name={user?.name} size="sm" />
+        <span className="hidden max-w-28 truncate lg:inline">
+          {user?.name?.split(" ")[0] ?? user?.username ?? "Chef"}
+        </span>
+        <ChevronDownIcon className="size-4 shrink-0" />
+      </Menu.Trigger>
+      <Menu.Portal>
+        <Menu.Positioner className="z-50" sideOffset={8} align="end">
+          <Menu.Popup className="min-w-56 animate-scale-in rounded-xl border border-line bg-surface p-1.5 shadow-lift">
+            <div className="flex items-center gap-3 border-b border-line px-3 py-2.5">
+              <Avatar src={user?.profileImageUrl} name={user?.name} size="sm" />
+              <div className="min-w-0">
+                <p className="truncate text-sm font-medium text-ink">{user?.name ?? "Chef"}</p>
+                {user?.username && <p className="truncate text-xs text-muted">@{user.username}</p>}
+              </div>
+            </div>
+            {USER_LINKS.map(({ to, label, icon: Icon }) => (
+              <Menu.Item key={to} className="menu-item" render={<Link to={to} />}>
+                <Icon className="size-4 text-muted" />
+                {label}
+              </Menu.Item>
+            ))}
+            <Menu.Separator className="my-1 h-px bg-line" />
+            <Menu.Item
+              onClick={() => void signOut()}
+              className="flex cursor-pointer items-center gap-2.5 rounded-md px-3 py-2 text-sm text-clay outline-none transition-colors hover:bg-clay-soft data-[highlighted]:bg-clay-soft"
+            >
+              <ArrowRightOnRectangleIcon className="size-4" />
+              Sign out
+            </Menu.Item>
+          </Menu.Popup>
+        </Menu.Positioner>
+      </Menu.Portal>
+    </Menu.Root>
+  );
+}
+
+function DesktopGuestActions() {
+  return (
+    <div className="flex items-center gap-1.5">
+      <Link to="/login" className="btn-ghost">
+        Sign in
+      </Link>
+      <Link to="/signup" className="btn-primary btn-sm">
+        Start cooking
+      </Link>
+    </div>
+  );
+}
+
+function MobileUserMenu({ onNavigate }: { onNavigate: () => void }) {
+  const user = useQuery(api.users.currentUser);
+  const signOut = useSignOut();
+
+  return (
+    <div className="space-y-6">
+      <div className="flex items-center gap-3 rounded-xl border border-line bg-surface p-3">
+        <Avatar src={user?.profileImageUrl} name={user?.name} size="md" />
+        <div className="min-w-0">
+          <p className="truncate font-medium text-ink">{user?.name ?? "Chef"}</p>
+          {user?.username && <p className="truncate text-xs text-muted">@{user.username}</p>}
+        </div>
+      </div>
+
+      <nav className="space-y-1" aria-label="Account">
+        {USER_LINKS.map(({ to, label, icon: Icon }) => (
+          <Link
+            key={to}
+            to={to}
+            onClick={onNavigate}
+            className="flex items-center gap-3 rounded-lg px-3 py-3 text-sm font-medium text-ink transition-colors hover:bg-surface-2"
+          >
+            <Icon className="size-5 text-muted" />
+            {label}
+          </Link>
+        ))}
+      </nav>
+
+      <button
+        type="button"
+        onClick={() => {
+          onNavigate();
+          void signOut();
+        }}
+        className="flex w-full items-center gap-3 rounded-lg px-3 py-3 text-left text-sm font-medium text-clay transition-colors hover:bg-clay-soft"
+      >
+        <ArrowRightOnRectangleIcon className="size-5" />
+        Sign out
+      </button>
+    </div>
+  );
+}
+
+function MobileGuestMenu({ onNavigate }: { onNavigate: () => void }) {
+  return (
+    <div className="space-y-2">
+      <Link to="/login" onClick={onNavigate} className="btn-secondary w-full">
+        Sign in
+      </Link>
+      <Link to="/signup" onClick={onNavigate} className="btn-primary w-full">
+        Start cooking
+      </Link>
+    </div>
   );
 }
 
@@ -153,61 +163,91 @@ export function Header() {
 
   return (
     <Dialog.Root open={mobileOpen} onOpenChange={setMobileOpen}>
-      <header className="fixed top-0 w-full z-50 glass">
-        <div className="wrapper h-16 flex items-center justify-between">
-          <Link
-            to="/"
-            className="font-serif text-2xl font-semibold tracking-tight text-primary hover:text-sage transition-colors"
-          >
-            mise
+      <a
+        href="#main"
+        className="sr-only z-[60] rounded-lg bg-ink px-4 py-2 text-canvas focus:not-sr-only focus:fixed focus:left-4 focus:top-4"
+      >
+        Skip to content
+      </a>
+
+      <header className="sticky top-0 z-50 border-b border-line bg-canvas/85 backdrop-blur-md">
+        <div className="container-page flex h-16 items-center justify-between gap-6">
+          <Link to="/" className="font-display text-2xl font-semibold tracking-tight text-ink">
+            Mise
           </Link>
-          <nav className="hidden sm:flex items-center gap-2">
+
+          <nav className="hidden items-center gap-1 md:flex" aria-label="Main">
+            {NAV_LINKS.map((link) => (
+              <Link
+                key={link.to}
+                to={link.to}
+                activeOptions={{ exact: link.exact }}
+                className="rounded-lg px-3 py-2 text-sm font-medium text-ink-soft transition-colors hover:bg-surface-2 hover:text-ink"
+                activeProps={{ className: "bg-surface-2 text-ink" }}
+              >
+                {link.label}
+              </Link>
+            ))}
+          </nav>
+
+          <div className="hidden items-center gap-1.5 md:flex">
             <ThemeToggle />
             <Authenticated>
-              <UserMenu />
+              <DesktopUserMenu />
             </Authenticated>
             <Unauthenticated>
-              <GuestNav />
+              <DesktopGuestActions />
             </Unauthenticated>
-          </nav>
-          <div className="flex sm:hidden items-center gap-2">
+          </div>
+
+          <div className="flex items-center gap-1 md:hidden">
             <ThemeToggle />
-            <Dialog.Trigger
-              className="p-2 hover:bg-cream-dark dark:hover:bg-d-surface-raised rounded-lg transition-colors cursor-pointer"
-              aria-label="Open menu"
-            >
-              <Bars3Icon className="w-5 h-5" />
-            </Dialog.Trigger>
+            <button type="button" onClick={() => setMobileOpen(true)} className="icon-btn" aria-label="Open menu">
+              <Bars3Icon className="size-5" />
+            </button>
           </div>
         </div>
       </header>
 
       <Dialog.Portal>
-        <Dialog.Backdrop className="fixed inset-0 z-40 bg-charcoal/30 backdrop-blur-sm sm:hidden data-[starting-style]:opacity-0 data-[ending-style]:opacity-0 transition-opacity duration-300" />
-        <Dialog.Popup className="fixed top-0 right-0 bottom-0 z-50 w-72 bg-warm-white shadow-hover flex flex-col sm:hidden transition-transform duration-300 data-[starting-style]:translate-x-full data-[ending-style]:translate-x-full">
+        <Dialog.Backdrop className="fixed inset-0 z-40 bg-black/30 backdrop-blur-sm transition-opacity duration-200 data-[ending-style]:opacity-0 data-[starting-style]:opacity-0 md:hidden" />
+        <Dialog.Popup className="fixed inset-y-0 right-0 z-50 flex w-[min(20rem,calc(100vw-3rem))] flex-col border-l border-line bg-canvas transition-transform duration-300 data-[ending-style]:translate-x-full data-[starting-style]:translate-x-full md:hidden">
           <Dialog.Title className="sr-only">Navigation menu</Dialog.Title>
-          <div className="flex items-center justify-between px-5 h-16 border-b border-cream-dark">
-            <span className="font-serif text-xl font-semibold text-primary">mise</span>
-            <Dialog.Close
-              className="p-2 hover:bg-cream-dark dark:hover:bg-d-surface-raised rounded-lg"
-              aria-label="Close menu"
-            >
-              <XMarkIcon className="w-5 h-5" />
+          <div className="flex h-16 items-center justify-between border-b border-line px-5">
+            <span className="font-display text-xl font-semibold">Mise</span>
+            <Dialog.Close className="icon-btn" aria-label="Close menu">
+              <XMarkIcon className="size-5" />
             </Dialog.Close>
           </div>
-          <nav className="flex-1 overflow-y-auto p-5 space-y-1">
+
+          <div className="flex-1 overflow-y-auto p-5">
+            <nav className="mb-8 space-y-1" aria-label="Main">
+              {NAV_LINKS.map((link) => (
+                <Link
+                  key={link.to}
+                  to={link.to}
+                  onClick={closeMenu}
+                  className="block rounded-lg px-3 py-3 text-sm font-medium text-ink-soft transition-colors hover:bg-surface-2 hover:text-ink"
+                  activeProps={{ className: "bg-surface-2 text-ink" }}
+                >
+                  {link.label}
+                </Link>
+              ))}
+            </nav>
+
             <Authenticated>
-              <UserMenu onClose={closeMenu} />
+              <MobileUserMenu onNavigate={closeMenu} />
             </Authenticated>
             <Unauthenticated>
-              <GuestNav onClose={closeMenu} />
+              <MobileGuestMenu onNavigate={closeMenu} />
             </Unauthenticated>
-          </nav>
-          <div className="p-5 border-t border-cream-dark">
-            <nav className="flex gap-4 text-sm text-stone">
-              {FOOTER_LINKS.map(({ to, label }) => (
-                <Link key={to} to={to} onClick={closeMenu} className="hover:text-primary transition-colors">
-                  {label}
+          </div>
+
+          <div className="border-t border-line p-5">
+            <nav className="flex flex-wrap gap-x-5 gap-y-2" aria-label="Legal">
+              {FOOTER_LINKS.map((link) => (
+                <Link key={link.to} to={link.to} onClick={closeMenu} className="link-muted text-xs">
+                  {link.label}
                 </Link>
               ))}
             </nav>
