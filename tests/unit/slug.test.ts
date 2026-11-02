@@ -31,14 +31,4 @@ describe("generateSlug", () => {
   it("is deterministic for the same title", () => {
     expect(generateSlug("test")).toBe(generateSlug("test"));
   });
-
-  it("appends an alphanumeric suffix when provided", () => {
-    expect(generateSlug("test", "1")).toBe("test-1");
-    expect(generateSlug("test", "a")).toBe("test-a");
-    expect(generateSlug("test", "1")).toMatch(/^test-[a-z0-9]+$/);
-  });
-
-  it("appends suffix to the fallback base", () => {
-    expect(generateSlug("!!!", "2")).toBe("recipe-2");
-  });
 });

@@ -14,14 +14,14 @@ const MAX_RECIPES_PER_QUERY = 100;
 const MAX_BOOKMARKS_PER_QUERY = 100;
 const SITEMAP_SLUG_LIMIT = 1000;
 
-export function generateSlug(title: string, suffix?: string): string {
-  const base =
+export function generateSlug(title: string): string {
+  return (
     title
       .toLowerCase()
       .replace(/[^a-z0-9]+/g, "-")
       .replace(/(^-|-$)+/g, "")
-      .slice(0, 80) || "recipe";
-  return suffix ? `${base}-${suffix}` : base;
+      .slice(0, 80) || "recipe"
+  );
 }
 
 async function isSlugTaken(ctx: MutationCtx, slug: string, recipeId?: Id<"recipes">): Promise<boolean> {
