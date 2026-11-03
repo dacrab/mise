@@ -1,45 +1,44 @@
 # Mise
 
-A quiet recipe journal for home cooks.
+*From "mise en place" — everything cut, weighed and ready before the fire.*
+
+A recipe journal for the food you actually cook.
 
 **Live demo:** https://mise-tan.vercel.app
 
-Write down the food you actually make, keep the ones worth repeating, and share the rest with people who care. There are no ads and no algorithm — just recipes, photos, and the cooks behind them. You can browse what everyone else is making, save favourites, and print anything in a clean, ink-friendly layout.
+Write a recipe once, with a photo, ingredients and steps. Keep it private while it's rough, publish when it's good, and let other cooks find it. No ads, no feed ranking, no "you might also like" — just recipes with a name attached. You can save the ones worth repeating, share a chef page of your own, and print anything on one clean page.
 
-## Features
+## What you can do there
 
-- Write recipes with a cover photo, ingredients, and steps
-- Keep drafts private and publish when you're ready
-- Browse, search, and filter recipes by category
-- Search inside ingredients and steps, not just titles
-- Save recipes you want to make again
-- Share a public chef page with your own bio and photo
-- Print any recipe on a single tidy page
+- Draft in private and publish on your own schedule
+- Search across titles, descriptions, ingredients and steps
+- Filter by category when you know roughly what you want
+- Bookmark recipes for later
+- Set up a chef page with a bio and a photo
+- Print a recipe without the site furniture
 
-## Run it locally
+## Getting it running
 
-You'll need [Bun](https://bun.sh) and a Convex deployment.
+Two terminals — Convex does the data, Vite serves the app. Convex is started first so the frontend has somewhere to talk to.
 
 ```bash
 bun install
-doppler setup        # link secrets, or copy .env.example to .env and fill it in
-bunx convex dev      # terminal 1 — backend
-bun dev              # terminal 2 — app
+doppler setup        # or copy .env.example to .env
+
+bunx convex dev      # terminal 1
+bun dev              # terminal 2 → http://localhost:3000
 ```
 
-The app opens at [http://localhost:3000](http://localhost:3000).
+`VITE_CONVEX_URL` writes itself when Convex starts. The rest of what you need — Clerk keys, Convex deployment, site URL — is listed in `.env.example`.
 
-## Good to know
+## Details worth knowing
 
-- Recipe links follow the title, and old links keep working after a rename.
-- Usernames are lowercase letters, numbers, and underscores (3–32 characters) and can't be changed once set.
-- Edits autosave after 30 seconds. There are hourly limits: 10 new recipes, 120 edits, 60 saves, and 30 uploads.
-- Images can be up to 5 MB; replacing one deletes the old file.
-- Accounts and sign-in are handled by Clerk.
+- Links follow the title, and a rename leaves the old URL working.
+- Usernames are 3–32 characters of lowercase letters, numbers and underscores. Pick carefully; they don't change.
+- Autosave waits 30 seconds after you stop typing. Hourly ceilings: 10 new recipes, 120 edits, 60 bookmark toggles, 30 uploads.
+- Cover images top out at 5 MB, and replacing one deletes the old file.
 
-## Built with
-
-React, TanStack Start, Convex, Clerk, and Tailwind CSS.
+React, TanStack Start, Convex and Clerk, with Tailwind for the styling.
 
 ## License
 
